@@ -1,0 +1,133 @@
+import React from 'react';
+import './Receipt.css';
+
+const Receipt = ({ sale, onClose }) => {
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="receipt-overlay">
+      <div className="receipt-modal">
+        <div className="receipt-actions no-print">
+          <button className="btn btn-success" onClick={handlePrint} data-testid="print-receipt-btn">
+            🖨️ Print Receipt
+          </button>
+          <button className="btn btn-secondary" onClick={onClose} data-testid="close-receipt-btn">
+            Close
+          </button>
+        </div>
+
+        <div className="receipt-container" id="receipt-print">
+          <div className="receipt-header">
+            <img 
+              src="/techzone-logo.jpg" 
+              alt="Techzone Logo" 
+              className="receipt-logo"
+            />
+            <h1 className="receipt-title">
+              <span className="text-blue">Tech</span>
+              <span className="text-red">zone</span>
+            </h1>
+            <p className="receipt-address">30 Giltress Street, Kingston 2, JA</p>
+            <p className="receipt-contact">(876) 8432416 / (876) 6339251</p>
+            <div className="receipt-divider"></div>
+          </div>
+
+          <div className="receipt-info">
+            <div className="receipt-row">
+              <span>Receipt #:</span>
+              <span><strong>{sale.id.substring(0, 8).toUpperCase()}</strong></span>
+            </div>
+            <div className="receipt-row">
+              <span>Date:</span>
+              <span>{formatDate(sale.created_at)}</span>
+            </div>
+            <div className="receipt-row">
+              <span>Cashier:</span>
+              <span>{sale.created_by}</span>
+            </div>
+            {sale.customer_name && (
+              <div className="receipt-row">
+                <span>Customer:</span>
+                <span>{sale.customer_name}</span>
+              </div>
+            )}
+            <div className="receipt-divider"></div>
+          </div>
+
+          <div className="receipt-items">
+            <table className="receipt-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sale.items.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.item_name}</td>
+                    <td>{item.quantity}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${item.subtotal.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="receipt-divider"></div>
+          </div>
+
+          <div className="receipt-totals">
+            <div className="receipt-row">
+              <span>Subtotal:</span>
+              <span>${sale.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="receipt-row">
+              <span>Tax (10%):</span>
+              <span>${sale.tax.toFixed(2)}</span>
+            </div>
+            <div className="receipt-row receipt-total">
+              <span><strong>TOTAL:</strong></span>
+              <span><strong>${sale.total.toFixed(2)}</strong></span>
+            </div>
+            <div className="receipt-divider"></div>
+          </div>
+
+          <div className="receipt-payment">
+            <div className="receipt-row">
+              <span>Payment Method:</span>
+              <span className="receipt-payment-badge">{sale.payment_method.toUpperCase()}</span>
+            </div>
+            <div className="receipt-row">
+              <span>Status:</span>
+              <span className="receipt-status-badge">{sale.payment_status.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div className="receipt-footer">
+            <div className="receipt-divider"></div>
+            <p className="receipt-thank-you">Thank you for your business!</p>
+            <p className="receipt-tagline">Quality repairs, trusted service</p>
+            <p className="receipt-small">Please keep this receipt for your records</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Receipt;
