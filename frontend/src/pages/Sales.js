@@ -47,7 +47,9 @@ const Sales = () => {
         item_name: item.name,
         quantity: 1,
         price: item.selling_price,
-        subtotal: item.selling_price
+        subtotal: item.selling_price,
+        image_url: item.image_url,
+        gsm_arena_url: item.gsm_arena_url
       }]);
     }
   };
