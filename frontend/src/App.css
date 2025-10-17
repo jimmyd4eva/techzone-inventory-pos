@@ -462,6 +462,9 @@ table tbody tr:hover {
 .badge.delivered { background: #e0e7ff; color: #3730a3; }
 .badge.cash { background: #d1fae5; color: #065f46; }
 .badge.stripe { background: #dbeafe; color: #1e40af; }
+.badge.admin { background: #fef3c7; color: #92400e; }
+.badge.technician { background: #dbeafe; color: #1e40af; }
+.badge.cashier { background: #d1fae5; color: #065f46; }
 
 .empty-state {
   text-align: center;
