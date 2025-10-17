@@ -178,7 +178,11 @@ const Inventory = () => {
                   <tr key={item.id} data-testid={`inventory-item-${item.id}`}>
                     <td>
                       {item.image_url ? (
-                        <a href="https://www.gsmarena.com" target="_blank" rel="noopener noreferrer">
+                        <a 
+                          href={item.gsmarena_url || 'https://www.gsmarena.com'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
                           <img 
                             src={item.image_url} 
                             alt={item.name}
@@ -191,7 +195,7 @@ const Inventory = () => {
                               cursor: 'pointer'
                             }}
                             onError={(e) => { e.target.style.display = 'none'; }}
-                            title="Click to view on GSM Arena"
+                            title={item.gsmarena_url ? "Click to view on GSM Arena" : "GSM Arena URL not set"}
                           />
                         </a>
                       ) : (
