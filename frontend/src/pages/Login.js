@@ -31,12 +31,12 @@ const Login = ({ onLogin }) => {
     <div className="login-page">
       <div className="login-container" data-testid="login-form">
         <div className="login-logo">
-          <div style={{ overflow: 'hidden', height: '80px', marginBottom: '8px' }}>
+          <div style={{ overflow: 'hidden', height: '100px', marginBottom: '8px' }}>
             <img 
               src="/techzone-logo.jpg" 
               alt="Techzone Logo" 
               style={{ 
-                width: '336px', 
+                width: '288px', 
                 height: 'auto', 
                 borderRadius: '12px', 
                 objectFit: 'cover',
