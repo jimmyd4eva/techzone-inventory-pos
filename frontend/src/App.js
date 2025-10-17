@@ -9,6 +9,7 @@ import Repairs from './pages/Repairs';
 import Customers from './pages/Customers';
 import Reports from './pages/Reports';
 import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentSuccessPayPal from './pages/PaymentSuccessPayPal';
 import Layout from './components/Layout';
 
 function App() {
