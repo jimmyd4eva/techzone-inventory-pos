@@ -31,6 +31,18 @@ const Login = ({ onLogin }) => {
     <div className="login-page">
       <div className="login-container" data-testid="login-form">
         <div className="login-logo">
+          <img 
+            src="/techzone-logo.jpg" 
+            alt="Techzone Logo" 
+            style={{ 
+              width: '100px', 
+              height: '100px', 
+              borderRadius: '12px', 
+              marginBottom: '16px',
+              objectFit: 'cover',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            }}
+          />
           <h1>Techzone Inventory</h1>
           <p>Sign in to continue</p>
         </div>
