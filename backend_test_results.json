@@ -1,0 +1,87 @@
+{
+  "summary": {
+    "tests_run": 13,
+    "tests_passed": 8,
+    "success_rate": 61.53846153846154
+  },
+  "results": [
+    {
+      "test": "Admin Login",
+      "status": "PASS",
+      "details": "Logged in as admin",
+      "timestamp": "2025-10-17T19:16:05.786233"
+    },
+    {
+      "test": "Get Current User",
+      "status": "PASS",
+      "details": "Retrieved user profile",
+      "timestamp": "2025-10-17T19:16:05.825718"
+    },
+    {
+      "test": "Get All Customers",
+      "status": "PASS",
+      "details": "Retrieved 2 customers",
+      "timestamp": "2025-10-17T19:16:05.867442"
+    },
+    {
+      "test": "Create Customer",
+      "status": "FAIL",
+      "details": "Expected 201, got 200",
+      "timestamp": "2025-10-17T19:16:05.905799"
+    },
+    {
+      "test": "Get All Inventory",
+      "status": "PASS",
+      "details": "Retrieved 4 items",
+      "timestamp": "2025-10-17T19:16:05.947367"
+    },
+    {
+      "test": "Create Inventory Item",
+      "status": "FAIL",
+      "details": "Expected 201, got 200",
+      "timestamp": "2025-10-17T19:16:05.987080"
+    },
+    {
+      "test": "Get All Repair Jobs",
+      "status": "PASS",
+      "details": "Retrieved 0 repair jobs",
+      "timestamp": "2025-10-17T19:16:06.064610"
+    },
+    {
+      "test": "Create Repair Job",
+      "status": "FAIL",
+      "details": "Expected 201, got 200",
+      "timestamp": "2025-10-17T19:16:06.186801"
+    },
+    {
+      "test": "Get All Sales",
+      "status": "PASS",
+      "details": "Retrieved 0 sales",
+      "timestamp": "2025-10-17T19:16:06.263113"
+    },
+    {
+      "test": "Create Cash Sale",
+      "status": "FAIL",
+      "details": "Expected 201, got 200",
+      "timestamp": "2025-10-17T19:16:06.321860"
+    },
+    {
+      "test": "Create Stripe Sale",
+      "status": "FAIL",
+      "details": "Expected 201, got 200",
+      "timestamp": "2025-10-17T19:16:06.395298"
+    },
+    {
+      "test": "Daily Sales Report",
+      "status": "PASS",
+      "details": "Today's sales: $132.00",
+      "timestamp": "2025-10-17T19:16:06.435342"
+    },
+    {
+      "test": "Dashboard Stats",
+      "status": "PASS",
+      "details": "Sales: $132.00, Repairs: 1, Low Stock: 1",
+      "timestamp": "2025-10-17T19:16:06.471731"
+    }
+  ]
+}
