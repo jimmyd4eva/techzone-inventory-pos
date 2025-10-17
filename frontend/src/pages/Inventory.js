@@ -176,18 +176,22 @@ const Inventory = () => {
                   <tr key={item.id} data-testid={`inventory-item-${item.id}`}>
                     <td>
                       {item.image_url ? (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name}
-                          style={{ 
-                            width: '50px', 
-                            height: '50px', 
-                            objectFit: 'cover', 
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0'
-                          }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
+                        <a href="https://www.gsmarena.com" target="_blank" rel="noopener noreferrer">
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name}
+                            style={{ 
+                              width: '50px', 
+                              height: '50px', 
+                              objectFit: 'cover', 
+                              borderRadius: '8px',
+                              border: '1px solid #e2e8f0',
+                              cursor: 'pointer'
+                            }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                            title="Click to view on GSM Arena"
+                          />
+                        </a>
                       ) : (
                         <div style={{ 
                           width: '50px', 
