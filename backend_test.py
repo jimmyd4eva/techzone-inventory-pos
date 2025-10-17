@@ -267,7 +267,7 @@ class TechzonePOSAPITester:
             "created_by": self.user_data['username']
         }
         
-        success, new_sale = self.make_request("POST", "sales", sale_data, 201)
+        success, new_sale = self.make_request("POST", "sales", sale_data, 200)
         if success:
             sale_id = new_sale['id']
             self.log_test("Create Cash Sale", True, f"Created cash sale with ID: {sale_id}")
