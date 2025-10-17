@@ -274,6 +274,62 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="User not found")
     return user_doc
 
+@api_router.get("/users", response_model=List[User])
+async def get_users(current_user: dict = Depends(get_current_user)):
+    # Only admins can view all users
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    for user in users:
+        if isinstance(user['created_at'], str):
+            user['created_at'] = datetime.fromisoformat(user['created_at'])
+    return users
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    # Only admins can delete users
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Don't allow deleting yourself
+    if user_id == current_user['user_id']:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    password: Optional[str] = None
+
+@api_router.put("/users/{user_id}")
+async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = Depends(get_current_user)):
+    # Only admins can update users
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    update_fields = {k: v for k, v in user_data.model_dump().items() if v is not None}
+    
+    # Hash password if provided
+    if 'password' in update_fields:
+        update_fields['password_hash'] = bcrypt.hash(update_fields.pop('password'))
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_fields}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User updated successfully"}
+
 # ============ CUSTOMER ENDPOINTS ============
 
 @api_router.post("/customers", response_model=Customer)
