@@ -49,7 +49,7 @@ const Login = ({ onLogin }) => {
             marginBottom: '16px',
             lineHeight: '1.4'
           }}>
-            30 Giltress Street, Kingston 2
+            30 Giltress Street, Kingston 2, JA
           </p>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
             <span style={{ color: '#1e3a8a' }}>Tech</span>
