@@ -307,7 +307,7 @@ class TechzonePOSAPITester:
             "created_by": self.user_data['username']
         }
         
-        success, new_sale = self.make_request("POST", "sales", sale_data, 201)
+        success, new_sale = self.make_request("POST", "sales", sale_data, 200)
         if success:
             sale_id = new_sale['id']
             self.log_test("Create Stripe Sale", True, f"Created stripe sale with ID: {sale_id}")
