@@ -61,7 +61,7 @@ const Layout = ({ user, onLogout }) => {
             </li>
             <li>
               <NavLink to="/customers" data-testid="nav-customers">
-                <Users size={20} />
+                <UsersIcon size={20} />
                 Customers
               </NavLink>
             </li>
@@ -71,6 +71,14 @@ const Layout = ({ user, onLogout }) => {
                 Reports
               </NavLink>
             </li>
+            {user?.role === 'admin' && (
+              <li>
+                <NavLink to="/users" data-testid="nav-users">
+                  <UserCog size={20} />
+                  Users
+                </NavLink>
+              </li>
+            )}
           </ul>
         </nav>
         
