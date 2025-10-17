@@ -8,6 +8,7 @@ import Sales from './pages/Sales';
 import Repairs from './pages/Repairs';
 import Customers from './pages/Customers';
 import Reports from './pages/Reports';
+import Users from './pages/Users';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentSuccessPayPal from './pages/PaymentSuccessPayPal';
 import Layout from './components/Layout';
