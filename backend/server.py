@@ -12,6 +12,8 @@ from datetime import datetime, timezone, timedelta
 from passlib.hash import bcrypt
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment
+from paypalcheckoutsdk.orders import OrdersCreateRequest, OrdersCaptureRequest, OrdersGetRequest
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -28,6 +30,19 @@ JWT_EXPIRATION_HOURS = 24
 
 # Stripe configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
+
+# PayPal configuration
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'test')
+PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', 'test')
+PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')
+
+# Initialize PayPal client
+if PAYPAL_MODE == 'live':
+    paypal_environment = LiveEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
+else:
+    paypal_environment = SandboxEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
+
+paypal_client = PayPalHttpClient(paypal_environment)
 
 # Create the main app
 app = FastAPI()
