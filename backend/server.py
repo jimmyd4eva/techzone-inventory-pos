@@ -435,6 +435,13 @@ async def delete_inventory_item(item_id: str, current_user: dict = Depends(get_c
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted successfully"}
 
+@api_router.get("/inventory/barcode/{barcode}")
+async def get_inventory_by_barcode(barcode: str, current_user: dict = Depends(get_current_user)):
+    item = await db.inventory.find_one({"barcode": barcode}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found with this barcode")
+    return item
+
 # ============ REPAIR JOB ENDPOINTS ============
 
 @api_router.post("/repairs", response_model=RepairJob)
