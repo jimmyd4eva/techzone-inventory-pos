@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Wrench, Users, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wrench, Users as UsersIcon, FileText, LogOut, UserCog } from 'lucide-react';
 
 const Layout = ({ user, onLogout }) => {
   return (
