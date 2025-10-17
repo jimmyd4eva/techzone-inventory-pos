@@ -160,6 +160,7 @@ const Inventory = () => {
                   <th>Name</th>
                   <th>Type</th>
                   <th>SKU</th>
+                  <th>Barcode</th>
                   <th>Quantity</th>
                   <th>Cost Price</th>
                   <th>Selling Price</th>
@@ -178,6 +179,7 @@ const Inventory = () => {
                     </td>
                     <td><span className="badge">{item.type}</span></td>
                     <td>{item.sku}</td>
+                    <td>{item.barcode || '-'}</td>
                     <td data-testid={`item-quantity-${item.id}`}>{item.quantity}</td>
                     <td>${item.cost_price.toFixed(2)}</td>
                     <td>${item.selling_price.toFixed(2)}</td>
