@@ -31,12 +31,11 @@ const Receipt = ({ sale, onClose }) => {
 
         <div className="receipt-container" id="receipt-print">
           <div className="receipt-header">
-            <div style={{ overflow: 'hidden', height: '60px', margin: '0 auto', width: '200px' }}>
+            <div style={{ overflow: 'hidden', height: '75px', margin: '0 auto', width: '200px' }}>
               <img 
                 src="/techzone-logo.jpg" 
                 alt="Techzone Logo" 
                 className="receipt-logo"
-                style={{ marginTop: '-15px' }}
               />
             </div>
             <h1 className="receipt-title">
