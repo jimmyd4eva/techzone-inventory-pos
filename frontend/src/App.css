@@ -812,12 +812,12 @@ table tbody tr:hover {
 .payment-methods {
   margin-top: 20px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .payment-btn {
-  padding: 12px 8px;
+  padding: 14px 12px;
   border: 2px solid #e2e8f0;
   background: white;
   border-radius: 10px;
@@ -825,7 +825,7 @@ table tbody tr:hover {
   transition: border-color 0.2s, background 0.2s, transform 0.2s;
   font-weight: 600;
   color: #334155;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .payment-btn:hover {
