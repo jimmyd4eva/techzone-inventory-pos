@@ -253,6 +253,32 @@ const Inventory = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
+                <div className="form-group">
+                  <label>Image URL (Optional)</label>
+                  <input
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    data-testid="item-image-input"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  {formData.image_url && (
+                    <div style={{ marginTop: '12px' }}>
+                      <img 
+                        src={formData.image_url} 
+                        alt="Preview" 
+                        style={{ 
+                          width: '100px', 
+                          height: '100px', 
+                          objectFit: 'cover', 
+                          borderRadius: '8px',
+                          border: '2px solid #e2e8f0'
+                        }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Name</label>
