@@ -256,26 +256,36 @@ const Inventory = () => {
                 <div className="form-group">
                   <label>Image URL (Optional)</label>
                   <input
-                    type="url"
-                    value={formData.image_url}
+                    type="text"
+                    value={formData.image_url || ''}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                     data-testid="item-image-input"
                     placeholder="https://example.com/image.jpg"
                   />
-                  {formData.image_url && (
+                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontSize: '0.85rem' }}>
+                    Enter a direct link to an image (e.g., from Google Images, product websites)
+                  </small>
+                  {formData.image_url && formData.image_url.length > 0 && (
                     <div style={{ marginTop: '12px' }}>
+                      <p style={{ fontSize: '0.9rem', marginBottom: '8px', color: '#334155' }}>Preview:</p>
                       <img 
                         src={formData.image_url} 
                         alt="Preview" 
                         style={{ 
-                          width: '100px', 
-                          height: '100px', 
+                          width: '120px', 
+                          height: '120px', 
                           objectFit: 'cover', 
                           borderRadius: '8px',
                           border: '2px solid #e2e8f0'
                         }}
-                        onError={(e) => { e.target.style.display = 'none'; }}
+                        onError={(e) => { 
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
                       />
+                      <p style={{ display: 'none', color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>
+                        ❌ Could not load image. Please check the URL.
+                      </p>
                     </div>
                   )}
                 </div>
