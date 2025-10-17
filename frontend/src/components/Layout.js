@@ -24,7 +24,7 @@ const Layout = ({ user, onLogout }) => {
             marginBottom: '12px',
             lineHeight: '1.4'
           }}>
-            30 Giltress Street, Kingston 2
+            30 Giltress Street, Kingston 2, JA
           </p>
           <h1 data-testid="app-title" style={{ margin: 0, fontSize: '1.5rem' }}>
             <span style={{ color: '#1e3a8a' }}>Tech</span>
