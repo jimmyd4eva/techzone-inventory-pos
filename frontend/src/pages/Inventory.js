@@ -257,6 +257,18 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="form-group">
+                    <label>Barcode (Optional)</label>
+                    <input
+                      type="text"
+                      value={formData.barcode}
+                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                      data-testid="item-barcode-input"
+                      placeholder="Enter barcode number"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
                     <label>Quantity</label>
                     <input
                       type="number"
@@ -264,6 +276,16 @@ const Inventory = () => {
                       onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
                       required
                       data-testid="item-quantity-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Low Stock Threshold</label>
+                    <input
+                      type="number"
+                      value={formData.low_stock_threshold}
+                      onChange={(e) => setFormData({ ...formData, low_stock_threshold: parseInt(e.target.value) })}
+                      required
+                      data-testid="item-threshold-input"
                     />
                   </div>
                 </div>
