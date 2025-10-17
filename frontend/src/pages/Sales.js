@@ -169,6 +169,34 @@ const Sales = () => {
                     onClick={() => addToCart(item)}
                     data-testid={`pos-item-${item.id}`}
                   >
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.name}
+                        style={{ 
+                          width: '100%', 
+                          height: '100px', 
+                          objectFit: 'cover', 
+                          borderRadius: '8px',
+                          marginBottom: '12px'
+                        }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100px', 
+                        background: '#f1f5f9',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '2.5rem',
+                        marginBottom: '12px'
+                      }}>
+                        📦
+                      </div>
+                    )}
                     <h4>{item.name}</h4>
                     <p>{item.type}</p>
                     <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Stock: {item.quantity}</p>
