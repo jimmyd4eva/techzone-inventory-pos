@@ -7,14 +7,18 @@ const Layout = ({ user, onLogout }) => {
     <div className="layout">
       <aside className="sidebar" data-testid="sidebar">
         <div className="sidebar-logo">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <img 
-              src="/techzone-logo.jpg" 
-              alt="Techzone Logo" 
-              style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
-            />
-            <h1 data-testid="app-title" style={{ margin: 0 }}>Techzone</h1>
-          </div>
+          <img 
+            src="/techzone-logo.jpg" 
+            alt="Techzone Logo" 
+            style={{ 
+              width: '240px', 
+              height: 'auto', 
+              borderRadius: '8px', 
+              objectFit: 'cover',
+              marginBottom: '12px'
+            }}
+          />
+          <h1 data-testid="app-title" style={{ margin: 0 }}>Techzone</h1>
           <p>Inventory System</p>
         </div>
         
