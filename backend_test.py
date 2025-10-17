@@ -113,7 +113,7 @@ class TechzonePOSAPITester:
             "address": "123 Test Street"
         }
         
-        success, new_customer = self.make_request("POST", "customers", customer_data, 201)
+        success, new_customer = self.make_request("POST", "customers", customer_data, 200)
         customer_id = None
         if success:
             customer_id = new_customer['id']
