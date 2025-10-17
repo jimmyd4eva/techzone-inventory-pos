@@ -99,6 +99,7 @@ const Inventory = () => {
         type: 'phone',
         sku: '',
         barcode: '',
+        image_url: '',
         quantity: 0,
         cost_price: 0,
         selling_price: 0,
