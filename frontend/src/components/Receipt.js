@@ -43,7 +43,7 @@ const Receipt = ({ sale, onClose }) => {
               <span className="text-red">zone</span>
             </h1>
             <p className="receipt-address">30 Giltress Street, Kingston 2, JA</p>
-            <p className="receipt-contact">(876) 8432416 / (876) 6339251</p>
+            <p className="receipt-contact">876-633-9251</p>
             <div className="receipt-divider"></div>
           </div>
 
