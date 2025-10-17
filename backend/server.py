@@ -633,6 +633,137 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+# ============ PAYPAL PAYMENT ENDPOINTS ============
+
+class PayPalOrderRequest(BaseModel):
+    sale_id: str
+
+@api_router.post("/payments/paypal/create-order")
+async def create_paypal_order(order_data: PayPalOrderRequest, current_user: dict = Depends(get_current_user)):
+    # Get sale details
+    sale = await db.sales.find_one({"id": order_data.sale_id})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    if sale['payment_status'] == "completed":
+        raise HTTPException(status_code=400, detail="Sale already paid")
+    
+    # Create PayPal order
+    request = OrdersCreateRequest()
+    request.prefer('return=representation')
+    request.request_body({
+        "intent": "CAPTURE",
+        "purchase_units": [{
+            "reference_id": order_data.sale_id,
+            "amount": {
+                "currency_code": "USD",
+                "value": f"{sale['total']:.2f}"
+            },
+            "description": f"Techzone POS Sale #{order_data.sale_id[:8]}"
+        }],
+        "application_context": {
+            "brand_name": "Techzone Inventory",
+            "landing_page": "NO_PREFERENCE",
+            "user_action": "PAY_NOW",
+            "return_url": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-success-paypal",
+            "cancel_url": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/sales"
+        }
+    })
+    
+    try:
+        response = paypal_client.execute(request)
+        order_id = response.result.id
+        
+        # Create payment transaction record
+        transaction = PaymentTransaction(
+            session_id=order_id,
+            sale_id=order_data.sale_id,
+            amount=float(sale['total']),
+            currency="usd",
+            payment_status="pending",
+            metadata={"sale_id": order_data.sale_id, "payment_method": "paypal"}
+        )
+        
+        trans_doc = transaction.model_dump()
+        trans_doc['created_at'] = trans_doc['created_at'].isoformat()
+        await db.payment_transactions.insert_one(trans_doc)
+        
+        # Update sale with PayPal order ID
+        await db.sales.update_one(
+            {"id": order_data.sale_id},
+            {"$set": {"paypal_order_id": order_id}}
+        )
+        
+        # Get approval URL
+        approval_url = None
+        for link in response.result.links:
+            if link.rel == "approve":
+                approval_url = link.href
+                break
+        
+        return {"order_id": order_id, "approval_url": approval_url}
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PayPal order creation failed: {str(e)}")
+
+@api_router.post("/payments/paypal/capture/{order_id}")
+async def capture_paypal_order(order_id: str, current_user: dict = Depends(get_current_user)):
+    request = OrdersCaptureRequest(order_id)
+    
+    try:
+        response = paypal_client.execute(request)
+        
+        # Update payment transaction
+        transaction = await db.payment_transactions.find_one({"session_id": order_id})
+        if transaction:
+            if transaction['payment_status'] != "completed":
+                await db.payment_transactions.update_one(
+                    {"session_id": order_id},
+                    {"$set": {"payment_status": "completed"}}
+                )
+                
+                # Update sale
+                sale_id = transaction['sale_id']
+                sale = await db.sales.find_one({"id": sale_id})
+                
+                if sale and sale['payment_status'] != "completed":
+                    await db.sales.update_one(
+                        {"id": sale_id},
+                        {"$set": {"payment_status": "completed"}}
+                    )
+                    
+                    # Update inventory
+                    for item in sale['items']:
+                        await db.inventory.update_one(
+                            {"id": item['item_id']},
+                            {"$inc": {"quantity": -item['quantity']}}
+                        )
+        
+        return {
+            "status": response.result.status,
+            "order_id": order_id,
+            "payment_status": "completed"
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PayPal capture failed: {str(e)}")
+
+@api_router.get("/payments/paypal/status/{order_id}")
+async def get_paypal_order_status(order_id: str, current_user: dict = Depends(get_current_user)):
+    request = OrdersGetRequest(order_id)
+    
+    try:
+        response = paypal_client.execute(request)
+        order = response.result
+        
+        return {
+            "order_id": order.id,
+            "status": order.status,
+            "amount": order.purchase_units[0].amount.value if order.purchase_units else 0
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to get order status: {str(e)}")
+
 # ============ REPORTS ENDPOINTS ============
 
 @api_router.get("/reports/daily-sales")
