@@ -321,16 +321,7 @@ const Inventory = () => {
                       value={formData.supplier}
                       onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                       data-testid="item-supplier-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Low Stock Threshold</label>
-                    <input
-                      type="number"
-                      value={formData.low_stock_threshold}
-                      onChange={(e) => setFormData({ ...formData, low_stock_threshold: parseInt(e.target.value) })}
-                      required
-                      data-testid="item-threshold-input"
+                      placeholder="Supplier name"
                     />
                   </div>
                 </div>
