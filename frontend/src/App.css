@@ -745,6 +745,10 @@ table tbody tr:hover {
   margin-bottom: 12px;
 }
 
+.cart-item-image {
+  flex-shrink: 0;
+}
+
 .cart-item-info {
   flex: 1;
 }
