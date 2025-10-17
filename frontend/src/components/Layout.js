@@ -18,7 +18,10 @@ const Layout = ({ user, onLogout }) => {
               marginBottom: '12px'
             }}
           />
-          <h1 data-testid="app-title" style={{ margin: 0 }}>Techzone</h1>
+          <h1 data-testid="app-title" style={{ margin: 0, fontSize: '1.5rem' }}>
+            <span style={{ color: '#1e3a8a' }}>Tech</span>
+            <span style={{ color: '#dc2626' }}>zone</span>
+          </h1>
           <p>Inventory System</p>
         </div>
         
