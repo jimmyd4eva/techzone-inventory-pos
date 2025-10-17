@@ -11,7 +11,7 @@ const Layout = ({ user, onLogout }) => {
             src="/techzone-logo.jpg" 
             alt="Techzone Logo" 
             style={{ 
-              width: '240px', 
+              width: '288px', 
               height: 'auto', 
               borderRadius: '8px', 
               objectFit: 'cover',
