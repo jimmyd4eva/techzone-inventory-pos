@@ -170,18 +170,30 @@ const Sales = () => {
                     data-testid={`pos-item-${item.id}`}
                   >
                     {item.image_url ? (
-                      <img 
-                        src={item.image_url} 
-                        alt={item.name}
-                        style={{ 
-                          width: '100%', 
-                          height: '100px', 
-                          objectFit: 'cover', 
-                          borderRadius: '8px',
-                          marginBottom: '12px'
-                        }}
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                      />
+                      <a 
+                        href="https://www.gsmarena.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Click to view on GSM Arena"
+                      >
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name}
+                          style={{ 
+                            width: '100%', 
+                            height: '100px', 
+                            objectFit: 'cover', 
+                            borderRadius: '8px',
+                            marginBottom: '12px',
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s'
+                          }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                          onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.target.style.opacity = '1'}
+                        />
+                      </a>
                     ) : (
                       <div style={{ 
                         width: '100%', 
