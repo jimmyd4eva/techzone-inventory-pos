@@ -235,6 +235,46 @@ const Sales = () => {
             ) : (
               cart.map((item) => (
                 <div key={item.item_id} className="cart-item" data-testid={`cart-item-${item.item_id}`}>
+                  {item.image_url && (
+                    <div className="cart-item-image">
+                      {item.gsm_arena_url ? (
+                        <a 
+                          href={item.gsm_arena_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          title="View on GSM Arena"
+                        >
+                          <img 
+                            src={item.image_url} 
+                            alt={item.item_name}
+                            style={{ 
+                              width: '60px', 
+                              height: '60px', 
+                              objectFit: 'cover', 
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              transition: 'opacity 0.2s'
+                            }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                            onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                            onMouseLeave={(e) => e.target.style.opacity = '1'}
+                          />
+                        </a>
+                      ) : (
+                        <img 
+                          src={item.image_url} 
+                          alt={item.item_name}
+                          style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            objectFit: 'cover', 
+                            borderRadius: '6px'
+                          }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
+                  )}
                   <div className="cart-item-info">
                     <h4>{item.item_name}</h4>
                     <p>${item.price.toFixed(2)} each</p>
