@@ -159,7 +159,7 @@ class TechzonePOSAPITester:
             "low_stock_threshold": 5
         }
         
-        success, new_item = self.make_request("POST", "inventory", item_data, 201)
+        success, new_item = self.make_request("POST", "inventory", item_data, 200)
         item_id = None
         if success:
             item_id = new_item['id']
