@@ -43,7 +43,16 @@ const Login = ({ onLogin }) => {
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             }}
           />
-          <h1>Techzone Inventory</h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
+            <span style={{ color: '#1e3a8a' }}>Tech</span>
+            <span style={{ color: '#dc2626' }}>zone</span>
+            {' '}
+            <span style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>Inventory</span>
+          </h1>
           <p>Sign in to continue</p>
         </div>
 
