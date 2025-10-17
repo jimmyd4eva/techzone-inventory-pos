@@ -15,9 +15,17 @@ const Layout = ({ user, onLogout }) => {
               height: 'auto', 
               borderRadius: '8px', 
               objectFit: 'cover',
-              marginBottom: '12px'
+              marginBottom: '8px'
             }}
           />
+          <p style={{ 
+            fontSize: '14px', 
+            color: 'rgba(255, 255, 255, 0.9)', 
+            marginBottom: '12px',
+            lineHeight: '1.4'
+          }}>
+            30 Giltress Street, Kingston 2
+          </p>
           <h1 data-testid="app-title" style={{ margin: 0, fontSize: '1.5rem' }}>
             <span style={{ color: '#1e3a8a' }}>Tech</span>
             <span style={{ color: '#dc2626' }}>zone</span>
