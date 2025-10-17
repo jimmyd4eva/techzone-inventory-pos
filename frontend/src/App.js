@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Sales from './pages/Sales';
+import SalesHistory from './pages/SalesHistory';
 import Repairs from './pages/Repairs';
 import Customers from './pages/Customers';
 import Reports from './pages/Reports';
