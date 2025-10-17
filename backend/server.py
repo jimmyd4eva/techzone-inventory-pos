@@ -90,6 +90,7 @@ class InventoryItem(BaseModel):
     type: str  # phone, part, accessory
     sku: str
     barcode: Optional[str] = None
+    image_url: Optional[str] = None
     quantity: int
     cost_price: float
     selling_price: float
@@ -102,6 +103,7 @@ class InventoryItemCreate(BaseModel):
     type: str
     sku: str
     barcode: Optional[str] = None
+    image_url: Optional[str] = None
     quantity: int
     cost_price: float
     selling_price: float
@@ -113,6 +115,7 @@ class InventoryItemUpdate(BaseModel):
     type: Optional[str] = None
     sku: Optional[str] = None
     barcode: Optional[str] = None
+    image_url: Optional[str] = None
     quantity: Optional[int] = None
     cost_price: Optional[float] = None
     selling_price: Optional[float] = None
