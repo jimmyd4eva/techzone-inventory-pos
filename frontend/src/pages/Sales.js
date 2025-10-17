@@ -171,11 +171,11 @@ const Sales = () => {
                   >
                     {item.image_url ? (
                       <a 
-                        href="https://www.gsmarena.com" 
+                        href={item.gsmarena_url || 'https://www.gsmarena.com'} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        title="Click to view on GSM Arena"
+                        title={item.gsmarena_url ? "Click to view on GSM Arena" : "GSM Arena URL not set"}
                       >
                         <img 
                           src={item.image_url} 
