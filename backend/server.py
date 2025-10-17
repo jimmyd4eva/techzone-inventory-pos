@@ -159,12 +159,13 @@ class Sale(BaseModel):
     items: List[SaleItem]
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
-    payment_method: str  # cash, stripe
+    payment_method: str  # cash, stripe, paypal
     subtotal: float
     tax: float
     total: float
     payment_status: str  # completed, pending
     stripe_session_id: Optional[str] = None
+    paypal_order_id: Optional[str] = None
     created_by: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
