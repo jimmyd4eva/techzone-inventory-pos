@@ -98,7 +98,7 @@ const Sales = () => {
       });
 
       if (paymentMethod === 'stripe') {
-        // Create checkout session
+        // Create Stripe checkout session
         const checkoutData = {
           sale_id: response.data.id,
           origin_url: window.location.origin
@@ -110,6 +110,18 @@ const Sales = () => {
 
         // Redirect to Stripe
         window.location.href = checkoutResponse.data.url;
+      } else if (paymentMethod === 'paypal') {
+        // Create PayPal order
+        const paypalData = {
+          sale_id: response.data.id
+        };
+
+        const paypalResponse = await axios.post(`${API}/payments/paypal/create-order`, paypalData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Redirect to PayPal
+        window.location.href = paypalResponse.data.approval_url;
       } else {
         // Cash payment - clear cart and refresh
         alert('Sale completed successfully!');
