@@ -159,6 +159,7 @@ const Inventory = () => {
             <table data-testid="inventory-table">
               <thead>
                 <tr>
+                  <th>Image</th>
                   <th>Name</th>
                   <th>Type</th>
                   <th>SKU</th>
@@ -173,6 +174,35 @@ const Inventory = () => {
               <tbody>
                 {filteredItems.map((item) => (
                   <tr key={item.id} data-testid={`inventory-item-${item.id}`}>
+                    <td>
+                      {item.image_url ? (
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name}
+                          style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            objectFit: 'cover', 
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                          }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          width: '50px', 
+                          height: '50px', 
+                          background: '#f1f5f9',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.5rem'
+                        }}>
+                          📦
+                        </div>
+                      )}
+                    </td>
                     <td>
                       {item.name}
                       {item.quantity <= item.low_stock_threshold && (
