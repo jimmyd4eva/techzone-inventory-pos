@@ -295,6 +295,19 @@ const Inventory = () => {
                     </div>
                   )}
                 </div>
+                <div className="form-group">
+                  <label>GSM Arena URL (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.gsmarena_url || ''}
+                    onChange={(e) => setFormData({ ...formData, gsmarena_url: e.target.value })}
+                    data-testid="item-gsmarena-input"
+                    placeholder="https://www.gsmarena.com/apple_iphone_14-11829.php"
+                  />
+                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontSize: '0.85rem' }}>
+                    Paste the full GSM Arena product page URL
+                  </small>
+                </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Name</label>
