@@ -253,7 +253,7 @@ const Sales = () => {
                 onClick={() => setPaymentMethod('stripe')}
                 data-testid="payment-card-btn"
               >
-                💳 Credit Card
+                💳 Credit Card/Debit Card
               </button>
             </div>
 
