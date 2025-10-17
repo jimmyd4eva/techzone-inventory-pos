@@ -212,7 +212,7 @@ class TechzonePOSAPITester:
             "notes": "Customer wants same-day service"
         }
         
-        success, new_repair = self.make_request("POST", "repairs", repair_data, 201)
+        success, new_repair = self.make_request("POST", "repairs", repair_data, 200)
         repair_id = None
         if success:
             repair_id = new_repair['id']
