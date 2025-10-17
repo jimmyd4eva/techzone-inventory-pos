@@ -16,6 +16,7 @@ const Inventory = () => {
     name: '',
     type: 'phone',
     sku: '',
+    barcode: '',
     quantity: 0,
     cost_price: 0,
     selling_price: 0,
@@ -30,7 +31,8 @@ const Inventory = () => {
   useEffect(() => {
     const filtered = items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase())
+      item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredItems(filtered);
   }, [searchTerm, items]);
