@@ -54,6 +54,12 @@ const Layout = ({ user, onLogout }) => {
               </NavLink>
             </li>
             <li>
+              <NavLink to="/sales-history" data-testid="nav-sales-history">
+                <Receipt size={20} />
+                Sales History
+              </NavLink>
+            </li>
+            <li>
               <NavLink to="/repairs" data-testid="nav-repairs">
                 <Wrench size={20} />
                 Repairs
