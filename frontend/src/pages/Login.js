@@ -47,10 +47,18 @@ const Login = ({ onLogin }) => {
           <p style={{ 
             fontSize: '14px', 
             color: '#64748b', 
-            marginBottom: '16px',
+            marginBottom: '4px',
             lineHeight: '1.4'
           }}>
             30 Giltress Street, Kingston 2, JA
+          </p>
+          <p style={{ 
+            fontSize: '14px', 
+            color: '#64748b', 
+            marginBottom: '16px',
+            lineHeight: '1.4'
+          }}>
+            876-633-9251
           </p>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
             <span style={{ color: '#1e3a8a' }}>Tech</span>
