@@ -35,8 +35,8 @@ const Login = ({ onLogin }) => {
             src="/techzone-logo.jpg" 
             alt="Techzone Logo" 
             style={{ 
-              width: '100px', 
-              height: '100px', 
+              width: '240px', 
+              height: 'auto', 
               borderRadius: '12px', 
               marginBottom: '16px',
               objectFit: 'cover',
