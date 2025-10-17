@@ -38,11 +38,19 @@ const Login = ({ onLogin }) => {
               width: '240px', 
               height: 'auto', 
               borderRadius: '12px', 
-              marginBottom: '16px',
+              marginBottom: '8px',
               objectFit: 'cover',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             }}
           />
+          <p style={{ 
+            fontSize: '14px', 
+            color: '#64748b', 
+            marginBottom: '16px',
+            lineHeight: '1.4'
+          }}>
+            30 Giltress Street, Kingston 2
+          </p>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
             <span style={{ color: '#1e3a8a' }}>Tech</span>
             <span style={{ color: '#dc2626' }}>zone</span>
