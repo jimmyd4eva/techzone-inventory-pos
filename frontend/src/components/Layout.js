@@ -7,12 +7,12 @@ const Layout = ({ user, onLogout }) => {
     <div className="layout">
       <aside className="sidebar" data-testid="sidebar">
         <div className="sidebar-logo">
-          <div style={{ overflow: 'hidden', height: '65px', marginBottom: '8px' }}>
+          <div style={{ overflow: 'hidden', height: '80px', marginBottom: '8px' }}>
             <img 
               src="/techzone-logo.jpg" 
               alt="Techzone Logo" 
               style={{ 
-                width: '336px', 
+                width: '288px', 
                 height: 'auto', 
                 borderRadius: '8px', 
                 objectFit: 'cover'
