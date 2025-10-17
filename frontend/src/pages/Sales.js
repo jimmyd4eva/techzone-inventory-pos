@@ -246,14 +246,21 @@ const Sales = () => {
                 onClick={() => setPaymentMethod('cash')}
                 data-testid="payment-cash-btn"
               >
-                Cash
+                💵 Cash
               </button>
               <button
                 className={`payment-btn ${paymentMethod === 'stripe' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('stripe')}
                 data-testid="payment-card-btn"
               >
-                Card
+                💳 Credit Card
+              </button>
+              <button
+                className={`payment-btn ${paymentMethod === 'paypal' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('paypal')}
+                data-testid="payment-paypal-btn"
+              >
+                🅿️ PayPal
               </button>
             </div>
 
