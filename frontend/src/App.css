@@ -807,31 +807,34 @@ table tbody tr:hover {
 
 .payment-methods {
   margin-top: 20px;
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .payment-btn {
-  flex: 1;
-  padding: 14px;
+  padding: 12px 8px;
   border: 2px solid #e2e8f0;
   background: white;
   border-radius: 10px;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
   font-weight: 600;
   color: #334155;
+  font-size: 0.9rem;
 }
 
 .payment-btn:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
+  transform: translateY(-2px);
 }
 
 .payment-btn.active {
   border-color: #667eea;
   background: #f0f4ff;
   color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 
 .btn-checkout {
