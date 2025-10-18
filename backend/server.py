@@ -105,7 +105,7 @@ class InventoryItemCreate(BaseModel):
     sku: str
     barcode: Optional[str] = None
     image_url: Optional[str] = None
-    gsmarena_url: Optional[str] = None
+    gsm_arena_url: Optional[str] = None
     quantity: int
     cost_price: float
     selling_price: float
