@@ -188,8 +188,10 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus:
+    - "Fix GSM Arena links in Inventory page"
+  stuck_tasks:
+    - "Fix GSM Arena links in Inventory page"
   test_all: false
   test_priority: "high_first"
 
