@@ -154,6 +154,18 @@ frontend:
         agent: "testing"
         comment: "✅ PRODUCTION VERIFIED: Complete end-to-end testing successful with populated GSM Arena URLs. All 3 target items display clickable images in cart with correct URLs: iPhone XR Screen (https://www.gsmarena.com/apple_iphone_xr-9320.php), Samsung Galaxy S21 (https://www.gsmarena.com/samsung_galaxy_s21_5g-10626.php), iPhone 15 Pro (https://www.gsmarena.com/apple_iphone_15_pro-12557.php). All links have proper target='_blank' and rel='noopener noreferrer' attributes. Images display at correct 60x60px dimensions with 6px border-radius. Feature fully functional."
 
+  - task: "Fix GSM Arena links in Inventory page"
+    implemented: false
+    working: false
+    file: "frontend/src/pages/Inventory.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE IDENTIFIED: Inventory page has flawed logic in lines 181-185. The anchor tag uses fallback URL 'https://www.gsmarena.com' when gsm_arena_url is null/empty, causing ALL images to redirect to GSM Arena homepage instead of specific product pages. API returns correct URLs (iPhone XR: apple_iphone_xr-9320.php, Galaxy S21: samsung_galaxy_s21_5g-10626.php) but frontend code ignores them due to JavaScript OR operator fallback. Even items WITH valid gsm_arena_url redirect to homepage. This is a frontend logic bug, not a backend data issue."
+
   - task: "Add CSS styling for cart item images"
     implemented: true
     working: true
