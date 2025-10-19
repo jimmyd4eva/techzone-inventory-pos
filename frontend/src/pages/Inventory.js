@@ -179,7 +179,7 @@ const Inventory = () => {
                     <td>
                       {item.image_url ? (
                         <a 
-                          href={item.gsmarena_url || 'https://www.gsmarena.com'} 
+                          href={item.gsm_arena_url || 'https://www.gsmarena.com'} 
                           target="_blank" 
                           rel="noopener noreferrer"
                         >
@@ -195,7 +195,7 @@ const Inventory = () => {
                               cursor: 'pointer'
                             }}
                             onError={(e) => { e.target.style.display = 'none'; }}
-                            title={item.gsmarena_url ? "Click to view on GSM Arena" : "GSM Arena URL not set"}
+                            title={item.gsm_arena_url ? "Click to view on GSM Arena" : "GSM Arena URL not set"}
                           />
                         </a>
                       ) : (
