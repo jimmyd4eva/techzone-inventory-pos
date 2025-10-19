@@ -303,8 +303,8 @@ const Inventory = () => {
                   <label>GSM Arena URL (Optional)</label>
                   <input
                     type="text"
-                    value={formData.gsmarena_url || ''}
-                    onChange={(e) => setFormData({ ...formData, gsmarena_url: e.target.value })}
+                    value={formData.gsm_arena_url || ''}
+                    onChange={(e) => setFormData({ ...formData, gsm_arena_url: e.target.value })}
                     data-testid="item-gsmarena-input"
                     placeholder="https://www.gsmarena.com/apple_iphone_14-11829.php"
                   />
