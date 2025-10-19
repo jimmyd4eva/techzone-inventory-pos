@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete the implementation of making inventory item images in the POS/Sales page link to their specific GSM Arena product URLs. The images in the shopping cart should be clickable and open the respective GSM Arena page."
+user_problem_statement: "Debug why GSM Arena image links are not working in the Inventory page. User clicks on product images but instead of going to specific GSM Arena product page, it goes to GSM Arena homepage."
 
 backend:
   - task: "Add image_url and gsm_arena_url fields to inventory items"
