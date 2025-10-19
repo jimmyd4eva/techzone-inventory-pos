@@ -18,7 +18,7 @@ const Inventory = () => {
     sku: '',
     barcode: '',
     image_url: '',
-    gsmarena_url: '',
+    gsm_arena_url: '',
     quantity: 0,
     cost_price: 0,
     selling_price: 0,
