@@ -118,7 +118,7 @@ class InventoryItemUpdate(BaseModel):
     sku: Optional[str] = None
     barcode: Optional[str] = None
     image_url: Optional[str] = None
-    gsmarena_url: Optional[str] = None
+    gsm_arena_url: Optional[str] = None
     quantity: Optional[int] = None
     cost_price: Optional[float] = None
     selling_price: Optional[float] = None
