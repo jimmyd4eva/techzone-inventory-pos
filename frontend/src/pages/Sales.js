@@ -188,7 +188,7 @@ const Sales = () => {
         // Cash payment - clear cart and refresh
         alert('Sale completed successfully!');
         setCart([]);
-        setCustomerName('');
+        clearCustomer();
         setPaymentMethod('cash');
         fetchInventory();
       }
