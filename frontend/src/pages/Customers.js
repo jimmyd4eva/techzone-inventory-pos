@@ -29,6 +29,7 @@ const Customers = () => {
     const filtered = customers.filter(customer =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.phone.includes(searchTerm) ||
+      (customer.account_number && customer.account_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredCustomers(filtered);
