@@ -195,11 +195,5 @@ test_plan:
   test_priority: "high_first"
 
 agent_communication:
-  - agent: "main"
-    message: "Implemented cart image linking feature. Updated Sales.js to store image_url and gsm_arena_url when adding items to cart, and display images as clickable links in the cart section. Added CSS for proper image layout. Need frontend testing to verify the feature works correctly - especially testing: 1) Images display in cart, 2) Clicking images opens GSM Arena URLs in new tab, 3) Proper handling when URLs are missing. Test credentials: username=admin, password=admin123"
   - agent: "testing"
-    message: "✅ TESTING COMPLETE: All cart image linking functionality is correctly implemented and working. Frontend code properly handles both scenarios: clickable images when gsm_arena_url exists, and non-clickable images when gsm_arena_url is null. Current inventory items have null gsm_arena_url values, so to see clickable links in action, inventory items need gsm_arena_url values populated. The implementation is ready for production use."
-  - agent: "main"
-    message: "Fixed backend issue where gsm_arena_url was returning null. Populated GSM Arena URLs for 3 inventory items: iPhone XR Screen (https://www.gsmarena.com/apple_iphone_xr-9320.php), Samsung Galaxy S21 (https://www.gsmarena.com/samsung_galaxy_s21_5g-10626.php), iPhone 15 Pro (https://www.gsmarena.com/apple_iphone_15_pro-12557.php). Need comprehensive end-to-end testing to verify complete feature functionality."
-  - agent: "testing"
-    message: "✅ COMPREHENSIVE END-TO-END TESTING COMPLETE: Successfully tested complete GSM Arena image linking feature. All 3 target items (iPhone XR Screen, Samsung Galaxy S21, iPhone 15 Pro) have working clickable images in cart that link to correct GSM Arena URLs. Verified: 1) Images display correctly in cart (60x60px with rounded corners), 2) All links have proper target='_blank' and rel='noopener noreferrer' attributes, 3) URLs match expected GSM Arena product pages exactly, 4) No console errors. Feature is fully functional and ready for production use."
+    message: "Starting comprehensive testing of customer lookup search functionality in Sales/POS page. Will test: 1) Login and navigation to Sales page 2) Customer search box functionality with various inputs (account numbers, names, phone numbers) 3) API calls to GET /api/customers 4) Dropdown visibility and results filtering 5) Console logs and network monitoring for debugging. Test credentials: username=admin, password=admin123"
