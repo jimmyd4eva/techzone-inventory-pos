@@ -173,6 +173,7 @@ const Customers = () => {
             <table data-testid="customers-table">
               <thead>
                 <tr>
+                  <th>Account #</th>
                   <th>Name</th>
                   <th>Phone</th>
                   <th>Email</th>
@@ -184,6 +185,18 @@ const Customers = () => {
               <tbody>
                 {filteredCustomers.map((customer) => (
                   <tr key={customer.id} data-testid={`customer-${customer.id}`}>
+                    <td>
+                      <code style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600', 
+                        color: '#667eea',
+                        background: '#f0f4ff',
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {customer.account_number || 'N/A'}
+                      </code>
+                    </td>
                     <td>{customer.name}</td>
                     <td>{customer.phone}</td>
                     <td>{customer.email || '-'}</td>
