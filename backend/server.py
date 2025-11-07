@@ -379,6 +379,32 @@ async def get_customer(customer_id: str, current_user: dict = Depends(get_curren
     repairs = await db.repair_jobs.find({"customer_id": customer_id}, {"_id": 0}).to_list(100)
     customer['repair_history'] = repairs
     
+    # Get purchase history
+    sales = await db.sales.find({"customer_id": customer_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    for sale in sales:
+        if isinstance(sale.get('created_at'), str):
+            sale['created_at'] = datetime.fromisoformat(sale['created_at'])
+    customer['purchase_history'] = sales
+    
+    return customer
+
+@api_router.get("/customers/account/{account_number}")
+async def get_customer_by_account(account_number: str, current_user: dict = Depends(get_current_user)):
+    customer = await db.customers.find_one({"account_number": account_number}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get repair history
+    repairs = await db.repair_jobs.find({"customer_id": customer['id']}, {"_id": 0}).to_list(100)
+    customer['repair_history'] = repairs
+    
+    # Get purchase history
+    sales = await db.sales.find({"customer_id": customer['id']}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    for sale in sales:
+        if isinstance(sale.get('created_at'), str):
+            sale['created_at'] = datetime.fromisoformat(sale['created_at'])
+    customer['purchase_history'] = sales
+    
     return customer
 
 @api_router.put("/customers/{customer_id}")
