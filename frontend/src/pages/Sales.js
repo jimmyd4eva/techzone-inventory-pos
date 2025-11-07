@@ -51,7 +51,7 @@ const Sales = () => {
   };
 
   const searchCustomerByAccount = async (accountNum) => {
-    if (!accountNum || accountNum.length < 3) {
+    if (!accountNum || accountNum.length < 2) {
       setCustomerSearchResults([]);
       setShowCustomerDropdown(false);
       return;
@@ -63,14 +63,19 @@ const Sales = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      const searchLower = accountNum.toLowerCase();
       const filtered = response.data.filter(customer =>
-        customer.account_number && customer.account_number.toLowerCase().includes(accountNum.toLowerCase())
+        (customer.account_number && customer.account_number.toLowerCase().includes(searchLower)) ||
+        (customer.name && customer.name.toLowerCase().includes(searchLower)) ||
+        (customer.phone && customer.phone.includes(accountNum))
       );
       
       setCustomerSearchResults(filtered);
       setShowCustomerDropdown(filtered.length > 0);
     } catch (error) {
       console.error('Error searching customers:', error);
+      setCustomerSearchResults([]);
+      setShowCustomerDropdown(false);
     }
   };
 
