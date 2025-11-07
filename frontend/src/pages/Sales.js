@@ -11,6 +11,10 @@ const Sales = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState('');
+  const [customerAccountNumber, setCustomerAccountNumber] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearchResults, setCustomerSearchResults] = useState([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
