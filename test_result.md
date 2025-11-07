@@ -191,8 +191,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Test customer lookup search functionality in Sales/POS page"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
