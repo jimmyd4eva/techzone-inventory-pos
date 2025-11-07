@@ -50,6 +50,45 @@ const Sales = () => {
     }
   };
 
+  const searchCustomerByAccount = async (accountNum) => {
+    if (!accountNum || accountNum.length < 3) {
+      setCustomerSearchResults([]);
+      setShowCustomerDropdown(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/customers`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const filtered = response.data.filter(customer =>
+        customer.account_number && customer.account_number.toLowerCase().includes(accountNum.toLowerCase())
+      );
+      
+      setCustomerSearchResults(filtered);
+      setShowCustomerDropdown(filtered.length > 0);
+    } catch (error) {
+      console.error('Error searching customers:', error);
+    }
+  };
+
+  const selectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setCustomerAccountNumber(customer.account_number);
+    setCustomerName(customer.name);
+    setShowCustomerDropdown(false);
+  };
+
+  const clearCustomer = () => {
+    setSelectedCustomer(null);
+    setCustomerAccountNumber('');
+    setCustomerName('');
+    setCustomerSearchResults([]);
+    setShowCustomerDropdown(false);
+  };
+
   const addToCart = (item) => {
     const existingItem = cart.find(i => i.item_id === item.id);
     if (existingItem) {
