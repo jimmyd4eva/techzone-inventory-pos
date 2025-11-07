@@ -418,8 +418,16 @@ const Sales = () => {
                 fontSize: '0.9rem',
                 color: '#334155'
               }}>
-                Customer Account # (Optional)
+                Customer Lookup (Optional)
               </label>
+              <small style={{ 
+                display: 'block', 
+                marginBottom: '8px',
+                fontSize: '0.85rem',
+                color: '#64748b'
+              }}>
+                Search by account #, name, or phone number
+              </small>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
