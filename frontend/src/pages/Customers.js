@@ -146,7 +146,7 @@ const Customers = () => {
             <Search className="search-icon" size={20} />
             <input
               type="text"
-              placeholder="Search customers..."
+              placeholder="Search by name, account #, phone, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               data-testid="customers-search"
