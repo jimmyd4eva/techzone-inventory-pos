@@ -146,11 +146,12 @@ const Sales = () => {
     setProcessing(true);
     const token = localStorage.getItem('token');
 
-    try {
+    try:
       const saleData = {
         items: cart,
         payment_method: paymentMethod,
         created_by: user.username,
+        customer_id: selectedCustomer ? selectedCustomer.id : undefined,
         customer_name: customerName || undefined
       };
 
