@@ -263,7 +263,7 @@ const Customers = () => {
                   />
                   {!editingCustomer ? (
                     <small style={{ color: '#667eea', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
-                      💡 If left blank, phone number will be used as account number
+                      💡 If left blank, last 4 digits of phone number will be used
                     </small>
                   ) : (
                     <small style={{ color: '#64748b', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
