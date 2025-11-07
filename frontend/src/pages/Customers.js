@@ -78,16 +78,18 @@ const Customers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    if (!window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API}/customers/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      alert('Customer deleted successfully!');
       fetchCustomers();
     } catch (error) {
       console.error('Error deleting customer:', error);
+      alert(`Error: ${error.response?.data?.detail || 'Failed to delete customer'}`);
     }
   };
 
