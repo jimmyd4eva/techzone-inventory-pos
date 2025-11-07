@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Minus, Trash2 } from 'lucide-react';
+import { Plus, Minus, Trash2, Search } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Sales = () => {
   const [inventory, setInventory] = useState([]);
+  const [filteredInventory, setFilteredInventory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
@@ -17,13 +19,25 @@ const Sales = () => {
     fetchInventory();
   }, []);
 
+  useEffect(() => {
+    const filtered = inventory.filter(item =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.sku && item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredInventory(filtered);
+  }, [searchTerm, inventory]);
+
   const fetchInventory = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API}/inventory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setInventory(response.data.filter(item => item.quantity > 0));
+      const inStockItems = response.data.filter(item => item.quantity > 0);
+      setInventory(inStockItems);
+      setFilteredInventory(inStockItems);
     } catch (error) {
       console.error('Error fetching inventory:', error);
     } finally {
