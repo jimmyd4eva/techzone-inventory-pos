@@ -181,6 +181,7 @@ class Sale(BaseModel):
 class SaleCreate(BaseModel):
     items: List[SaleItem]
     customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
     payment_method: str
     created_by: str
 
