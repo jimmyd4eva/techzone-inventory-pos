@@ -102,7 +102,31 @@ const SalesHistory = () => {
                     </td>
                     <td>{new Date(sale.created_at).toLocaleString()}</td>
                     <td>{sale.customer_name || 'Walk-in'}</td>
-                    <td>{sale.items.length} item(s)</td>
+                    <td>
+                      <div style={{ maxWidth: '250px' }}>
+                        {sale.items.map((item, idx) => (
+                          <div key={idx} style={{ 
+                            fontSize: '0.85rem', 
+                            marginBottom: '4px',
+                            padding: '4px 8px',
+                            background: '#f8fafc',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <span style={{ fontWeight: '500' }}>{item.item_name}</span>
+                            <span style={{ 
+                              color: '#64748b', 
+                              marginLeft: '8px',
+                              fontSize: '0.8rem'
+                            }}>
+                              x{item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
                     <td style={{ fontWeight: '600' }}>${sale.total.toFixed(2)}</td>
                     <td>
                       <span className={`badge ${sale.payment_method}`}>
