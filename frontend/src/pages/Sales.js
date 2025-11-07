@@ -428,7 +428,14 @@ const Sales = () => {
                     setCustomerAccountNumber(e.target.value);
                     searchCustomerByAccount(e.target.value);
                   }}
-                  placeholder="Enter account number or search..."
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#667eea';
+                    // Re-show dropdown if there are existing results
+                    if (customerSearchResults.length > 0) {
+                      setShowCustomerDropdown(true);
+                    }
+                  }}
+                  placeholder="Enter account #, name, or phone..."
                   data-testid="customer-account-input"
                   disabled={!!selectedCustomer}
                   style={{
@@ -441,11 +448,10 @@ const Sales = () => {
                     transition: 'border-color 0.2s',
                     background: selectedCustomer ? '#e2e8f0' : 'white'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#667eea'}
                   onBlur={(e) => setTimeout(() => {
                     e.target.style.borderColor = '#cbd5e1';
                     setShowCustomerDropdown(false);
-                  }, 200)}
+                  }, 300)}
                 />
                 
                 {showCustomerDropdown && customerSearchResults.length > 0 && (
