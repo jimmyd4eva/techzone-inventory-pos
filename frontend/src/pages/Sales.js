@@ -146,7 +146,7 @@ const Sales = () => {
     setProcessing(true);
     const token = localStorage.getItem('token');
 
-    try:
+    try {
       const saleData = {
         items: cart,
         payment_method: paymentMethod,
