@@ -103,6 +103,7 @@ const Customers = () => {
     if (customer) {
       setEditingCustomer(customer);
       setFormData({
+        account_number: customer.account_number || '',
         name: customer.name,
         email: customer.email || '',
         phone: customer.phone,
@@ -111,6 +112,7 @@ const Customers = () => {
     } else {
       setEditingCustomer(null);
       setFormData({
+        account_number: '',
         name: '',
         email: '',
         phone: '',
