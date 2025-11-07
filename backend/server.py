@@ -518,9 +518,9 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
     tax = subtotal * 0.1  # 10% tax
     total = subtotal + tax
     
-    # Get customer name if provided
-    customer_name = None
-    if sale_data.customer_id:
+    # Get customer name - prioritize the direct customer_name field over customer_id lookup
+    customer_name = sale_data.customer_name
+    if not customer_name and sale_data.customer_id:
         customer = await db.customers.find_one({"id": sale_data.customer_id})
         if customer:
             customer_name = customer['name']
