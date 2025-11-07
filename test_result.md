@@ -189,9 +189,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix GSM Arena links in Inventory page"
-  stuck_tasks:
-    - "Fix GSM Arena links in Inventory page"
+    - "Test customer lookup search functionality in Sales/POS page"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
