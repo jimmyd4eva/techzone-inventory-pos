@@ -368,8 +368,42 @@ const Sales = () => {
               onClick={handleCheckout}
               disabled={cart.length === 0 || processing}
               data-testid="checkout-btn"
+              style={{ marginBottom: '10px' }}
             >
               {processing ? 'Processing...' : `Checkout - $${total.toFixed(2)}`}
+            </button>
+            
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                if (cart.length > 0 && window.confirm('Are you sure you want to clear the cart?')) {
+                  setCart([]);
+                  setPaymentMethod('cash');
+                }
+              }}
+              disabled={cart.length === 0}
+              data-testid="cancel-sale-btn"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: 'none',
+                borderRadius: '8px',
+                background: cart.length === 0 ? '#e2e8f0' : '#ef4444',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s',
+                opacity: cart.length === 0 ? 0.6 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (cart.length > 0) e.target.style.background = '#dc2626';
+              }}
+              onMouseLeave={(e) => {
+                if (cart.length > 0) e.target.style.background = '#ef4444';
+              }}
+            >
+              Clear Cart
             </button>
           </div>
         </div>
