@@ -170,15 +170,25 @@ const Sales = () => {
           <div className="card">
             <div className="card-header">
               <h2>Select Items</h2>
+              <div className="search-bar" style={{ marginLeft: 'auto', maxWidth: '300px' }}>
+                <Search className="search-icon" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  data-testid="sales-search"
+                />
+              </div>
             </div>
             <div className="items-grid">
-              {inventory.length === 0 ? (
+              {filteredInventory.length === 0 ? (
                 <div className="empty-state">
-                  <h3>No items in stock</h3>
-                  <p>Add inventory items to start making sales</p>
+                  <h3>{searchTerm ? 'No items found' : 'No items in stock'}</h3>
+                  <p>{searchTerm ? 'Try a different search term' : 'Add inventory items to start making sales'}</p>
                 </div>
               ) : (
-                inventory.map((item) => (
+                filteredInventory.map((item) => (
                   <div
                     key={item.id}
                     className="item-card"
