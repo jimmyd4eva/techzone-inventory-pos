@@ -107,7 +107,8 @@ const Sales = () => {
       const saleData = {
         items: cart,
         payment_method: paymentMethod,
-        created_by: user.username
+        created_by: user.username,
+        customer_name: customerName || undefined
       };
 
       const response = await axios.post(`${API}/sales`, saleData, {
