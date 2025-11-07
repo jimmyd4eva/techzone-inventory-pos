@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Debug why GSM Arena image links are not working in the Inventory page. User clicks on product images but instead of going to specific GSM Arena product page, it goes to GSM Arena homepage."
+user_problem_statement: "Debug and test the customer lookup search box in the Sales/POS page. User reports customer lookup is not working when they type in the search field."
 
 backend:
   - task: "Add image_url and gsm_arena_url fields to inventory items"
