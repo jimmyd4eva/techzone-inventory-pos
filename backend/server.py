@@ -346,7 +346,7 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = 
 
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
-    # Use provided account number or default to phone number
+    # Use provided account number or default to last 4 digits of phone
     if customer_data.account_number:
         # Check if provided account number already exists
         existing = await db.customers.find_one({"account_number": customer_data.account_number})
@@ -354,20 +354,27 @@ async def create_customer(customer_data: CustomerCreate, current_user: dict = De
             raise HTTPException(status_code=400, detail="Account number already exists")
         account_number = customer_data.account_number
     else:
-        # Default: Use phone number as account number
-        # Check if phone number is already used as account number
-        existing = await db.customers.find_one({"account_number": customer_data.phone})
-        if existing:
-            # If phone exists, fall back to auto-generation
-            customer_count = await db.customers.count_documents({})
-            account_number = f"CUST{str(customer_count + 1).zfill(4)}"
-            
-            # Check if account number already exists (edge case)
-            while await db.customers.find_one({"account_number": account_number}):
-                customer_count += 1
-                account_number = f"CUST{str(customer_count + 1).zfill(4)}"
+        # Default: Use last 4 digits of phone number as account number
+        # Extract only digits from phone number
+        phone_digits = ''.join(filter(str.isdigit, customer_data.phone))
+        
+        if len(phone_digits) >= 4:
+            last_4_digits = phone_digits[-4:]
         else:
-            account_number = customer_data.phone
+            # If phone has less than 4 digits, use what we have
+            last_4_digits = phone_digits
+        
+        # Check if last 4 digits already used as account number
+        existing = await db.customers.find_one({"account_number": last_4_digits})
+        if existing:
+            # If exists, append a letter or number to make it unique
+            suffix = 'A'
+            account_number = f"{last_4_digits}{suffix}"
+            while await db.customers.find_one({"account_number": account_number}):
+                suffix = chr(ord(suffix) + 1) if suffix != 'Z' else '1'
+                account_number = f"{last_4_digits}{suffix}"
+        else:
+            account_number = last_4_digits
     
     customer_dict = customer_data.model_dump()
     customer_dict['account_number'] = account_number
