@@ -418,6 +418,7 @@ const Sales = () => {
               onClick={() => {
                 if (cart.length > 0 && window.confirm('Are you sure you want to clear the cart?')) {
                   setCart([]);
+                  setCustomerName('');
                   setPaymentMethod('cash');
                 }
               }}
