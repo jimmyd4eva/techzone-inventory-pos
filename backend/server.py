@@ -346,7 +346,7 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = 
 
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
-    # Use provided account number or auto-generate
+    # Use provided account number or default to phone number
     if customer_data.account_number:
         # Check if provided account number already exists
         existing = await db.customers.find_one({"account_number": customer_data.account_number})
@@ -354,14 +354,20 @@ async def create_customer(customer_data: CustomerCreate, current_user: dict = De
             raise HTTPException(status_code=400, detail="Account number already exists")
         account_number = customer_data.account_number
     else:
-        # Auto-generate account number
-        customer_count = await db.customers.count_documents({})
-        account_number = f"CUST{str(customer_count + 1).zfill(4)}"  # CUST0001, CUST0002, etc.
-        
-        # Check if account number already exists (edge case)
-        while await db.customers.find_one({"account_number": account_number}):
-            customer_count += 1
+        # Default: Use phone number as account number
+        # Check if phone number is already used as account number
+        existing = await db.customers.find_one({"account_number": customer_data.phone})
+        if existing:
+            # If phone exists, fall back to auto-generation
+            customer_count = await db.customers.count_documents({})
             account_number = f"CUST{str(customer_count + 1).zfill(4)}"
+            
+            # Check if account number already exists (edge case)
+            while await db.customers.find_one({"account_number": account_number}):
+                customer_count += 1
+                account_number = f"CUST{str(customer_count + 1).zfill(4)}"
+        else:
+            account_number = customer_data.phone
     
     customer_dict = customer_data.model_dump()
     customer_dict['account_number'] = account_number
