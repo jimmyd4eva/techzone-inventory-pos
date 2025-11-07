@@ -57,18 +57,23 @@ const Customers = () => {
 
     try {
       if (editingCustomer) {
-        await axios.put(`${API}/customers/${editingCustomer.id}`, formData, {
+        // When editing, don't send account_number (it's locked)
+        const { account_number, ...updateData } = formData;
+        await axios.put(`${API}/customers/${editingCustomer.id}`, updateData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        alert('Customer updated successfully!');
       } else {
         await axios.post(`${API}/customers`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        alert('Customer added successfully!');
       }
       fetchCustomers();
       closeModal();
     } catch (error) {
       console.error('Error saving customer:', error);
+      alert(`Error: ${error.response?.data?.detail || 'Failed to save customer'}`);
     }
   };
 
