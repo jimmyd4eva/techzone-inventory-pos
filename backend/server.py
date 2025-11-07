@@ -79,6 +79,7 @@ class Customer(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCreate(BaseModel):
+    account_number: Optional[str] = None
     name: str
     email: Optional[str] = None
     phone: str
