@@ -15,6 +15,7 @@ const Customers = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
+    account_number: '',
     name: '',
     email: '',
     phone: '',
