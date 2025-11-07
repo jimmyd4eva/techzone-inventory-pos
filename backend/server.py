@@ -71,6 +71,7 @@ class UserLogin(BaseModel):
 class Customer(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    account_number: str
     name: str
     email: Optional[str] = None
     phone: str
