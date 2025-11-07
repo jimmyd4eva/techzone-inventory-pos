@@ -345,7 +345,17 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = 
 
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
-    customer = Customer(**customer_data.model_dump())
+    # Auto-generate account number
+    # Get the count of existing customers to generate next account number
+    customer_count = await db.customers.count_documents({})
+    account_number = f"CUST{str(customer_count + 1).zfill(4)}"  # CUST0001, CUST0002, etc.
+    
+    # Check if account number already exists (edge case)
+    while await db.customers.find_one({"account_number": account_number}):
+        customer_count += 1
+        account_number = f"CUST{str(customer_count + 1).zfill(4)}"
+    
+    customer = Customer(**customer_data.model_dump(), account_number=account_number)
     doc = customer.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     await db.customers.insert_one(doc)
