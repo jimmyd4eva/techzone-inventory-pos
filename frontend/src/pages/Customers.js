@@ -249,6 +249,23 @@ const Customers = () => {
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
                 <div className="form-group">
+                  <label>Account Number (Optional - Auto-generated if left blank)</label>
+                  <input
+                    type="text"
+                    value={formData.account_number}
+                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value.toUpperCase() })}
+                    placeholder="e.g., CUST0001 or leave blank"
+                    data-testid="customer-account-input"
+                    disabled={editingCustomer}
+                    style={{ background: editingCustomer ? '#f1f5f9' : 'white' }}
+                  />
+                  {editingCustomer && (
+                    <small style={{ color: '#64748b', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
+                      Account number cannot be changed after creation
+                    </small>
+                  )}
+                </div>
+                <div className="form-group">
                   <label>Name</label>
                   <input
                     type="text"
