@@ -350,6 +350,42 @@ const Sales = () => {
               <span data-testid="cart-total">${total.toFixed(2)}</span>
             </div>
 
+            <div style={{ 
+              marginTop: '16px', 
+              marginBottom: '16px',
+              padding: '12px',
+              background: '#f8fafc',
+              borderRadius: '8px'
+            }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                color: '#334155'
+              }}>
+                Customer Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Enter customer name..."
+                data-testid="customer-name-input"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+              />
+            </div>
+
             <div className="payment-methods">
               <button
                 className={`payment-btn ${paymentMethod === 'cash' ? 'active' : ''}`}
