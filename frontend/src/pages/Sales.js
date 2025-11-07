@@ -511,6 +511,34 @@ const Sales = () => {
               
               {!selectedCustomer && (
                 <>
+                  <button
+                    type="button"
+                    onClick={clearCustomer}
+                    style={{
+                      marginTop: '12px',
+                      width: '100%',
+                      padding: '8px',
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      color: '#475569',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#e2e8f0';
+                      e.target.style.borderColor = '#94a3b8';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#f1f5f9';
+                      e.target.style.borderColor = '#cbd5e1';
+                    }}
+                  >
+                    👤 Skip - Continue as Walk-in Customer
+                  </button>
+                  
                   <label style={{ 
                     display: 'block', 
                     marginTop: '12px',
