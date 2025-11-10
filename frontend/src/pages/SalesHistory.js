@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Printer } from 'lucide-react';
+import { Search, Printer, Trash2 } from 'lucide-react';
 import Receipt from '../components/Receipt';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -12,6 +12,7 @@ const SalesHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState(null);
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchSales();
