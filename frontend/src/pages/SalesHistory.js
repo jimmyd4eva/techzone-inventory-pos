@@ -42,6 +42,25 @@ const SalesHistory = () => {
     }
   };
 
+  const handleDeleteSale = async (saleId) => {
+    if (!window.confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/sales/${saleId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Sale deleted successfully!');
+      fetchSales(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      const errorMsg = error.response?.data?.detail || 'Failed to delete sale';
+      alert(`Error: ${errorMsg}`);
+    }
+  };
+
   const handlePrintReceipt = (sale) => {
     setSelectedSale(sale);
   };
