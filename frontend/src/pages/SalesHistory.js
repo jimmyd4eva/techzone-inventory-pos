@@ -160,14 +160,38 @@ const SalesHistory = () => {
                     </td>
                     <td>{sale.created_by}</td>
                     <td>
-                      <button
-                        className="btn-icon"
-                        onClick={() => handlePrintReceipt(sale)}
-                        data-testid={`print-receipt-${sale.id}`}
-                        title="Print Receipt"
-                      >
-                        <Printer size={18} />
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          className="btn-icon"
+                          onClick={() => handlePrintReceipt(sale)}
+                          data-testid={`print-receipt-${sale.id}`}
+                          title="Print Receipt"
+                        >
+                          <Printer size={18} />
+                        </button>
+                        {user?.role === 'admin' && (
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDeleteSale(sale.id)}
+                            data-testid={`delete-sale-${sale.id}`}
+                            title="Delete Sale"
+                            style={{
+                              color: '#ef4444',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#dc2626';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#ef4444';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
