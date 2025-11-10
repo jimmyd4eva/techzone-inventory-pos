@@ -629,6 +629,25 @@ async def get_sale(sale_id: str, current_user: dict = Depends(get_current_user))
         raise HTTPException(status_code=404, detail="Sale not found")
     return sale
 
+@api_router.delete("/sales/{sale_id}")
+async def delete_sale(sale_id: str, current_user: dict = Depends(get_current_user)):
+    # Only admins should be able to delete sales
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can delete sales")
+    
+    # Check if sale exists
+    sale = await db.sales.find_one({"id": sale_id})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    # Delete the sale
+    result = await db.sales.delete_one({"id": sale_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to delete sale")
+    
+    return {"message": "Sale deleted successfully", "sale_id": sale_id}
+
 # ============ PAYMENT ENDPOINTS ============
 
 @api_router.post("/payments/checkout")
