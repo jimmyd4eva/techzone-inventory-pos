@@ -13,6 +13,13 @@ const Repairs = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingRepair, setEditingRepair] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerData, setNewCustomerData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
   const [formData, setFormData] = useState({
     customer_id: '',
     device: '',
