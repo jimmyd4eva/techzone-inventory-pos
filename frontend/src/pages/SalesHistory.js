@@ -138,7 +138,7 @@ const SalesHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredSales.map((sale) => (
+                {currentSales.map((sale) => (
                   <tr key={sale.id} data-testid={`sale-${sale.id}`}>
                     <td>
                       <code style={{ fontSize: '0.85rem', color: '#667eea' }}>
