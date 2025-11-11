@@ -183,7 +183,8 @@ const Inventory = () => {
               <p>Start by adding your first inventory item</p>
             </div>
           ) : (
-            <table data-testid="inventory-table">
+            <>
+              <table data-testid="inventory-table">
               <thead>
                 <tr>
                   <th>Image</th>
