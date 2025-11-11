@@ -305,20 +305,97 @@ const Repairs = () => {
               <div className="modal-body">
                 <div className="form-group">
                   <label>Customer</label>
-                  <select
-                    value={formData.customer_id}
-                    onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                    required
-                    data-testid="repair-customer-select"
-                  >
-                    <option value="">Select customer</option>
-                    {customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.phone}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <select
+                      value={formData.customer_id}
+                      onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                      required={!showNewCustomerForm}
+                      disabled={showNewCustomerForm}
+                      data-testid="repair-customer-select"
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">Select customer</option>
+                      {customers.map(customer => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name} - {customer.phone}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowNewCustomerForm(!showNewCustomerForm)}
+                      style={{ 
+                        padding: '8px 16px',
+                        whiteSpace: 'nowrap',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {showNewCustomerForm ? 'Select Existing' : '+ Add New'}
+                    </button>
+                  </div>
                 </div>
+
+                {showNewCustomerForm && (
+                  <div style={{ 
+                    padding: '16px', 
+                    background: '#f8fafc', 
+                    borderRadius: '8px',
+                    marginBottom: '16px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '12px', color: '#334155' }}>
+                      New Customer Details
+                    </h3>
+                    <div className="form-group">
+                      <label>Name *</label>
+                      <input
+                        type="text"
+                        value={newCustomerData.name}
+                        onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })}
+                        placeholder="Customer name"
+                        required={showNewCustomerForm}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Phone *</label>
+                      <input
+                        type="tel"
+                        value={newCustomerData.phone}
+                        onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })}
+                        placeholder="Phone number"
+                        required={showNewCustomerForm}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        value={newCustomerData.email}
+                        onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })}
+                        placeholder="Email address (optional)"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Address</label>
+                      <input
+                        type="text"
+                        value={newCustomerData.address}
+                        onChange={(e) => setNewCustomerData({ ...newCustomerData, address: e.target.value })}
+                        placeholder="Address (optional)"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-success"
+                      onClick={handleAddNewCustomer}
+                      style={{ width: '100%', marginTop: '8px' }}
+                    >
+                      Add Customer
+                    </button>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label>Device</label>
                   <input
