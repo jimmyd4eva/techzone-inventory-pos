@@ -222,6 +222,93 @@ const SalesHistory = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {filteredSales.length > itemsPerPage && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '16px',
+                background: '#f8fafc',
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                  Showing {indexOfFirstSale + 1} to {Math.min(indexOfLastSale, filteredSales.length)} of {filteredSales.length} sales
+                </div>
+                
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      background: currentPage === 1 ? '#f1f5f9' : 'white',
+                      color: currentPage === 1 ? '#94a3b8' : '#334155',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Previous
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            style={{
+                              padding: '8px 12px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              background: currentPage === pageNumber ? '#667eea' : 'white',
+                              color: currentPage === pageNumber ? 'white' : '#334155',
+                              cursor: 'pointer',
+                              fontWeight: currentPage === pageNumber ? '600' : '500',
+                              minWidth: '40px'
+                            }}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return <span key={pageNumber} style={{ padding: '8px 4px', color: '#94a3b8' }}>...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      background: currentPage === totalPages ? '#f1f5f9' : 'white',
+                      color: currentPage === totalPages ? '#94a3b8' : '#334155',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           )}
         </div>
       </div>
