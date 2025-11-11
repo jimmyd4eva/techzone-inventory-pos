@@ -27,7 +27,30 @@ const SalesHistory = () => {
       sale.created_by.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredSales(filtered);
+    setCurrentPage(1); // Reset to first page when search changes
   }, [searchTerm, sales]);
+
+  // Calculate pagination
+  const indexOfLastSale = currentPage * itemsPerPage;
+  const indexOfFirstSale = indexOfLastSale - itemsPerPage;
+  const currentSales = filteredSales.slice(indexOfFirstSale, indexOfLastSale);
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const fetchSales = async () => {
     try {
