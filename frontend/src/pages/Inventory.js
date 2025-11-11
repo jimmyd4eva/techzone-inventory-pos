@@ -39,7 +39,30 @@ const Inventory = () => {
       (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredItems(filtered);
+    setCurrentPage(1); // Reset to first page when search changes
   }, [searchTerm, items]);
+
+  // Calculate pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const fetchItems = async () => {
     try {
