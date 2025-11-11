@@ -273,6 +273,133 @@ const Inventory = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {filteredItems.length > itemsPerPage && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '20px',
+                padding: '16px',
+                background: '#f8fafc',
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredItems.length)} of {filteredItems.length} items
+                </div>
+                
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      background: currentPage === 1 ? '#f1f5f9' : 'white',
+                      color: currentPage === 1 ? '#94a3b8' : '#334155',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentPage !== 1) {
+                        e.target.style.background = '#f8fafc';
+                        e.target.style.borderColor = '#94a3b8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== 1) {
+                        e.target.style.background = 'white';
+                        e.target.style.borderColor = '#cbd5e1';
+                      }
+                    }}
+                  >
+                    Previous
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            style={{
+                              padding: '8px 12px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              background: currentPage === pageNumber ? '#667eea' : 'white',
+                              color: currentPage === pageNumber ? 'white' : '#334155',
+                              cursor: 'pointer',
+                              fontWeight: currentPage === pageNumber ? '600' : '500',
+                              minWidth: '40px',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (currentPage !== pageNumber) {
+                                e.target.style.background = '#f8fafc';
+                                e.target.style.borderColor = '#94a3b8';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (currentPage !== pageNumber) {
+                                e.target.style.background = 'white';
+                                e.target.style.borderColor = '#cbd5e1';
+                              }
+                            }}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return <span key={pageNumber} style={{ padding: '8px 4px', color: '#94a3b8' }}>...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      background: currentPage === totalPages ? '#f1f5f9' : 'white',
+                      color: currentPage === totalPages ? '#94a3b8' : '#334155',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentPage !== totalPages) {
+                        e.target.style.background = '#f8fafc';
+                        e.target.style.borderColor = '#94a3b8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== totalPages) {
+                        e.target.style.background = 'white';
+                        e.target.style.borderColor = '#cbd5e1';
+                      }
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           )}
         </div>
       </div>
