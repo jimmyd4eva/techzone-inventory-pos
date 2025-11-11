@@ -12,6 +12,8 @@ const Inventory = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Items per page
   const [formData, setFormData] = useState({
     name: '',
     type: 'phone',
