@@ -128,11 +128,53 @@ const Repairs = () => {
       });
     }
     setShowModal(true);
+    setShowNewCustomerForm(false);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingRepair(null);
+    setShowNewCustomerForm(false);
+    setNewCustomerData({
+      name: '',
+      phone: '',
+      email: '',
+      address: ''
+    });
+  };
+
+  const handleAddNewCustomer = async () => {
+    if (!newCustomerData.name || !newCustomerData.phone) {
+      alert('Please provide at least customer name and phone number');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/customers`, newCustomerData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Refresh customers list
+      await fetchCustomers();
+      
+      // Select the newly created customer
+      setFormData({ ...formData, customer_id: response.data.id });
+      
+      // Reset and hide new customer form
+      setNewCustomerData({
+        name: '',
+        phone: '',
+        email: '',
+        address: ''
+      });
+      setShowNewCustomerForm(false);
+      
+      alert('Customer added successfully!');
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      alert('Failed to add customer. Please try again.');
+    }
   };
 
   const updateStatus = async (repairId, newStatus) => {
