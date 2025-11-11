@@ -12,6 +12,8 @@ const SalesHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Sales per page
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
