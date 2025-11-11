@@ -199,7 +199,7 @@ const Inventory = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => (
+                {currentItems.map((item) => (
                   <tr key={item.id} data-testid={`inventory-item-${item.id}`}>
                     <td>
                       {item.image_url ? (
