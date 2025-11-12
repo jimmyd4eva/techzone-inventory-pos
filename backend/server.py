@@ -281,7 +281,7 @@ async def login(credentials: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Create token
-    token = create_token(user_doc['id'], user_doc['role'])
+    token = create_token(user_doc['id'], user_doc['role'], user_doc['username'])
     
     # Remove password hash from response
     user_doc.pop('password_hash', None)
