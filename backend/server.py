@@ -463,6 +463,7 @@ async def delete_customer(customer_id: str, current_user: dict = Depends(get_cur
 
 @api_router.post("/inventory", response_model=InventoryItem)
 async def create_inventory_item(item_data: InventoryItemCreate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     item = InventoryItem(**item_data.model_dump())
     doc = item.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
