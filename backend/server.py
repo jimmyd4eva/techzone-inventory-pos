@@ -89,7 +89,7 @@ class InventoryItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    type: str  # phone, part, accessory
+    type: str  # phone, part, accessory, other
     sku: str
     barcode: Optional[str] = None
     image_url: Optional[str] = None
