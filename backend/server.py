@@ -564,6 +564,7 @@ async def get_repair_job(job_id: str, current_user: dict = Depends(get_current_u
 
 @api_router.put("/repairs/{job_id}")
 async def update_repair_job(job_id: str, job_data: RepairJobUpdate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     update_data = {k: v for k, v in job_data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
