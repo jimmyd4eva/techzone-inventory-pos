@@ -511,6 +511,7 @@ async def update_inventory_item(item_id: str, item_data: InventoryItemUpdate, cu
 
 @api_router.delete("/inventory/{item_id}")
 async def delete_inventory_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     result = await db.inventory.delete_one({"id": item_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
