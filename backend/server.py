@@ -528,6 +528,7 @@ async def get_inventory_by_barcode(barcode: str, current_user: dict = Depends(ge
 
 @api_router.post("/repairs", response_model=RepairJob)
 async def create_repair_job(job_data: RepairJobCreate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Get customer name
     customer = await db.customers.find_one({"id": job_data.customer_id})
     if not customer:
