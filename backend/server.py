@@ -355,6 +355,7 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = 
 
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Use provided account number or default to last 4 digits of phone
     if customer_data.account_number:
         # Check if provided account number already exists
