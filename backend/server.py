@@ -331,6 +331,7 @@ class UserUpdate(BaseModel):
 
 @api_router.put("/users/{user_id}")
 async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Only admins can update users
     if current_user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Not authorized")
