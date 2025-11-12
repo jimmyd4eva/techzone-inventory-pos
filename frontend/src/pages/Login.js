@@ -113,8 +113,7 @@ const Login = ({ onLogin }) => {
         </form>
 
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
-          <p>Admin: admin / admin123</p>
-          <p style={{ marginTop: '4px' }}>Demo (Read-Only): demo / demo123</p>
+          <p>Demo (Read-Only): demo / demo123</p>
         </div>
       </div>
     </div>
