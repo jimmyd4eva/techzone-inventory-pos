@@ -265,7 +265,7 @@ async def register(user_data: UserCreate):
     await db.users.insert_one(doc)
     
     # Create token
-    token = create_token(user.id, user.role)
+    token = create_token(user.id, user.role, user.username)
     
     return {"user": user, "token": token}
 
