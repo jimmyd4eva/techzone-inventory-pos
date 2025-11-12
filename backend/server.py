@@ -650,6 +650,7 @@ async def get_sale(sale_id: str, current_user: dict = Depends(get_current_user))
 
 @api_router.delete("/sales/{sale_id}")
 async def delete_sale(sale_id: str, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Only admins should be able to delete sales
     if current_user.get('role') != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can delete sales")
