@@ -581,6 +581,7 @@ async def update_repair_job(job_id: str, job_data: RepairJobUpdate, current_user
 
 @api_router.delete("/repairs/{job_id}")
 async def delete_repair_job(job_id: str, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     result = await db.repair_jobs.delete_one({"id": job_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Repair job not found")
