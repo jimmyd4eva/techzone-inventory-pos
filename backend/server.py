@@ -309,6 +309,7 @@ async def get_users(current_user: dict = Depends(get_current_user)):
 
 @api_router.delete("/users/{user_id}")
 async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Only admins can delete users
     if current_user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Not authorized")
