@@ -487,6 +487,7 @@ const Inventory = () => {
                       <option value="phone">Phone</option>
                       <option value="part">Part</option>
                       <option value="accessory">Accessory</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
                 </div>
