@@ -204,10 +204,11 @@ class CheckoutRequest(BaseModel):
 
 # ============ AUTH UTILITIES ============
 
-def create_token(user_id: str, role: str) -> str:
+def create_token(user_id: str, role: str, username: str = None) -> str:
     payload = {
         "user_id": user_id,
         "role": role,
+        "username": username,
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
