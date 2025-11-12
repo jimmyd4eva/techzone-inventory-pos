@@ -442,6 +442,7 @@ async def get_customer_by_account(account_number: str, current_user: dict = Depe
 
 @api_router.put("/customers/{customer_id}")
 async def update_customer(customer_id: str, customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     result = await db.customers.update_one(
         {"id": customer_id},
         {"$set": customer_data.model_dump()}
