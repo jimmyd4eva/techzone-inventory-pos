@@ -591,6 +591,7 @@ async def delete_repair_job(job_id: str, current_user: dict = Depends(get_curren
 
 @api_router.post("/sales", response_model=Sale)
 async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     # Calculate totals
     subtotal = sum(item.subtotal for item in sale_data.items)
     tax = subtotal * 0.1  # 10% tax
