@@ -496,6 +496,7 @@ async def get_inventory_item(item_id: str, current_user: dict = Depends(get_curr
 
 @api_router.put("/inventory/{item_id}")
 async def update_inventory_item(item_id: str, item_data: InventoryItemUpdate, current_user: dict = Depends(get_current_user)):
+    check_not_readonly(current_user)
     update_data = {k: v for k, v in item_data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
