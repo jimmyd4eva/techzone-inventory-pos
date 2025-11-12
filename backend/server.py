@@ -229,6 +229,15 @@ async def get_current_user(request: Request) -> dict:
     token = auth_header.split(" ")[1]
     return verify_token(token)
 
+def check_not_readonly(current_user: dict):
+    """Check if user is not read-only (demo user)"""
+    if current_user.get("username") == "demo":
+        raise HTTPException(
+            status_code=403, 
+            detail="Demo account is read-only. Write operations are not permitted."
+        )
+    return current_user
+
 # ============ AUTH ENDPOINTS ============
 
 @api_router.post("/auth/register")
