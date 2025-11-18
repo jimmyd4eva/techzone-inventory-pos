@@ -947,7 +947,8 @@ async def get_daily_sales(current_user: dict = Depends(get_current_user)):
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_iso = today.isoformat()
     
-    pipeline = [
+    # Calculate sales revenue
+    sales_pipeline = [
         {"$match": {
             "created_at": {"$gte": today_iso},
             "payment_status": "completed"
@@ -958,20 +959,31 @@ async def get_daily_sales(current_user: dict = Depends(get_current_user)):
             "total_transactions": {"$sum": 1}
         }}
     ]
+    sales_result = await db.sales.aggregate(sales_pipeline).to_list(1)
     
-    result = await db.sales.aggregate(pipeline).to_list(1)
+    # Calculate completed repair jobs revenue
+    repairs_pipeline = [
+        {"$match": {
+            "created_at": {"$gte": today_iso},
+            "status": "completed"
+        }},
+        {"$group": {
+            "_id": None,
+            "total_repairs": {"$sum": "$cost"},
+            "total_repair_jobs": {"$sum": 1}
+        }}
+    ]
+    repairs_result = await db.repair_jobs.aggregate(repairs_pipeline).to_list(1)
     
-    if result:
-        return {
-            "date": today.date().isoformat(),
-            "total_sales": result[0]['total_sales'],
-            "total_transactions": result[0]['total_transactions']
-        }
+    sales_total = sales_result[0]['total_sales'] if sales_result else 0
+    sales_count = sales_result[0]['total_transactions'] if sales_result else 0
+    repairs_total = repairs_result[0]['total_repairs'] if repairs_result else 0
+    repairs_count = repairs_result[0]['total_repair_jobs'] if repairs_result else 0
     
     return {
         "date": today.date().isoformat(),
-        "total_sales": 0,
-        "total_transactions": 0
+        "total_sales": sales_total + repairs_total,
+        "total_transactions": sales_count + repairs_count
     }
 
 @api_router.get("/reports/dashboard-stats")
