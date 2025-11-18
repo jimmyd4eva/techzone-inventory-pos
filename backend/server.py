@@ -1005,6 +1005,25 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     ]
     sales_result = await db.sales.aggregate(sales_pipeline).to_list(1)
     
+    # Today's completed repair jobs
+    repairs_pipeline = [
+        {"$match": {
+            "created_at": {"$gte": today_iso},
+            "status": "completed"
+        }},
+        {"$group": {
+            "_id": None,
+            "total_repairs": {"$sum": "$cost"},
+            "total_repair_jobs": {"$sum": 1}
+        }}
+    ]
+    repairs_result = await db.repair_jobs.aggregate(repairs_pipeline).to_list(1)
+    
+    sales_total = sales_result[0]['total_sales'] if sales_result else 0
+    sales_count = sales_result[0]['total_transactions'] if sales_result else 0
+    repairs_total = repairs_result[0]['total_repairs'] if repairs_result else 0
+    repairs_count = repairs_result[0]['total_repair_jobs'] if repairs_result else 0
+    
     # Pending repairs
     pending_repairs = await db.repair_jobs.count_documents({"status": {"$in": ["pending", "in-progress"]}})
     
@@ -1020,8 +1039,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     total_customers = await db.customers.count_documents({})
     
     return {
-        "today_sales": sales_result[0]['total_sales'] if sales_result else 0,
-        "today_transactions": sales_result[0]['total_transactions'] if sales_result else 0,
+        "today_sales": sales_total + repairs_total,
+        "today_transactions": sales_count + repairs_count,
         "pending_repairs": pending_repairs,
         "low_stock_items": low_stock_count,
         "total_customers": total_customers
