@@ -1034,6 +1034,54 @@ async def get_weekly_sales(current_user: dict = Depends(get_current_user)):
         "total_transactions": sales_count + repairs_count
     }
 
+@api_router.get("/reports/monthly-sales")
+async def get_monthly_sales(current_user: dict = Depends(get_current_user)):
+    # Calculate start of current month
+    today = datetime.now(timezone.utc)
+    start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_of_month_iso = start_of_month.isoformat()
+    
+    # Calculate monthly sales revenue
+    sales_pipeline = [
+        {"$match": {
+            "created_at": {"$gte": start_of_month_iso},
+            "payment_status": "completed"
+        }},
+        {"$group": {
+            "_id": None,
+            "total_sales": {"$sum": "$total"},
+            "total_transactions": {"$sum": 1}
+        }}
+    ]
+    sales_result = await db.sales.aggregate(sales_pipeline).to_list(1)
+    
+    # Calculate completed repair jobs revenue for the month
+    repairs_pipeline = [
+        {"$match": {
+            "created_at": {"$gte": start_of_month_iso},
+            "status": "completed"
+        }},
+        {"$group": {
+            "_id": None,
+            "total_repairs": {"$sum": "$cost"},
+            "total_repair_jobs": {"$sum": 1}
+        }}
+    ]
+    repairs_result = await db.repair_jobs.aggregate(repairs_pipeline).to_list(1)
+    
+    sales_total = sales_result[0]['total_sales'] if sales_result else 0
+    sales_count = sales_result[0]['total_transactions'] if sales_result else 0
+    repairs_total = repairs_result[0]['total_repairs'] if repairs_result else 0
+    repairs_count = repairs_result[0]['total_repair_jobs'] if repairs_result else 0
+    
+    return {
+        "month": today.strftime("%B %Y"),
+        "month_start": start_of_month.date().isoformat(),
+        "month_end": today.date().isoformat(),
+        "total_sales": sales_total + repairs_total,
+        "total_transactions": sales_count + repairs_count
+    }
+
 @api_router.get("/reports/dashboard-stats")
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
