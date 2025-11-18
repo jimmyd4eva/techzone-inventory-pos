@@ -980,6 +980,8 @@ async def get_daily_sales(current_user: dict = Depends(get_current_user)):
     repairs_total = repairs_result[0]['total_repairs'] if repairs_result else 0
     repairs_count = repairs_result[0]['total_repair_jobs'] if repairs_result else 0
     
+    logging.info(f"Daily Sales Calculation: Sales={sales_total}, Repairs={repairs_total}, Total={sales_total + repairs_total}")
+    
     return {
         "date": today.date().isoformat(),
         "total_sales": sales_total + repairs_total,
