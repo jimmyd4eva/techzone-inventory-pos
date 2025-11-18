@@ -8,6 +8,7 @@ const API = `${BACKEND_URL}/api`;
 const Reports = () => {
   const [dailySales, setDailySales] = useState({ date: '', total_sales: 0, total_transactions: 0 });
   const [weeklySales, setWeeklySales] = useState({ week_start: '', week_end: '', total_sales: 0, total_transactions: 0 });
+  const [monthlySales, setMonthlySales] = useState({ month: '', total_sales: 0, total_transactions: 0 });
   const [lowStockItems, setLowStockItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,11 +20,14 @@ const Reports = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [salesResponse, weeklySalesResponse, lowStockResponse] = await Promise.all([
+      const [salesResponse, weeklySalesResponse, monthlySalesResponse, lowStockResponse] = await Promise.all([
         axios.get(`${API}/reports/daily-sales`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API}/reports/weekly-sales`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/reports/monthly-sales`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API}/inventory/low-stock`, {
@@ -33,6 +37,7 @@ const Reports = () => {
 
       setDailySales(salesResponse.data);
       setWeeklySales(weeklySalesResponse.data);
+      setMonthlySales(monthlySalesResponse.data);
       setLowStockItems(lowStockResponse.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
