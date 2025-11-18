@@ -68,6 +68,21 @@ const Reports = () => {
           </div>
         </div>
 
+        <div className="stat-card" data-testid="report-weekly-sales">
+          <div className="stat-card-header">
+            <h3>Weekly Sales</h3>
+            <div className="stat-icon blue">
+              <TrendingUp size={20} color="white" />
+            </div>
+          </div>
+          <div className="stat-value" data-testid="weekly-sales-value">
+            ${weeklySales.total_sales.toFixed(2)}
+          </div>
+          <div className="stat-label">
+            {weeklySales.total_transactions} transactions this week
+          </div>
+        </div>
+
         <div className="stat-card" data-testid="report-low-stock-count">
           <div className="stat-card-header">
             <h3>Low Stock Alert</h3>
