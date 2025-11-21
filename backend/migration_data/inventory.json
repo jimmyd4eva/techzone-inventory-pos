@@ -1,0 +1,1 @@
+$(cat /tmp/migration_data/inventory.json)
