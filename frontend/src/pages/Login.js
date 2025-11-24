@@ -111,10 +111,6 @@ const Login = ({ onLogin }) => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
-          <p>Demo (Read-Only): demo / demo123</p>
-        </div>
       </div>
     </div>
   );
