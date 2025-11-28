@@ -37,19 +37,26 @@ const Receipt = ({ sale, onClose }) => {
         <div className="receipt-actions no-print" style={{ position: 'relative', zIndex: 10000 }}>
           <button 
             className="btn btn-success" 
-            onClick={handlePrint}
+            onClick={() => {
+              alert('BUTTON CLICKED!');
+              handlePrint();
+            }}
+            onMouseOver={() => console.log('Mouse over print button')}
             data-testid="print-receipt-btn"
             type="button"
-            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+            style={{ cursor: 'pointer', pointerEvents: 'auto', backgroundColor: 'green', color: 'white', padding: '10px 20px' }}
           >
             🖨️ Print Receipt
           </button>
           <button 
             className="btn btn-secondary" 
-            onClick={onClose}
+            onClick={() => {
+              alert('Close clicked!');
+              onClose();
+            }}
             data-testid="close-receipt-btn"
             type="button"
-            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+            style={{ cursor: 'pointer', pointerEvents: 'auto', backgroundColor: 'gray', color: 'white', padding: '10px 20px' }}
           >
             Close
           </button>
