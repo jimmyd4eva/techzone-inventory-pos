@@ -154,20 +154,17 @@ frontend:
         agent: "testing"
         comment: "✅ PRODUCTION VERIFIED: Complete end-to-end testing successful with populated GSM Arena URLs. All 3 target items display clickable images in cart with correct URLs: iPhone XR Screen (https://www.gsmarena.com/apple_iphone_xr-9320.php), Samsung Galaxy S21 (https://www.gsmarena.com/samsung_galaxy_s21_5g-10626.php), iPhone 15 Pro (https://www.gsmarena.com/apple_iphone_15_pro-12557.php). All links have proper target='_blank' and rel='noopener noreferrer' attributes. Images display at correct 60x60px dimensions with 6px border-radius. Feature fully functional."
 
-  - task: "Test customer lookup search functionality in Sales/POS page"
+  - task: "Test Print Receipt functionality in Sales History page"
     implemented: true
-    working: true
-    file: "frontend/src/pages/Sales.js"
+    working: "NA"
+    file: "frontend/src/pages/SalesHistory.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
-        comment: "Customer lookup functionality implemented in Sales.js lines 53-80 with searchCustomerByAccount function. Need to test: 1) Search by account number, name, phone 2) API call to GET /api/customers 3) Dropdown visibility and results filtering 4) Console logs for errors. User reports search box not working when typing."
-      - working: true
-        agent: "testing"
-        comment: "✅ COMPREHENSIVE TESTING COMPLETE: Customer lookup functionality is working perfectly. Fixed backend customer data issue (missing account_number fields) and created admin user. Verified: 1) Search by account number ('92') - 3 results shown, 2) Search by name ('John') - 3 results shown, 3) Search by phone ('633') - 3 results shown, 4) API calls to GET /api/customers working correctly (4 successful requests), 5) Dropdown appears and displays results properly, 6) Customer selection works - John Doe selected successfully with account CUST1000, 7) Selected customer display shows in blue box with Clear button, 8) Input field correctly disabled when customer selected, 9) No console errors detected. The user's reported issue was likely due to missing customer data or authentication problems, both now resolved."
+        comment: "Print Receipt functionality implemented in SalesHistory.js and Receipt.js component. Need to test: 1) Login with Ian Miller credentials, 2) Navigate to Sales History page, 3) Click print icon for any sale, 4) Click Print Receipt button in modal, 5) Verify console logs appear: '🖨️ Print button clicked - calling window.print()', 'Executing window.print()...', 'window.print() executed successfully', 6) Test red TEST PRINT button at bottom-right, 7) Verify window.print() is called without errors."
 
   - task: "Add CSS styling for cart item images"
     implemented: true
