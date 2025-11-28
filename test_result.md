@@ -156,15 +156,18 @@ frontend:
 
   - task: "Test Print Receipt functionality in Sales History page"
     implemented: true
-    working: "NA"
+    working: false
     file: "frontend/src/pages/SalesHistory.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
         comment: "Print Receipt functionality implemented in SalesHistory.js and Receipt.js component. Need to test: 1) Login with Ian Miller credentials, 2) Navigate to Sales History page, 3) Click print icon for any sale, 4) Click Print Receipt button in modal, 5) Verify console logs appear: '🖨️ Print button clicked - calling window.print()', 'Executing window.print()...', 'window.print() executed successfully', 6) Test red TEST PRINT button at bottom-right, 7) Verify window.print() is called without errors."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE FOUND: Print Receipt functionality has problems. WORKING: ✅ Login successful with demo credentials, ✅ Sales History page loads, ✅ Print button clickable, ✅ Receipt modal opens correctly, ✅ Print Receipt button exists and clickable, ✅ window.print() works when called manually. FAILING: ❌ Expected console logs from Receipt component handlePrint function NOT appearing, ❌ TEST PRINT button completely missing from DOM (should appear when modal is open), ❌ Receipt component's handlePrint function not executing properly. ISSUE: The Print Receipt button click is not triggering the handlePrint function in Receipt.js. Manual execution of the same code works and shows expected logs. This suggests a React event handling or component state issue. Browser shows 'Ignoring too frequent calls to print()' warning indicating print function works but is rate-limited."
 
   - task: "Add CSS styling for cart item images"
     implemented: true
