@@ -27,40 +27,14 @@ const Receipt = ({ sale, onClose }) => {
   };
 
   return (
-    <div className="receipt-overlay" onClick={(e) => {
-      // Only close if clicking the overlay background, not the modal
-      if (e.target.className === 'receipt-overlay') {
-        onClose();
-      }
-    }}>
-      <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="receipt-actions no-print" style={{ position: 'relative', zIndex: 10000 }}>
-          <button 
-            className="btn btn-success" 
-            onClick={() => {
-              alert('BUTTON CLICKED!');
-              handlePrint();
-            }}
-            onMouseOver={() => console.log('Mouse over print button')}
-            data-testid="print-receipt-btn"
-            type="button"
-            style={{ cursor: 'pointer', pointerEvents: 'auto', backgroundColor: 'green', color: 'white', padding: '10px 20px' }}
-          >
-            🖨️ Print Receipt
-          </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => {
-              alert('Close clicked!');
-              onClose();
-            }}
-            data-testid="close-receipt-btn"
-            type="button"
-            style={{ cursor: 'pointer', pointerEvents: 'auto', backgroundColor: 'gray', color: 'white', padding: '10px 20px' }}
-          >
-            Close
-          </button>
-        </div>
+    <>
+      <div className="receipt-overlay" onClick={(e) => {
+        // Only close if clicking the overlay background, not the modal
+        if (e.target.className === 'receipt-overlay') {
+          onClose();
+        }
+      }}>
+        <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
 
         <div className="receipt-container" id="receipt-print">
           <div className="receipt-header">
