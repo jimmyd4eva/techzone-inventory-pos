@@ -178,9 +178,23 @@
 
 /* Print styles */
 @media print {
+  /* Hide everything except receipt */
+  body * {
+    visibility: hidden;
+  }
+  
+  .receipt-overlay,
+  .receipt-overlay * {
+    visibility: visible;
+  }
+  
   .receipt-overlay {
-    position: static;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
     background: white;
+    z-index: 9999;
   }
 
   .receipt-modal {
@@ -188,9 +202,11 @@
     max-height: none;
     padding: 0;
     max-width: none;
+    border-radius: 0;
   }
 
-  .no-print {
+  .no-print,
+  .receipt-actions {
     display: none !important;
   }
 
