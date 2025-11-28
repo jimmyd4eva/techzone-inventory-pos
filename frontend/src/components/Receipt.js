@@ -2,6 +2,8 @@ import React from 'react';
 import './Receipt.css';
 
 const Receipt = ({ sale, onClose }) => {
+  console.log('Receipt component rendered!');
+  
   const handlePrint = () => {
     console.log('🖨️ PRINT BUTTON CLICKED!');
     alert('Print button was clicked! Now calling window.print()...');
@@ -25,8 +27,13 @@ const Receipt = ({ sale, onClose }) => {
   };
 
   return (
-    <div className="receipt-overlay">
-      <div className="receipt-modal">
+    <div className="receipt-overlay" onClick={(e) => {
+      // Only close if clicking the overlay background, not the modal
+      if (e.target.className === 'receipt-overlay') {
+        onClose();
+      }
+    }}>
+      <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
         <div className="receipt-actions no-print" style={{ position: 'relative', zIndex: 10000 }}>
           <button 
             className="btn btn-success" 
