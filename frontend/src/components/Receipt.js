@@ -135,6 +135,7 @@ const Receipt = ({ sale, onClose }) => {
           </div>
         </div>
       </div>
+      </div>
       
       {/* Buttons positioned outside modal to avoid any blocking issues */}
       <div style={{
