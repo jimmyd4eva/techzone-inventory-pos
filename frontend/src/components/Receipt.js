@@ -135,7 +135,57 @@ const Receipt = ({ sale, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+      
+      {/* Buttons positioned outside modal to avoid any blocking issues */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: 9999,
+        display: 'flex',
+        gap: '10px'
+      }} className="no-print">
+        <button 
+          onClick={() => {
+            alert('BUTTON CLICKED!');
+            handlePrint();
+          }}
+          onMouseEnter={() => console.log('MOUSE ENTERED BUTTON')}
+          style={{ 
+            backgroundColor: '#22c55e', 
+            color: 'white', 
+            padding: '12px 24px',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+          }}
+        >
+          🖨️ PRINT
+        </button>
+        <button 
+          onClick={() => {
+            alert('CLOSE CLICKED!');
+            onClose();
+          }}
+          style={{ 
+            backgroundColor: '#ef4444', 
+            color: 'white', 
+            padding: '12px 24px',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+          }}
+        >
+          ✕ CLOSE
+        </button>
+      </div>
+    </>
   );
 };
 
