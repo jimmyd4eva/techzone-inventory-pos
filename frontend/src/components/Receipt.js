@@ -180,7 +180,8 @@ const Receipt = ({ sale, onClose }) => {
             fontSize: '16px',
             fontWeight: 'bold',
             cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            pointerEvents: 'auto'
           }}
         >
           ✕ CLOSE
