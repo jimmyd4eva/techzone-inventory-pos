@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Debug and test the customer lookup search box in the Sales/POS page. User reports customer lookup is not working when they type in the search field."
+user_problem_statement: "Test the Print Receipt functionality in the Techzone Inventory app. Verify that the print button works correctly, console logs appear, and window.print() is called without errors."
 
 backend:
   - task: "Add image_url and gsm_arena_url fields to inventory items"
