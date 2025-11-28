@@ -191,9 +191,9 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: 
+  current_focus: []
+  stuck_tasks: 
     - "Test Print Receipt functionality in Sales History page"
-  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
