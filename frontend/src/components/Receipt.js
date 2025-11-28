@@ -2,17 +2,8 @@ import React from 'react';
 import './Receipt.css';
 
 const Receipt = ({ sale, onClose }) => {
-  console.log('Receipt component rendered!');
-  
   const handlePrint = () => {
-    console.log('🖨️ PRINT BUTTON CLICKED!');
-    alert('Print button was clicked! Now calling window.print()...');
-    
-    setTimeout(() => {
-      console.log('Calling window.print()...');
-      window.print();
-      console.log('window.print() called');
-    }, 100);
+    window.print();
   };
 
   const formatDate = (dateString) => {
@@ -27,14 +18,16 @@ const Receipt = ({ sale, onClose }) => {
   };
 
   return (
-    <>
-      <div className="receipt-overlay" onClick={(e) => {
-        // Only close if clicking the overlay background, not the modal
-        if (e.target.className === 'receipt-overlay') {
-          onClose();
-        }
-      }}>
-        <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="receipt-overlay">
+      <div className="receipt-modal">
+        <div className="receipt-actions no-print">
+          <button className="btn btn-success" onClick={handlePrint} data-testid="print-receipt-btn">
+            🖨️ Print Receipt
+          </button>
+          <button className="btn btn-secondary" onClick={onClose} data-testid="close-receipt-btn">
+            Close
+          </button>
+        </div>
 
         <div className="receipt-container" id="receipt-print">
           <div className="receipt-header">
@@ -50,7 +43,7 @@ const Receipt = ({ sale, onClose }) => {
               <span className="text-red">zone</span>
             </h1>
             <p className="receipt-address">30 Giltress Street, Kingston 2, JA</p>
-            <p className="receipt-contact">876-633-9251 / 876-843-2416</p>
+            <p className="receipt-contact">876-633-9251</p>
             <div className="receipt-divider"></div>
           </div>
 
@@ -135,60 +128,7 @@ const Receipt = ({ sale, onClose }) => {
           </div>
         </div>
       </div>
-      </div>
-      
-      {/* Buttons positioned outside modal to avoid any blocking issues */}
-      <div style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 9999,
-        display: 'flex',
-        gap: '10px',
-        pointerEvents: 'auto'
-      }} className="no-print">
-        <button 
-          onClick={() => {
-            alert('PRINT CLICKED!');
-            window.print();
-          }}
-          style={{ 
-            backgroundColor: '#22c55e', 
-            color: 'white', 
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-            pointerEvents: 'auto'
-          }}
-        >
-          🖨️ PRINT
-        </button>
-        <button 
-          onClick={() => {
-            alert('CLOSE CLICKED!');
-            onClose();
-          }}
-          style={{ 
-            backgroundColor: '#ef4444', 
-            color: 'white', 
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-            pointerEvents: 'auto'
-          }}
-        >
-          ✕ CLOSE
-        </button>
-      </div>
-    </>
+    </div>
   );
 };
 
