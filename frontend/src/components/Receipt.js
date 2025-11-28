@@ -5,11 +5,23 @@ const Receipt = ({ sale, onClose }) => {
   const handlePrint = () => {
     try {
       console.log('Print button clicked');
-      // Small delay to ensure modal is fully rendered before printing
+      
+      // Check if print is supported
+      if (typeof window.print !== 'function') {
+        alert('Print is not supported in this browser');
+        return;
+      }
+      
+      // Ensure modal content is rendered before printing
       setTimeout(() => {
         console.log('Opening print dialog...');
+        
+        // Try to focus the window before printing
+        window.focus();
+        
+        // Trigger print
         window.print();
-      }, 100);
+      }, 150);
     } catch (error) {
       console.error('Print error:', error);
       alert('Unable to open print dialog. Please try using Ctrl+P (Windows) or Cmd+P (Mac)');
