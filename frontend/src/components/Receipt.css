@@ -178,42 +178,69 @@
 
 /* Print styles */
 @media print {
+  /* Hide everything first */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Show only receipt and its children */
+  .receipt-overlay,
+  .receipt-overlay * {
+    visibility: visible !important;
+  }
+  
+  /* Position receipt for printing */
   .receipt-overlay {
-    position: static;
-    background: white;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    z-index: 9999 !important;
   }
 
   .receipt-modal {
-    box-shadow: none;
-    max-height: none;
-    padding: 0;
-    max-width: none;
+    position: static !important;
+    transform: none !important;
+    box-shadow: none !important;
+    max-height: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
 
-  .no-print {
+  /* Hide buttons */
+  .no-print,
+  .receipt-actions {
     display: none !important;
+    visibility: hidden !important;
   }
 
   .receipt-container {
-    padding: 20px;
-    max-width: 80mm;
+    padding: 20px !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    background: white !important;
   }
 
   .receipt-logo {
-    width: 150px;
+    width: 150px !important;
   }
 
   .receipt-title {
-    font-size: 1.5rem;
+    font-size: 1.5rem !important;
   }
 
   body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   @page {
     size: 80mm auto;
-    margin: 0;
+    margin: 5mm;
   }
 }
