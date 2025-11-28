@@ -3,7 +3,10 @@ import './Receipt.css';
 
 const Receipt = ({ sale, onClose }) => {
   const handlePrint = () => {
-    window.print();
+    // Small delay to ensure modal is fully rendered before printing
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const formatDate = (dateString) => {
