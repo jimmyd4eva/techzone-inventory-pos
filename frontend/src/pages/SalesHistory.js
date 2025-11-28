@@ -316,10 +316,35 @@ const SalesHistory = () => {
       </div>
 
       {selectedSale && (
-        <Receipt 
-          sale={selectedSale} 
-          onClose={() => setSelectedSale(null)} 
-        />
+        <>
+          <Receipt 
+            sale={selectedSale} 
+            onClose={() => setSelectedSale(null)} 
+          />
+          {/* Test button to verify clicks work */}
+          <button
+            onClick={() => {
+              alert('TEST BUTTON CLICKED!');
+              window.print();
+            }}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              padding: '20px 40px',
+              backgroundColor: 'red',
+              color: 'white',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              border: '3px solid yellow',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              zIndex: 99999
+            }}
+          >
+            TEST PRINT
+          </button>
+        </>
       )}
     </div>
   );
