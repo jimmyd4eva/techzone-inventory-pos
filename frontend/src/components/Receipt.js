@@ -148,10 +148,9 @@ const Receipt = ({ sale, onClose }) => {
       }} className="no-print">
         <button 
           onClick={() => {
-            alert('BUTTON CLICKED!');
-            handlePrint();
+            alert('PRINT CLICKED!');
+            window.print();
           }}
-          onMouseEnter={() => console.log('MOUSE ENTERED BUTTON')}
           style={{ 
             backgroundColor: '#22c55e', 
             color: 'white', 
@@ -161,7 +160,8 @@ const Receipt = ({ sale, onClose }) => {
             fontSize: '16px',
             fontWeight: 'bold',
             cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            pointerEvents: 'auto'
           }}
         >
           🖨️ PRINT
