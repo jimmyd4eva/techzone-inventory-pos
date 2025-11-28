@@ -3,42 +3,14 @@ import './Receipt.css';
 
 const Receipt = ({ sale, onClose }) => {
   const handlePrint = () => {
-    try {
-      console.log('🖨️ Print button clicked - attempting to open print dialog');
-      
-      // Check if print is supported
-      if (typeof window.print !== 'function') {
-        console.error('window.print is not available');
-        alert('Print is not supported in this browser');
-        return;
-      }
-      
-      console.log('✅ window.print is available');
-      
-      // Direct print call - most reliable method
-      try {
-        window.print();
-        console.log('✅ Print dialog called successfully');
-      } catch (printError) {
-        console.error('Print call failed:', printError);
-        
-        // Fallback: try with delay
-        console.log('Trying with delay...');
-        setTimeout(() => {
-          try {
-            window.focus();
-            window.print();
-            console.log('✅ Print dialog called with delay');
-          } catch (delayError) {
-            console.error('Delayed print also failed:', delayError);
-            alert('Unable to open print dialog. Please use your browser\'s print shortcut:\n\nWindows: Ctrl+P\nMac: Cmd+P');
-          }
-        }, 200);
-      }
-    } catch (error) {
-      console.error('Print handler error:', error);
-      alert('Unable to open print dialog. Please use your browser\'s print shortcut:\n\nWindows: Ctrl+P\nMac: Cmd+P');
-    }
+    console.log('🖨️ PRINT BUTTON CLICKED!');
+    alert('Print button was clicked! Now calling window.print()...');
+    
+    setTimeout(() => {
+      console.log('Calling window.print()...');
+      window.print();
+      console.log('window.print() called');
+    }, 100);
   };
 
   const formatDate = (dateString) => {
