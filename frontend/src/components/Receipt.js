@@ -144,7 +144,8 @@ const Receipt = ({ sale, onClose }) => {
         right: '20px',
         zIndex: 9999,
         display: 'flex',
-        gap: '10px'
+        gap: '10px',
+        pointerEvents: 'auto'
       }} className="no-print">
         <button 
           onClick={() => {
