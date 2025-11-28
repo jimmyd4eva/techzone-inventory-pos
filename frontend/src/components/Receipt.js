@@ -4,27 +4,40 @@ import './Receipt.css';
 const Receipt = ({ sale, onClose }) => {
   const handlePrint = () => {
     try {
-      console.log('Print button clicked');
+      console.log('🖨️ Print button clicked - attempting to open print dialog');
       
       // Check if print is supported
       if (typeof window.print !== 'function') {
+        console.error('window.print is not available');
         alert('Print is not supported in this browser');
         return;
       }
       
-      // Ensure modal content is rendered before printing
-      setTimeout(() => {
-        console.log('Opening print dialog...');
-        
-        // Try to focus the window before printing
-        window.focus();
-        
-        // Trigger print
+      console.log('✅ window.print is available');
+      
+      // Direct print call - most reliable method
+      try {
         window.print();
-      }, 150);
+        console.log('✅ Print dialog called successfully');
+      } catch (printError) {
+        console.error('Print call failed:', printError);
+        
+        // Fallback: try with delay
+        console.log('Trying with delay...');
+        setTimeout(() => {
+          try {
+            window.focus();
+            window.print();
+            console.log('✅ Print dialog called with delay');
+          } catch (delayError) {
+            console.error('Delayed print also failed:', delayError);
+            alert('Unable to open print dialog. Please use your browser\'s print shortcut:\n\nWindows: Ctrl+P\nMac: Cmd+P');
+          }
+        }, 200);
+      }
     } catch (error) {
-      console.error('Print error:', error);
-      alert('Unable to open print dialog. Please try using Ctrl+P (Windows) or Cmd+P (Mac)');
+      console.error('Print handler error:', error);
+      alert('Unable to open print dialog. Please use your browser\'s print shortcut:\n\nWindows: Ctrl+P\nMac: Cmd+P');
     }
   };
 
