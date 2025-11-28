@@ -3,10 +3,17 @@ import './Receipt.css';
 
 const Receipt = ({ sale, onClose }) => {
   const handlePrint = () => {
-    // Small delay to ensure modal is fully rendered before printing
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    try {
+      console.log('Print button clicked');
+      // Small delay to ensure modal is fully rendered before printing
+      setTimeout(() => {
+        console.log('Opening print dialog...');
+        window.print();
+      }, 100);
+    } catch (error) {
+      console.error('Print error:', error);
+      alert('Unable to open print dialog. Please try using Ctrl+P (Windows) or Cmd+P (Mac)');
+    }
   };
 
   const formatDate = (dateString) => {
