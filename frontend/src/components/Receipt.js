@@ -27,27 +27,22 @@ const Receipt = ({ sale, onClose }) => {
   return (
     <div className="receipt-overlay">
       <div className="receipt-modal">
-        <div className="receipt-actions no-print">
+        <div className="receipt-actions no-print" style={{ position: 'relative', zIndex: 10000 }}>
           <button 
             className="btn btn-success" 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handlePrint();
-            }} 
+            onClick={handlePrint}
             data-testid="print-receipt-btn"
             type="button"
+            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
           >
             🖨️ Print Receipt
           </button>
           <button 
             className="btn btn-secondary" 
-            onClick={(e) => {
-              e.preventDefault();
-              onClose();
-            }} 
+            onClick={onClose}
             data-testid="close-receipt-btn"
             type="button"
+            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
           >
             Close
           </button>
