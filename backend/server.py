@@ -1341,8 +1341,13 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
     category_totals = {}
     taxable_total = 0
     exempt_total = 0
+    actual_tax_by_category = {}
     
     for sale in all_sales:
+        sale_subtotal = sale.get('subtotal', 0)
+        sale_tax = sale.get('tax', 0)
+        
+        # Calculate what portion of the sale's tax applies to each item
         for item in sale.get('items', []):
             # Look up item type
             inv_item = await db.inventory.find_one({"id": item.get('item_id')}, {"_id": 0, "type": 1})
@@ -1352,6 +1357,7 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
             # Track by category
             if item_type not in category_totals:
                 category_totals[item_type] = {"sales": 0, "is_exempt": False}
+                actual_tax_by_category[item_type] = 0
             category_totals[item_type]["sales"] += item_subtotal
             
             # Check if exempt
@@ -1362,14 +1368,24 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
                 exempt_total += item_subtotal
             else:
                 taxable_total += item_subtotal
+                # Allocate actual tax proportionally to taxable items
+                if sale_subtotal > 0 and sale_tax > 0:
+                    # Calculate taxable portion of this sale
+                    taxable_in_sale = sum(
+                        i.get('subtotal', 0) for i in sale.get('items', [])
+                        if not (await db.inventory.find_one({"id": i.get('item_id')}, {"_id": 0, "type": 1}) or {}).get('type', 'other').lower() in [c.lower() for c in exempt_categories]
+                    ) if exempt_categories else sale_subtotal
+                    if taxable_in_sale > 0:
+                        item_tax_portion = (item_subtotal / taxable_in_sale) * sale_tax
+                        actual_tax_by_category[item_type] += item_tax_portion
     
-    # Format category breakdown
+    # Format category breakdown with actual tax collected
     category_breakdown = [
         {
             "category": cat,
             "sales": data["sales"],
             "is_exempt": data["is_exempt"],
-            "tax_collected": 0 if data["is_exempt"] else data["sales"] * tax_rate
+            "tax_collected": actual_tax_by_category.get(cat, 0) if not data["is_exempt"] else 0
         }
         for cat, data in sorted(category_totals.items(), key=lambda x: x[1]["sales"], reverse=True)
     ]
