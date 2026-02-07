@@ -656,12 +656,24 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
     # Get tax settings
     settings = await db.settings.find_one({"id": "app_settings"})
     tax_rate = 0.0
+    tax_exempt_categories = []
     if settings and settings.get('tax_enabled', False):
         tax_rate = settings.get('tax_rate', 0.0)
+        tax_exempt_categories = settings.get('tax_exempt_categories', [])
     
-    # Calculate totals
+    # Calculate totals with category-based tax exemptions
     subtotal = sum(item.subtotal for item in sale_data.items)
-    tax = subtotal * tax_rate
+    taxable_subtotal = 0.0
+    
+    # Look up each item's type to determine if it's taxable
+    for item in sale_data.items:
+        inv_item = await db.inventory.find_one({"id": item.item_id})
+        item_type = inv_item.get('type', '') if inv_item else ''
+        # Item is taxable if its type is NOT in the exempt list
+        if item_type.lower() not in [cat.lower() for cat in tax_exempt_categories]:
+            taxable_subtotal += item.subtotal
+    
+    tax = taxable_subtotal * tax_rate
     total = subtotal + tax
     
     # Get customer name - prioritize the direct customer_name field over customer_id lookup
