@@ -236,12 +236,14 @@ const Sales = () => {
     });
     
     const tax = taxSettings.tax_enabled ? taxableSubtotal * taxSettings.tax_rate : 0;
-    const total = subtotal + tax;
+    const discount = couponDiscount;
+    const total = subtotal + tax - discount;
     return { 
       subtotal, 
       taxableSubtotal,
       tax, 
-      total, 
+      discount,
+      total: Math.max(0, total), 
       taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 
     };
   };
