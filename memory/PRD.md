@@ -6,6 +6,7 @@
 3. Add category-based tax exemptions
 4. Add tax reporting
 5. Add PDF export for tax reports
+6. Add coupon/discount feature
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -15,48 +16,51 @@
 
 ## What's Been Implemented
 
-### Feb 7, 2026 - Tax Removal
-- Removed hardcoded 10% tax calculation
+### Feb 7, 2026 - Tax Features
+- Removed hardcoded 10% tax
+- Configurable tax rate in Settings (0-100%)
+- Category-based tax exemptions (Parts, Screens, etc.)
+- Tax reporting with daily/weekly/monthly stats
+- Taxable vs Exempt visual breakdown
+- PDF export for tax reports
 
-### Feb 7, 2026 - Configurable Tax Rate
-- Settings page with Enable/Disable tax toggle
-- Configurable tax rate percentage (0-100%)
-- Currency selector (USD, JMD, EUR, GBP)
+### Feb 7, 2026 - Coupon Feature
+- **Backend Endpoints**:
+  - GET /api/coupons - List all coupons
+  - POST /api/coupons - Create coupon (admin)
+  - PUT /api/coupons/{id} - Update coupon
+  - DELETE /api/coupons/{id} - Delete coupon
+  - POST /api/coupons/validate - Validate & calculate discount
+  - POST /api/coupons/{id}/increment-usage - Track usage
 
-### Feb 7, 2026 - Category-Based Tax Exemptions  
-- Category selection UI with TAX EXEMPT badges
-- Backend calculates tax only on non-exempt categories
-- Categories: Phones, Parts, Accessories, Screens, Other
+- **Coupon Model**:
+  - Code (unique, uppercase)
+  - Discount type (percentage or fixed)
+  - Discount value
+  - Minimum purchase requirement
+  - Maximum discount (for percentage)
+  - Usage limit & tracking
+  - Validity dates
+  - Active/inactive status
 
-### Feb 7, 2026 - Tax Reporting
-- Reports page with tabbed interface (Sales, Tax, Inventory)
-- Tax Reports tab shows:
-  - Tax status banner (enabled/rate/exempt categories)
-  - Daily/Weekly/Monthly tax collection stats
-  - Taxable vs Exempt visual breakdown with bar chart
-  - Sales by Category breakdown table
-
-### Feb 7, 2026 - PDF Export
-- **Backend**: `/api/reports/tax-summary/pdf` endpoint
-  - Uses ReportLab to generate professional PDF
-  - Includes: TECHZONE header, tax config, collection summary, 
-    taxable vs exempt breakdown, category sales table
-  - Returns as downloadable attachment
-  
-- **Frontend**: Export PDF button on Tax Reports tab
-  - Downloads PDF with filename `tax_report_YYYYMMDD.pdf`
+- **Frontend**:
+  - Coupons page with table view
+  - Add/Edit coupon modal
+  - Toggle active status
+  - Sales page coupon input
+  - Apply/remove coupon
+  - Discount display in cart
 
 ## Test Results
-- Backend: 95% success
+- Backend: 100% success
 - Frontend: 100% success
-- PDF Export: Working correctly
 
 ## User Personas
-- **Admin**: Configure tax settings, view reports, export PDFs
-- **Cashier/Technician**: View reports, use configured tax in sales
+- **Admin**: Full access - manage coupons, tax settings, reports
+- **Cashier/Technician**: Apply coupons during sales
 
 ## Backlog
-- P2: Return 201 instead of 200 for POST /api/sales (cosmetic)
+- None
 
 ## Next Tasks
 - Deploy to production
