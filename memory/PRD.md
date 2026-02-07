@@ -3,6 +3,7 @@
 ## Original Problem Statement
 1. Remove the 10% tax from the SmartRepair POS application
 2. Add a configurable tax rate in settings
+3. Add category-based tax exemptions
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -13,36 +14,43 @@
 
 ### Feb 7, 2026 - Tax Removal
 - Removed hardcoded 10% tax calculation
-- Backend: `server.py` - changed tax from `subtotal * 0.1` to `0`
-- Frontend: `Sales.js` - changed tax from `subtotal * 0.1` to `0`
 
-### Feb 7, 2026 - Configurable Tax Rate Feature
-- **Backend Settings Endpoints**:
-  - `GET /api/settings` - Returns tax configuration
-  - `PUT /api/settings` - Updates tax settings (admin only)
-  - New `Settings` model with `tax_rate`, `tax_enabled`, `currency` fields
+### Feb 7, 2026 - Configurable Tax Rate
+- Settings page with Enable/Disable tax toggle
+- Configurable tax rate percentage (0-100%)
+- Currency selector (USD, JMD, EUR, GBP)
+- Backend GET/PUT /api/settings endpoints
+
+### Feb 7, 2026 - Category-Based Tax Exemptions  
+- **Backend**:
+  - Added `tax_exempt_categories` array to Settings model
+  - Sales endpoint looks up item type and calculates tax only on non-exempt categories
+  - Case-insensitive category matching
   
-- **Frontend Settings Page** (`/app/frontend/src/pages/Settings.js`):
-  - Enable/disable tax toggle
-  - Tax rate percentage input (0-100%)
-  - Currency selector
-  - Preview of current tax configuration
-  - Admin-only access
+- **Frontend Settings**:
+  - Category selection UI with checkable items
+  - TAX EXEMPT badges for exempt categories
+  - Preview showing taxable vs exempt categories
+  
+- **Frontend Sales**:
+  - Shows "Taxable Amount" when exemptions apply
+  - Tax calculated only on taxable items
 
-- **Sales Integration**:
-  - Sales page fetches tax settings on load
-  - Dynamic tax rate display (shows actual %)
-  - Tax calculated based on enabled/disabled status and rate
-  - Backend calculates tax using settings from database
+## Product Categories
+- Phones (taxable by default)
+- Parts (can be exempt)
+- Accessories (taxable by default)
+- Screens (can be exempt)
+- Other (taxable by default)
 
 ## Test Results
-- Backend: 84.2% (16/19 tests - minor cosmetic issues only)
+- Backend: 100% success
 - Frontend: 100% success
-- Tax toggle, rate input, and calculations all working
+- Integration: 100% success
 
 ## User Personas
-- **Admin**: Full access - can configure tax settings
-- **Cashier/Technician**: View-only settings, can use configured tax in sales
+- **Admin**: Full access - configure tax settings and exemptions
+- **Cashier/Technician**: Use configured tax in sales
 
 ## Backlog
 - P2: Return 201 instead of 200 for POST /api/sales (cosmetic)
