@@ -70,15 +70,17 @@ const Sales = () => {
     }
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
+  const applyCoupon = async (code = null) => {
+    const codeToApply = code || couponCode;
+    if (!codeToApply.trim()) return;
     setCouponError('');
+    setShowCouponList(false);
     
     try {
       const token = localStorage.getItem('token');
       const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
       const response = await axios.post(`${API}/coupons/validate`, {
-        code: couponCode,
+        code: codeToApply,
         subtotal: subtotal
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -92,6 +94,10 @@ const Sales = () => {
       setAppliedCoupon(null);
       setCouponDiscount(0);
     }
+  };
+
+  const selectCoupon = (coupon) => {
+    applyCoupon(coupon.code);
   };
 
   const removeCoupon = () => {
