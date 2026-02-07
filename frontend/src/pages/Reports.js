@@ -214,6 +214,38 @@ const Reports = () => {
       {/* Tax Reports Tab */}
       {activeTab === 'tax' && taxReport && (
         <>
+          {/* Header with Download Button */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '16px'
+          }}>
+            <div></div>
+            <button
+              data-testid="download-pdf-btn"
+              onClick={downloadTaxReport}
+              disabled={downloading}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#8b5cf6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '600',
+                cursor: downloading ? 'not-allowed' : 'pointer',
+                opacity: downloading ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Download size={18} />
+              {downloading ? 'Generating PDF...' : 'Export PDF'}
+            </button>
+          </div>
+
           {/* Tax Status Banner */}
           <div style={{
             padding: '16px 20px',
