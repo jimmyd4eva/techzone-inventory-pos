@@ -8,6 +8,7 @@ import Sales from './pages/Sales';
 import SalesHistory from './pages/SalesHistory';
 import Repairs from './pages/Repairs';
 import Customers from './pages/Customers';
+import Coupons from './pages/Coupons';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
