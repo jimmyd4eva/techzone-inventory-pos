@@ -582,9 +582,103 @@ class TaxExemptionTester:
             
         return success
 
+    def test_pdf_export_endpoint(self):
+        """Test GET /api/reports/tax-summary/pdf endpoint"""
+        print("\n=== TESTING PDF EXPORT ENDPOINT ===")
+        
+        # First ensure tax is enabled for meaningful data
+        tax_data = {
+            "tax_rate": 0.10,
+            "tax_enabled": True,
+            "tax_exempt_categories": ["part"]
+        }
+        self.run_test(
+            "Enable Tax for PDF Test",
+            "PUT",
+            "settings",
+            200,
+            data=tax_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        # Test PDF endpoint
+        url = f"{self.api_url}/reports/tax-summary/pdf"
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            response = requests.get(url, headers=headers)
+            
+            # Check status code
+            if response.status_code == 200:
+                self.log_test("PDF endpoint returns 200", True)
+            else:
+                self.log_test("PDF endpoint returns 200", False, f"Status: {response.status_code}")
+                return False
+            
+            # Check content type
+            content_type = response.headers.get('content-type', '')
+            if 'application/pdf' in content_type:
+                self.log_test("PDF has correct content-type", True)
+            else:
+                self.log_test("PDF has correct content-type", False, f"Content-Type: {content_type}")
+            
+            # Check if response contains PDF data
+            pdf_content = response.content
+            if pdf_content and pdf_content.startswith(b'%PDF'):
+                self.log_test("Response contains valid PDF data", True, f"PDF size: {len(pdf_content)} bytes")
+            else:
+                self.log_test("Response contains valid PDF data", False, "Response does not start with PDF header")
+            
+            # Check PDF content length
+            if len(pdf_content) > 1000:  # PDF should be substantial
+                self.log_test("PDF has substantial content", True, f"Size: {len(pdf_content)} bytes")
+            else:
+                self.log_test("PDF has substantial content", False, f"Size too small: {len(pdf_content)} bytes")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("PDF endpoint test", False, f"Error: {str(e)}")
+            return False
+
+    def test_tax_summary_endpoint(self):
+        """Test GET /api/reports/tax-summary endpoint for data validation"""
+        print("\n=== TESTING TAX SUMMARY DATA ENDPOINT ===")
+        
+        success, response = self.run_test(
+            "Get Tax Summary Data",
+            "GET",
+            "reports/tax-summary",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success:
+            # Verify required fields exist
+            required_fields = ['tax_enabled', 'tax_rate', 'daily', 'weekly', 'monthly', 'category_breakdown', 'taxable_vs_exempt']
+            
+            for field in required_fields:
+                if field in response:
+                    self.log_test(f"Tax summary contains {field}", True)
+                else:
+                    self.log_test(f"Tax summary contains {field}", False, f"Missing field: {field}")
+            
+            # Verify nested structure
+            if 'daily' in response:
+                daily_fields = ['tax_collected', 'total_sales', 'transactions']
+                for field in daily_fields:
+                    if field in response['daily']:
+                        self.log_test(f"Daily data contains {field}", True)
+                    else:
+                        self.log_test(f"Daily data contains {field}", False, f"Missing daily field: {field}")
+            
+            print(f"Tax summary response structure validated")
+            
+        return success
+
     def run_all_tests(self):
-        """Run all tax configuration tests"""
-        print("🚀 Starting Tax Configuration API Tests")
+        """Run all tax configuration and PDF export tests"""
+        print("🚀 Starting Tax Configuration & PDF Export API Tests")
         print("=" * 50)
         
         # Test sequence
@@ -594,6 +688,8 @@ class TaxExemptionTester:
             ("Enable Tax at 10%", self.test_update_settings_enable_tax),
             ("Verify Settings Persistence", self.test_get_settings_after_update),
             ("Create Sale with Tax", self.test_create_sale_with_tax),
+            ("Test Tax Summary Data Endpoint", self.test_tax_summary_endpoint),
+            ("Test PDF Export Endpoint", self.test_pdf_export_endpoint),
             ("Disable Tax", self.test_disable_tax),
             ("Create Sale without Tax", self.test_create_sale_without_tax),
             ("Non-Admin Access Restriction", self.test_non_admin_access)
