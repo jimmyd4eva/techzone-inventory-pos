@@ -162,9 +162,30 @@ const Sales = () => {
 
   const calculateTotal = () => {
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const tax = taxSettings.tax_enabled ? subtotal * taxSettings.tax_rate : 0;
+    
+    // Calculate taxable amount (exclude exempt categories)
+    let taxableSubtotal = 0;
+    cart.forEach(cartItem => {
+      // Find the inventory item to get its type
+      const invItem = inventory.find(i => i.id === cartItem.item_id);
+      const itemType = invItem?.type?.toLowerCase() || '';
+      const exemptCategories = taxSettings.tax_exempt_categories.map(c => c.toLowerCase());
+      
+      // Add to taxable if not in exempt list
+      if (!exemptCategories.includes(itemType)) {
+        taxableSubtotal += cartItem.subtotal;
+      }
+    });
+    
+    const tax = taxSettings.tax_enabled ? taxableSubtotal * taxSettings.tax_rate : 0;
     const total = subtotal + tax;
-    return { subtotal, tax, total, taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 };
+    return { 
+      subtotal, 
+      taxableSubtotal,
+      tax, 
+      total, 
+      taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 
+    };
   };
 
   const handleCheckout = async () => {
