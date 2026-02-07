@@ -365,6 +365,12 @@ class CouponAPITester:
         # Test insufficient purchase amount
         self.test_validate_insufficient_purchase()
         
+        # Test coupon analytics endpoint
+        self.test_coupon_analytics()
+        
+        # Test sales with coupon tracking
+        self.test_sales_with_coupon_tracking()
+        
         # Test update and delete if we created a coupon
         if coupon_id:
             # Test increment usage
