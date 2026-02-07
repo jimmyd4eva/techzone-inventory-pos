@@ -181,6 +181,9 @@ class Sale(BaseModel):
     payment_method: str  # cash, stripe, paypal
     subtotal: float
     tax: float
+    discount: float = 0  # Coupon discount amount
+    coupon_code: Optional[str] = None
+    coupon_id: Optional[str] = None
     total: float
     payment_status: str  # completed, pending
     stripe_session_id: Optional[str] = None
@@ -193,6 +196,7 @@ class SaleCreate(BaseModel):
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
     payment_method: str
+    coupon_code: Optional[str] = None
     created_by: str
 
 class PaymentTransaction(BaseModel):
