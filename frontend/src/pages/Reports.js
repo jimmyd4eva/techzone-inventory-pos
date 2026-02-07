@@ -164,6 +164,26 @@ const Reports = () => {
           <Package size={18} />
           Inventory
         </button>
+        <button
+          data-testid="tab-coupons"
+          onClick={() => setActiveTab('coupons')}
+          style={{
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: activeTab === 'coupons' ? '#8b5cf6' : '#f3f4f6',
+            color: activeTab === 'coupons' ? '#fff' : '#374151',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
+          }}
+        >
+          <Ticket size={18} />
+          Coupons
+        </button>
       </div>
 
       {/* Sales Tab */}
