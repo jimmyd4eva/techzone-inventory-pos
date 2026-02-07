@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, ToggleLeft, ToggleRight, Tag, Check } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Available product categories
+const PRODUCT_CATEGORIES = [
+  { id: 'phone', label: 'Phones', description: 'Mobile phones and smartphones' },
+  { id: 'part', label: 'Parts', description: 'Replacement parts and components' },
+  { id: 'accessory', label: 'Accessories', description: 'Phone cases, chargers, etc.' },
+  { id: 'screen', label: 'Screens', description: 'Screen replacements' },
+  { id: 'other', label: 'Other', description: 'Miscellaneous items' }
+];
 
 const Settings = () => {
   const [settings, setSettings] = useState({
     tax_rate: 0,
     tax_enabled: false,
-    currency: 'USD'
+    currency: 'USD',
+    tax_exempt_categories: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,9 +37,10 @@ const Settings = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSettings({
-        tax_rate: (response.data.tax_rate || 0) * 100, // Convert to percentage
+        tax_rate: (response.data.tax_rate || 0) * 100,
         tax_enabled: response.data.tax_enabled || false,
-        currency: response.data.currency || 'USD'
+        currency: response.data.currency || 'USD',
+        tax_exempt_categories: response.data.tax_exempt_categories || []
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -46,9 +57,10 @@ const Settings = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${API}/settings`, {
-        tax_rate: settings.tax_rate / 100, // Convert back to decimal
+        tax_rate: settings.tax_rate / 100,
         tax_enabled: settings.tax_enabled,
-        currency: settings.currency
+        currency: settings.currency,
+        tax_exempt_categories: settings.tax_exempt_categories
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -58,6 +70,23 @@ const Settings = () => {
       setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to save settings' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleCategoryExemption = (categoryId) => {
+    const currentExemptions = settings.tax_exempt_categories;
+    const isExempt = currentExemptions.includes(categoryId);
+    
+    if (isExempt) {
+      setSettings({
+        ...settings,
+        tax_exempt_categories: currentExemptions.filter(c => c !== categoryId)
+      });
+    } else {
+      setSettings({
+        ...settings,
+        tax_exempt_categories: [...currentExemptions, categoryId]
+      });
     }
   };
 
@@ -88,6 +117,10 @@ const Settings = () => {
     );
   }
 
+  const taxableCategories = PRODUCT_CATEGORIES.filter(
+    c => !settings.tax_exempt_categories.includes(c.id)
+  );
+
   return (
     <div className="page-container" data-testid="settings-page">
       <div className="page-header">
@@ -97,7 +130,7 @@ const Settings = () => {
         </h1>
       </div>
 
-      <div style={{ maxWidth: '600px' }}>
+      <div style={{ maxWidth: '700px' }}>
         {message.text && (
           <div
             data-testid="settings-message"
@@ -114,7 +147,7 @@ const Settings = () => {
           </div>
         )}
 
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
           <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151' }}>
             Tax Configuration
           </h2>
@@ -146,7 +179,7 @@ const Settings = () => {
               </button>
             </label>
             <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-              When enabled, tax will be applied to all sales
+              When enabled, tax will be applied to sales based on product category
             </p>
           </div>
 
@@ -186,13 +219,10 @@ const Settings = () => {
                 }}
               />
             </div>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-              Enter tax percentage (e.g., 10 for 10%)
-            </p>
           </div>
 
           {/* Currency Selection */}
-          <div style={{ marginBottom: '32px' }}>
+          <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
               Currency
             </label>
@@ -229,51 +259,145 @@ const Settings = () => {
               />
             </div>
           </div>
-
-          {/* Preview */}
-          <div style={{
-            padding: '16px',
-            backgroundColor: '#f9fafb',
-            borderRadius: '8px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>
-              Preview
-            </h3>
-            <p style={{ fontSize: '15px', color: '#374151' }} data-testid="tax-preview">
-              {settings.tax_enabled 
-                ? `Tax: ${settings.tax_rate}% will be added to sales`
-                : 'Tax is disabled - no tax will be applied'}
-            </p>
-          </div>
-
-          {/* Save Button */}
-          <button
-            data-testid="save-settings-btn"
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              width: '100%',
-              padding: '14px 24px',
-              backgroundColor: '#8b5cf6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.7 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Save size={20} />
-            {saving ? 'Saving...' : 'Save Settings'}
-          </button>
         </div>
+
+        {/* Category Tax Exemptions */}
+        <div className="card" style={{ padding: '24px', marginBottom: '24px', opacity: settings.tax_enabled ? 1 : 0.6 }}>
+          <h2 style={{ marginBottom: '8px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Tag size={20} />
+            Category Tax Exemptions
+          </h2>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>
+            Select categories that should be <strong>exempt from tax</strong>. Unchecked categories will have tax applied.
+          </p>
+
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {PRODUCT_CATEGORIES.map((category) => {
+              const isExempt = settings.tax_exempt_categories.includes(category.id);
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  data-testid={`category-${category.id}`}
+                  onClick={() => settings.tax_enabled && toggleCategoryExemption(category.id)}
+                  disabled={!settings.tax_enabled}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 16px',
+                    border: `2px solid ${isExempt ? '#8b5cf6' : '#e5e7eb'}`,
+                    borderRadius: '10px',
+                    backgroundColor: isExempt ? '#f5f3ff' : '#fff',
+                    cursor: settings.tax_enabled ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div>
+                    <div style={{ 
+                      fontSize: '15px', 
+                      fontWeight: '600', 
+                      color: isExempt ? '#7c3aed' : '#374151',
+                      marginBottom: '2px'
+                    }}>
+                      {category.label}
+                      {isExempt && (
+                        <span style={{
+                          marginLeft: '8px',
+                          fontSize: '11px',
+                          padding: '2px 8px',
+                          backgroundColor: '#8b5cf6',
+                          color: '#fff',
+                          borderRadius: '4px',
+                          fontWeight: '500'
+                        }}>
+                          TAX EXEMPT
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                      {category.description}
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    border: `2px solid ${isExempt ? '#8b5cf6' : '#d1d5db'}`,
+                    backgroundColor: isExempt ? '#8b5cf6' : '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {isExempt && <Check size={14} color="#fff" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="card" style={{ padding: '24px', marginBottom: '24px', backgroundColor: '#f9fafb' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '12px' }}>
+            Tax Configuration Preview
+          </h3>
+          {!settings.tax_enabled ? (
+            <p style={{ fontSize: '15px', color: '#374151' }} data-testid="tax-preview">
+              Tax is <strong>disabled</strong> - no tax will be applied to any sales
+            </p>
+          ) : (
+            <div data-testid="tax-preview">
+              <p style={{ fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
+                Tax Rate: <strong>{settings.tax_rate}%</strong>
+              </p>
+              <p style={{ fontSize: '14px', color: '#374151', marginBottom: '4px' }}>
+                <span style={{ color: '#059669' }}>✓ Taxable:</span>{' '}
+                {taxableCategories.length > 0 
+                  ? taxableCategories.map(c => c.label).join(', ')
+                  : 'None'}
+              </p>
+              <p style={{ fontSize: '14px', color: '#374151' }}>
+                <span style={{ color: '#dc2626' }}>✗ Tax Exempt:</span>{' '}
+                {settings.tax_exempt_categories.length > 0
+                  ? PRODUCT_CATEGORIES
+                      .filter(c => settings.tax_exempt_categories.includes(c.id))
+                      .map(c => c.label)
+                      .join(', ')
+                  : 'None'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Save Button */}
+        <button
+          data-testid="save-settings-btn"
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: '14px 24px',
+            backgroundColor: '#8b5cf6',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.7 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
+          }}
+        >
+          <Save size={20} />
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
     </div>
   );
