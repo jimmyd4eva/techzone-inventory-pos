@@ -413,7 +413,7 @@ const Sales = () => {
               <span data-testid="cart-subtotal">${subtotal.toFixed(2)}</span>
             </div>
             <div className="summary-row">
-              <span>Tax (10%):</span>
+              <span>Tax ({taxRate.toFixed(0)}%):</span>
               <span data-testid="cart-tax">${tax.toFixed(2)}</span>
             </div>
             <div className="summary-row total">
