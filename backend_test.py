@@ -3,7 +3,7 @@ import sys
 import json
 from datetime import datetime
 
-class TaxSettingsAPITester:
+class TaxConfigurationTester:
     def __init__(self, base_url="https://zero-tax-pos.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
@@ -12,6 +12,7 @@ class TaxSettingsAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
+        self.admin_user = {"username": "admin", "password": "admin123"}
 
     def log_test(self, name, success, details=""):
         """Log test result"""
