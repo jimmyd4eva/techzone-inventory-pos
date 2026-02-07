@@ -1,0 +1,83 @@
+[
+  {
+    "id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "account_number": "CUST0004",
+    "name": "Harry Dick",
+    "email": "",
+    "phone": "8762813137",
+    "address": "11 Giltress street. Rollington Town",
+    "created_at": "2025-11-07T17:00:39.488903+00:00"
+  },
+  {
+    "id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "account_number": null,
+    "name": "Danny harry",
+    "email": "",
+    "phone": "+1 (954) 691-6964",
+    "address": "12 Giltress Street, Kingston 2. Rollignton town",
+    "created_at": "2025-11-07T18:06:59.050124+00:00"
+  },
+  {
+    "id": "f5e8cdb7-92af-462e-a86a-38d794b383a0",
+    "account_number": "2416",
+    "name": "Jimmyd",
+    "email": "richyestas@gmail.com",
+    "phone": "18768432416",
+    "address": "3 carmona Road, Kingston2.",
+    "created_at": "2025-11-07T18:20:08.523301+00:00"
+  },
+  {
+    "id": "920982dd-55b2-490b-8ac1-7c0100ad67c8",
+    "account_number": "0982",
+    "name": "Bones",
+    "email": "",
+    "phone": "1 (876) 524-0982",
+    "address": "Mountain view",
+    "created_at": "2025-11-10T22:58:14.044015+00:00"
+  },
+  {
+    "id": "40ce509a-ac8d-471a-a4e5-4ce0f50f1569",
+    "account_number": "1048",
+    "name": "Flash Tech",
+    "email": "",
+    "phone": "8765021048",
+    "address": "Rollington town. round a Danovan",
+    "created_at": "2025-11-11T16:40:52.115555+00:00"
+  },
+  {
+    "id": "ba35ce5e-fd50-4f18-9861-33fe1c761d14",
+    "account_number": "6061",
+    "name": "Dannavon",
+    "email": "",
+    "phone": "+1 (876) 384-6061",
+    "address": "Milk Avenue, Rollington Town. kgn2",
+    "created_at": "2025-11-11T20:36:49.635237+00:00"
+  },
+  {
+    "id": "24a27255-2ed7-414d-a520-b3b1e25b04ff",
+    "account_number": null,
+    "name": "John Body man",
+    "email": "",
+    "phone": "18762379169",
+    "address": "Bygrave, Mountain View Avenue, Kingston 2.",
+    "created_at": "2025-11-11T20:52:58.966449+00:00"
+  },
+  {
+    "id": "b92165a3-dffe-4ffe-ab30-a13eaf76bd25",
+    "account_number": "0000",
+    "name": "DC-Brina Worker",
+    "email": "",
+    "phone": "876-1000000",
+    "address": "Langston Road, Kingston 3",
+    "created_at": "2025-11-18T22:30:50.115929+00:00"
+  },
+  {
+    "id": "80682d4c-242a-4ef1-b3a2-0704e9519d61",
+    "account_number": "0002",
+    "name": "Assure Girl#2",
+    "email": "",
+    "phone": "876-1000002",
+    "address": "",
+    "created_at": "2025-11-18T22:32:44.291778+00:00"
+  }
+]

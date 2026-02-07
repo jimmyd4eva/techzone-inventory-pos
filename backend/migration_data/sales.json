@@ -1,0 +1,699 @@
+[
+  {
+    "id": "75b9c14e-70a5-4530-a5a7-69bdb6249c80",
+    "items": [
+      {
+        "item_id": "a091ec21-06a1-47d7-b540-22d30ec95064",
+        "item_name": "SAM-A11 SMALL",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:10:08.859728+00:00"
+  },
+  {
+    "id": "a1edcef6-aebf-4b40-b55d-ec997c85c93a",
+    "items": [
+      {
+        "item_id": "875aa90c-8f6d-46b4-83ec-5b6d94793bdc",
+        "item_name": "SM-A057(A05S)",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:25:32.440231+00:00"
+  },
+  {
+    "id": "8419409e-9e98-4df2-b0aa-9e2639e4bf68",
+    "items": [
+      {
+        "item_id": "f61f7739-16b1-4eca-8ea2-3eaaa72a0314",
+        "item_name": "SM-A03(A04E/02S SMALL)",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:35:52.413199+00:00"
+  },
+  {
+    "id": "462412cb-cc07-4076-b166-e50b4cd5af88",
+    "items": [
+      {
+        "item_id": "875aa90c-8f6d-46b4-83ec-5b6d94793bdc",
+        "item_name": "SM-A057(A05S)",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:39:28.410125+00:00"
+  },
+  {
+    "id": "5795aecf-63fd-493b-8ae7-ce1725dd1bf1",
+    "items": [
+      {
+        "item_id": "f61f7739-16b1-4eca-8ea2-3eaaa72a0314",
+        "item_name": "SM-A03(A04E/02S SMALL)",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:39:42.278452+00:00"
+  },
+  {
+    "id": "71d3372d-57ae-4ea2-aa25-609725056fe0",
+    "items": [
+      {
+        "item_id": "13d0e202-d226-4819-8263-562b65bd2e3f",
+        "item_name": "SAM-A04",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": "harry dick",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T16:45:04.776717+00:00"
+  },
+  {
+    "id": "25351f52-650b-462f-812d-6d6bb51a0234",
+    "items": [
+      {
+        "item_id": "a9e8eb6a-a3ad-4f79-861f-551ac629b610",
+        "item_name": "SM-A037",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T18:09:52.337727+00:00"
+  },
+  {
+    "id": "5abbe185-6084-4736-b7c5-6f9cd4c2c70a",
+    "items": [
+      {
+        "item_id": "a9e8eb6a-a3ad-4f79-861f-551ac629b610",
+        "item_name": "SM-A037",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": "danny harry",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T18:15:54.550092+00:00"
+  },
+  {
+    "id": "07b9906f-8ad9-487a-bfa5-2cabf3b4fb08",
+    "items": [
+      {
+        "item_id": "b38acc47-fa45-498c-bc9b-cb1130c6b415",
+        "item_name": "SAM-A11 BIG",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-07T18:20:36.302409+00:00"
+  },
+  {
+    "id": "5b5d5f97-e6ca-4578-b750-ed4742a58e1e",
+    "items": [
+      {
+        "item_id": "a9e8eb6a-a3ad-4f79-861f-551ac629b610",
+        "item_name": "SM-A037",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": "920982dd-55b2-490b-8ac1-7c0100ad67c8",
+    "customer_name": "Bones",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-10T23:00:49.878225+00:00"
+  },
+  {
+    "id": "e68ea4d7-81e4-4834-aa8d-783108a6bc80",
+    "items": [
+      {
+        "item_id": "6455a9b3-6f24-4cb0-afb7-9d532c8a7f91",
+        "item_name": "Samsung A16 4G Sub Board",
+        "quantity": 1,
+        "price": 2000.0,
+        "subtotal": 2000.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 2000.0,
+    "tax": 200.0,
+    "total": 2200.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-10T23:05:48.323213+00:00"
+  },
+  {
+    "id": "c1c54e2d-d3a5-4053-9af5-9eab0c9851b3",
+    "items": [
+      {
+        "item_id": "ec05cbea-7f46-4e99-b46b-f4432b927366",
+        "item_name": "SAMSUNG A03",
+        "quantity": 1,
+        "price": 3499.99,
+        "subtotal": 3499.99
+      }
+    ],
+    "customer_id": null,
+    "customer_name": "danny harry",
+    "payment_method": "cash",
+    "subtotal": 3499.99,
+    "tax": 349.999,
+    "total": 3849.9889999999996,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T16:53:38.458249+00:00"
+  },
+  {
+    "id": "402b2362-6605-439d-aace-9071966c1297",
+    "items": [
+      {
+        "item_id": "ec05cbea-7f46-4e99-b46b-f4432b927366",
+        "item_name": "SAMSUNG A03",
+        "quantity": 1,
+        "price": 3499.99,
+        "subtotal": 3499.99
+      },
+      {
+        "item_id": "f61f7739-16b1-4eca-8ea2-3eaaa72a0314",
+        "item_name": "SM-A03(A04E/02S SMALL)",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": "danny harry",
+    "payment_method": "cash",
+    "subtotal": 6999.99,
+    "tax": 699.999,
+    "total": 7699.989,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T16:54:24.954189+00:00"
+  },
+  {
+    "id": "3cb3a1d9-8fd9-4f23-b493-916e77276120",
+    "items": [
+      {
+        "item_id": "3fedb70a-862b-4d79-bb41-b6abbeaecd28",
+        "item_name": "SAM-05",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": "flash danovan",
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T16:55:28.394352+00:00"
+  },
+  {
+    "id": "1e3a0609-21ef-47d8-97c1-b621d7104008",
+    "items": [
+      {
+        "item_id": "6b65e602-c3f8-4b37-b3de-79250c0104e5",
+        "item_name": "Samsung A-217",
+        "quantity": 1,
+        "price": 3499.99,
+        "subtotal": 3499.99
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 3499.99,
+    "tax": 349.999,
+    "total": 3849.9889999999996,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T18:47:06.886514+00:00"
+  },
+  {
+    "id": "12a8d9f0-186e-4784-b82f-bc60c60f7ec9",
+    "items": [
+      {
+        "item_id": "52b4bbdd-d715-459d-a0e7-4c6802e29326",
+        "item_name": "SAM-A146B (A14 5G)",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T19:08:10.332589+00:00"
+  },
+  {
+    "id": "cbf53c66-79ae-4b9d-83f2-d6b4e0dc5ed1",
+    "items": [
+      {
+        "item_id": "52b4bbdd-d715-459d-a0e7-4c6802e29326",
+        "item_name": "SAM-A146B (A14 5G)",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T20:32:45.907116+00:00"
+  },
+  {
+    "id": "889e9a12-8746-40a0-a2a7-0193fcab00b1",
+    "items": [
+      {
+        "item_id": "597c6a52-adb4-420c-9830-6c609cbb8552",
+        "item_name": "SAM-A15 INCELL IN FRAME",
+        "quantity": 1,
+        "price": 6000.0,
+        "subtotal": 6000.0
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 6000.0,
+    "tax": 600.0,
+    "total": 6600.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-11T20:33:14.524992+00:00"
+  },
+  {
+    "id": "779a7f4a-cd13-4cbe-9f83-560ea5de5d19",
+    "items": [
+      {
+        "item_id": "ab0eb945-f4d4-49f1-8c45-2ca39da850af",
+        "item_name": "Iphone 16 Pro Max Case-NF Green",
+        "quantity": 1,
+        "price": 2000.0,
+        "subtotal": 2000.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 2000.0,
+    "tax": 200.0,
+    "total": 2200.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-12T18:46:13.615001+00:00"
+  },
+  {
+    "id": "49668d4c-0b3a-4c74-8171-bc6a55ce963b",
+    "items": [
+      {
+        "item_id": "dcb24ebb-7b4e-4492-9323-9fb6d4a2386b",
+        "item_name": "Vehicle Phone holder",
+        "quantity": 1,
+        "price": 1500.0,
+        "subtotal": 1500.0
+      }
+    ],
+    "customer_id": null,
+    "customer_name": null,
+    "payment_method": "cash",
+    "subtotal": 1500.0,
+    "tax": 150.0,
+    "total": 1650.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-12T19:18:10.190203+00:00"
+  },
+  {
+    "id": "fd6dc373-5627-4ad0-b1fa-4ac22b574f24",
+    "items": [
+      {
+        "item_id": "571b0c40-e21f-43af-b078-5fa027c06faf",
+        "item_name": "Samsung A06",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-12T21:14:38.223275+00:00"
+  },
+  {
+    "id": "7e146d2a-38de-484b-8e72-dbe757f63131",
+    "items": [
+      {
+        "item_id": "e77916a3-e5a2-48e1-9a6e-cfa12c2dca1d",
+        "item_name": "LG STYLO 6",
+        "quantity": 1,
+        "price": 5999.99,
+        "subtotal": 5999.99
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 5999.99,
+    "tax": 599.999,
+    "total": 6599.989,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T17:42:28.103965+00:00"
+  },
+  {
+    "id": "2f0c3efc-fc36-4021-afa2-3dbc8ec71f5b",
+    "items": [
+      {
+        "item_id": "b2df785a-0026-49fb-927c-45d27f5efb36",
+        "item_name": "ZTE BLADE A35E",
+        "quantity": 1,
+        "price": 4999.99,
+        "subtotal": 4999.99
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 4999.99,
+    "tax": 499.999,
+    "total": 5499.989,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T17:43:39.202906+00:00"
+  },
+  {
+    "id": "bb88c453-1c18-4e81-915e-db12bc31c10b",
+    "items": [
+      {
+        "item_id": "06b3f103-6f82-44e7-addb-eec50a70ae31",
+        "item_name": "SAM-A12-F12-UNIVERSAL",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T22:10:21.887895+00:00"
+  },
+  {
+    "id": "2417a575-8dc7-4d0a-b6e7-ebaab087783d",
+    "items": [
+      {
+        "item_id": "6b65e602-c3f8-4b37-b3de-79250c0104e5",
+        "item_name": "Samsung A-217",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T23:14:59.288619+00:00"
+  },
+  {
+    "id": "445c23c9-9352-4f1d-98ff-62b3efec374c",
+    "items": [
+      {
+        "item_id": "6b65e602-c3f8-4b37-b3de-79250c0104e5",
+        "item_name": "Samsung A-217",
+        "quantity": 1,
+        "price": 3500.0,
+        "subtotal": 3500.0
+      }
+    ],
+    "customer_id": "3854418b-f1b0-4458-95cc-f9cf18c89c9f",
+    "customer_name": "Danny harry",
+    "payment_method": "cash",
+    "subtotal": 3500.0,
+    "tax": 350.0,
+    "total": 3850.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T23:36:48.523531+00:00"
+  },
+  {
+    "id": "dec0b374-6388-4f0b-bd84-ece3f8d4e1d7",
+    "items": [
+      {
+        "item_id": "52b4bbdd-d715-459d-a0e7-4c6802e29326",
+        "item_name": "SAM-A146B (A14 5G)",
+        "quantity": 1,
+        "price": 4000.0,
+        "subtotal": 4000.0
+      }
+    ],
+    "customer_id": "80682d4c-242a-4ef1-b3a2-0704e9519d61",
+    "customer_name": "Assure Girl#2",
+    "payment_method": "cash",
+    "subtotal": 4000.0,
+    "tax": 400.0,
+    "total": 4400.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T23:38:47.130127+00:00"
+  },
+  {
+    "id": "0e991247-1008-4c44-89d6-ab0af2793bbf",
+    "items": [
+      {
+        "item_id": "d61f2cbf-b76b-478b-a756-159c68e5dd12",
+        "item_name": "Samsung A52 Oled in Frame",
+        "quantity": 1,
+        "price": 12000.0,
+        "subtotal": 12000.0
+      }
+    ],
+    "customer_id": "b92165a3-dffe-4ffe-ab30-a13eaf76bd25",
+    "customer_name": "DC-Brina Worker",
+    "payment_method": "cash",
+    "subtotal": 12000.0,
+    "tax": 1200.0,
+    "total": 13200.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-18T23:39:22.698968+00:00"
+  },
+  {
+    "id": "35b43acf-720d-4c05-b440-4c879a07da2c",
+    "items": [
+      {
+        "item_id": "597c6a52-adb4-420c-9830-6c609cbb8552",
+        "item_name": "SAM-A15 INCELL IN FRAME",
+        "quantity": 1,
+        "price": 6000.0,
+        "subtotal": 6000.0
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 6000.0,
+    "tax": 600.0,
+    "total": 6600.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-19T17:34:12.669467+00:00"
+  },
+  {
+    "id": "190b3de9-515b-47f7-aa0e-2b26f3afdd21",
+    "items": [
+      {
+        "item_id": "597c6a52-adb4-420c-9830-6c609cbb8552",
+        "item_name": "SAM-A15 INCELL IN FRAME",
+        "quantity": 1,
+        "price": 6000.0,
+        "subtotal": 6000.0
+      }
+    ],
+    "customer_id": "8324a682-5f82-4250-a5ae-8eb8cc31bbe7",
+    "customer_name": "Harry Dick",
+    "payment_method": "cash",
+    "subtotal": 6000.0,
+    "tax": 600.0,
+    "total": 6600.0,
+    "payment_status": "completed",
+    "stripe_session_id": null,
+    "paypal_order_id": null,
+    "created_by": "Ian Miller",
+    "created_at": "2025-11-19T17:44:00.960353+00:00"
+  }
+]
