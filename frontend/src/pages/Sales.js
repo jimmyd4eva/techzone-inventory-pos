@@ -260,12 +260,14 @@ const Sales = () => {
         payment_method: paymentMethod,
         created_by: user.username,
         customer_id: selectedCustomer ? selectedCustomer.id : undefined,
-        customer_name: selectedCustomer ? selectedCustomer.name : (customerName || undefined)
+        customer_name: selectedCustomer ? selectedCustomer.name : (customerName || undefined),
+        coupon_code: appliedCoupon ? appliedCoupon.code : undefined
       };
 
       console.log('Submitting sale with customer data:', {
         customer_id: saleData.customer_id,
-        customer_name: saleData.customer_name
+        customer_name: saleData.customer_name,
+        coupon_code: saleData.coupon_code
       });
 
       const response = await axios.post(`${API}/sales`, saleData, {
