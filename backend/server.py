@@ -227,6 +227,49 @@ class SettingsUpdate(BaseModel):
     currency: Optional[str] = None
     tax_exempt_categories: Optional[List[str]] = None
 
+# ============ COUPON MODELS ============
+
+class Coupon(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str  # Unique coupon code
+    description: Optional[str] = None
+    discount_type: str  # 'percentage' or 'fixed'
+    discount_value: float  # Percentage (0-100) or fixed amount
+    min_purchase: float = 0  # Minimum purchase amount to use coupon
+    max_discount: Optional[float] = None  # Maximum discount for percentage coupons
+    usage_limit: Optional[int] = None  # Max number of times coupon can be used
+    usage_count: int = 0  # How many times it's been used
+    is_active: bool = True
+    valid_from: Optional[str] = None
+    valid_until: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: Optional[str] = None
+
+class CouponCreate(BaseModel):
+    code: str
+    description: Optional[str] = None
+    discount_type: str
+    discount_value: float
+    min_purchase: float = 0
+    max_discount: Optional[float] = None
+    usage_limit: Optional[int] = None
+    is_active: bool = True
+    valid_from: Optional[str] = None
+    valid_until: Optional[str] = None
+
+class CouponUpdate(BaseModel):
+    code: Optional[str] = None
+    description: Optional[str] = None
+    discount_type: Optional[str] = None
+    discount_value: Optional[float] = None
+    min_purchase: Optional[float] = None
+    max_discount: Optional[float] = None
+    usage_limit: Optional[int] = None
+    is_active: Optional[bool] = None
+    valid_from: Optional[str] = None
+    valid_until: Optional[str] = None
+
 # ============ AUTH UTILITIES ============
 
 def create_token(user_id: str, role: str, username: str = None) -> str:
