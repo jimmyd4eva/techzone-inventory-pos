@@ -597,8 +597,8 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
     check_not_readonly(current_user)
     # Calculate totals
     subtotal = sum(item.subtotal for item in sale_data.items)
-    tax = subtotal * 0.1  # 10% tax
-    total = subtotal + tax
+    tax = 0  # No tax
+    total = subtotal
     
     # Get customer name - prioritize the direct customer_name field over customer_id lookup
     customer_name = sale_data.customer_name

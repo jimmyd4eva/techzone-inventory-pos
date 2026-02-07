@@ -140,8 +140,8 @@ const Sales = () => {
 
   const calculateTotal = () => {
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const tax = subtotal * 0.1;
-    const total = subtotal + tax;
+    const tax = 0;  // No tax
+    const total = subtotal;
     return { subtotal, tax, total };
   };
 
