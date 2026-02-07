@@ -18,7 +18,11 @@ const Sales = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [taxSettings, setTaxSettings] = useState({ tax_rate: 0, tax_enabled: false });
+  const [taxSettings, setTaxSettings] = useState({ 
+    tax_rate: 0, 
+    tax_enabled: false,
+    tax_exempt_categories: []
+  });
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
@@ -34,7 +38,8 @@ const Sales = () => {
       });
       setTaxSettings({
         tax_rate: response.data.tax_rate || 0,
-        tax_enabled: response.data.tax_enabled || false
+        tax_enabled: response.data.tax_enabled || false,
+        tax_exempt_categories: response.data.tax_exempt_categories || []
       });
     } catch (error) {
       console.error('Error fetching tax settings:', error);
