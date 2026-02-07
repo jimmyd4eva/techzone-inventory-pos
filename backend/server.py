@@ -857,7 +857,36 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
             taxable_subtotal += item.subtotal
     
     tax = taxable_subtotal * tax_rate
-    total = subtotal + tax
+    
+    # Handle coupon discount
+    discount = 0
+    coupon_code = None
+    coupon_id = None
+    
+    if sale_data.coupon_code:
+        coupon = await db.coupons.find_one({"code": sale_data.coupon_code.upper(), "is_active": True})
+        if coupon:
+            # Validate coupon
+            if coupon.get('usage_limit') and coupon.get('usage_count', 0) >= coupon.get('usage_limit'):
+                pass  # Skip - usage limit reached
+            elif subtotal < coupon.get('min_purchase', 0):
+                pass  # Skip - minimum not met
+            else:
+                # Calculate discount
+                if coupon.get('discount_type') == 'percentage':
+                    discount = subtotal * (coupon.get('discount_value', 0) / 100)
+                    if coupon.get('max_discount') and discount > coupon.get('max_discount'):
+                        discount = coupon.get('max_discount')
+                else:
+                    discount = min(coupon.get('discount_value', 0), subtotal)
+                
+                coupon_code = coupon.get('code')
+                coupon_id = coupon.get('id')
+                
+                # Increment usage count
+                await db.coupons.update_one({"id": coupon_id}, {"$inc": {"usage_count": 1}})
+    
+    total = subtotal + tax - discount
     
     # Get customer name - prioritize the direct customer_name field over customer_id lookup
     customer_name = sale_data.customer_name
@@ -876,6 +905,9 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
         payment_method=sale_data.payment_method,
         subtotal=subtotal,
         tax=tax,
+        discount=discount,
+        coupon_code=coupon_code,
+        coupon_id=coupon_id,
         total=total,
         payment_status=payment_status,
         created_by=sale_data.created_by
