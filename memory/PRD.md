@@ -5,11 +5,13 @@
 2. Add a configurable tax rate in settings
 3. Add category-based tax exemptions
 4. Add tax reporting
+5. Add PDF export for tax reports
 
 ## Architecture
 - **Backend**: FastAPI (Python)
 - **Frontend**: React.js
 - **Database**: MongoDB
+- **PDF Generation**: ReportLab
 
 ## What's Been Implemented
 
@@ -27,27 +29,30 @@
 - Categories: Phones, Parts, Accessories, Screens, Other
 
 ### Feb 7, 2026 - Tax Reporting
-- **Backend**: `/api/reports/tax-summary` endpoint
+- Reports page with tabbed interface (Sales, Tax, Inventory)
+- Tax Reports tab shows:
+  - Tax status banner (enabled/rate/exempt categories)
   - Daily/Weekly/Monthly tax collection stats
-  - Category breakdown with taxable/exempt status
-  - Taxable vs exempt sales totals
+  - Taxable vs Exempt visual breakdown with bar chart
+  - Sales by Category breakdown table
+
+### Feb 7, 2026 - PDF Export
+- **Backend**: `/api/reports/tax-summary/pdf` endpoint
+  - Uses ReportLab to generate professional PDF
+  - Includes: TECHZONE header, tax config, collection summary, 
+    taxable vs exempt breakdown, category sales table
+  - Returns as downloadable attachment
   
-- **Frontend Reports Page** (tabbed interface):
-  - **Sales Reports**: Daily/Weekly/Monthly sales stats
-  - **Tax Reports**:
-    - Tax status banner (enabled/disabled, rate, exempt categories)
-    - Daily/Weekly/Monthly tax collected cards
-    - Taxable vs Exempt visual bar chart (79% vs 21%)
-    - Sales by Category breakdown table
-  - **Inventory**: Low stock alerts
+- **Frontend**: Export PDF button on Tax Reports tab
+  - Downloads PDF with filename `tax_report_YYYYMMDD.pdf`
 
 ## Test Results
-- Backend: 95% success (minor calculation fix applied)
+- Backend: 95% success
 - Frontend: 100% success
-- Integration: 100% success
+- PDF Export: Working correctly
 
 ## User Personas
-- **Admin**: Configure tax settings, view all reports
+- **Admin**: Configure tax settings, view reports, export PDFs
 - **Cashier/Technician**: View reports, use configured tax in sales
 
 ## Backlog
