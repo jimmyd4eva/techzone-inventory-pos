@@ -1276,6 +1276,132 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "total_customers": total_customers
     }
 
+@api_router.get("/reports/tax-summary")
+async def get_tax_summary(current_user: dict = Depends(get_current_user)):
+    """Get tax collection summary with breakdown by category and time periods"""
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Calculate date ranges
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_month = today.replace(day=1)
+    
+    today_iso = today.isoformat()
+    week_iso = start_of_week.isoformat()
+    month_iso = start_of_month.isoformat()
+    
+    # Get current tax settings
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    tax_enabled = settings.get('tax_enabled', False) if settings else False
+    tax_rate = settings.get('tax_rate', 0) if settings else 0
+    exempt_categories = settings.get('tax_exempt_categories', []) if settings else []
+    
+    # Daily tax collected
+    daily_pipeline = [
+        {"$match": {"created_at": {"$gte": today_iso}, "payment_status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "total_tax": {"$sum": "$tax"},
+            "total_sales": {"$sum": "$subtotal"},
+            "transaction_count": {"$sum": 1}
+        }}
+    ]
+    daily_result = await db.sales.aggregate(daily_pipeline).to_list(1)
+    
+    # Weekly tax collected
+    weekly_pipeline = [
+        {"$match": {"created_at": {"$gte": week_iso}, "payment_status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "total_tax": {"$sum": "$tax"},
+            "total_sales": {"$sum": "$subtotal"},
+            "transaction_count": {"$sum": 1}
+        }}
+    ]
+    weekly_result = await db.sales.aggregate(weekly_pipeline).to_list(1)
+    
+    # Monthly tax collected
+    monthly_pipeline = [
+        {"$match": {"created_at": {"$gte": month_iso}, "payment_status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "total_tax": {"$sum": "$tax"},
+            "total_sales": {"$sum": "$subtotal"},
+            "transaction_count": {"$sum": 1}
+        }}
+    ]
+    monthly_result = await db.sales.aggregate(monthly_pipeline).to_list(1)
+    
+    # Get category breakdown for the month (taxable vs exempt)
+    # We need to look at individual items in each sale
+    all_sales = await db.sales.find(
+        {"created_at": {"$gte": month_iso}, "payment_status": "completed"},
+        {"_id": 0, "items": 1, "subtotal": 1, "tax": 1}
+    ).to_list(1000)
+    
+    category_totals = {}
+    taxable_total = 0
+    exempt_total = 0
+    
+    for sale in all_sales:
+        for item in sale.get('items', []):
+            # Look up item type
+            inv_item = await db.inventory.find_one({"id": item.get('item_id')}, {"_id": 0, "type": 1})
+            item_type = inv_item.get('type', 'other') if inv_item else 'other'
+            item_subtotal = item.get('subtotal', 0)
+            
+            # Track by category
+            if item_type not in category_totals:
+                category_totals[item_type] = {"sales": 0, "is_exempt": False}
+            category_totals[item_type]["sales"] += item_subtotal
+            
+            # Check if exempt
+            is_exempt = item_type.lower() in [c.lower() for c in exempt_categories]
+            category_totals[item_type]["is_exempt"] = is_exempt
+            
+            if is_exempt:
+                exempt_total += item_subtotal
+            else:
+                taxable_total += item_subtotal
+    
+    # Format category breakdown
+    category_breakdown = [
+        {
+            "category": cat,
+            "sales": data["sales"],
+            "is_exempt": data["is_exempt"],
+            "tax_collected": 0 if data["is_exempt"] else data["sales"] * tax_rate
+        }
+        for cat, data in sorted(category_totals.items(), key=lambda x: x[1]["sales"], reverse=True)
+    ]
+    
+    return {
+        "tax_enabled": tax_enabled,
+        "tax_rate": tax_rate,
+        "exempt_categories": exempt_categories,
+        "daily": {
+            "tax_collected": daily_result[0]["total_tax"] if daily_result else 0,
+            "total_sales": daily_result[0]["total_sales"] if daily_result else 0,
+            "transactions": daily_result[0]["transaction_count"] if daily_result else 0
+        },
+        "weekly": {
+            "tax_collected": weekly_result[0]["total_tax"] if weekly_result else 0,
+            "total_sales": weekly_result[0]["total_sales"] if weekly_result else 0,
+            "transactions": weekly_result[0]["transaction_count"] if weekly_result else 0
+        },
+        "monthly": {
+            "tax_collected": monthly_result[0]["total_tax"] if monthly_result else 0,
+            "total_sales": monthly_result[0]["total_sales"] if monthly_result else 0,
+            "transactions": monthly_result[0]["transaction_count"] if monthly_result else 0,
+            "month": today.strftime("%B %Y")
+        },
+        "category_breakdown": category_breakdown,
+        "taxable_vs_exempt": {
+            "taxable_sales": taxable_total,
+            "exempt_sales": exempt_total,
+            "effective_tax_collected": taxable_total * tax_rate if tax_enabled else 0
+        }
+    }
+
 # Include router
 app.include_router(api_router)
 
