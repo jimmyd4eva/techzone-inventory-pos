@@ -23,6 +23,10 @@ const Sales = () => {
     tax_enabled: false,
     tax_exempt_categories: []
   });
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
@@ -45,6 +49,60 @@ const Sales = () => {
       console.error('Error fetching tax settings:', error);
     }
   };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponError('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+      const response = await axios.post(`${API}/coupons/validate`, {
+        code: couponCode,
+        subtotal: subtotal
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setAppliedCoupon(response.data.coupon);
+      setCouponDiscount(response.data.discount);
+      setCouponCode('');
+    } catch (error) {
+      setCouponError(error.response?.data?.detail || 'Invalid coupon');
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponError('');
+  };
+
+  // Recalculate coupon discount when cart changes
+  useEffect(() => {
+    if (appliedCoupon && cart.length > 0) {
+      const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+      if (subtotal < (appliedCoupon.min_purchase || 0)) {
+        removeCoupon();
+      } else {
+        // Recalculate discount
+        let discount;
+        if (appliedCoupon.discount_type === 'percentage') {
+          discount = subtotal * (appliedCoupon.discount_value / 100);
+          if (appliedCoupon.max_discount && discount > appliedCoupon.max_discount) {
+            discount = appliedCoupon.max_discount;
+          }
+        } else {
+          discount = Math.min(appliedCoupon.discount_value, subtotal);
+        }
+        setCouponDiscount(discount);
+      }
+    } else if (cart.length === 0) {
+      removeCoupon();
+    }
+  }, [cart, appliedCoupon]);
 
   useEffect(() => {
     const filtered = inventory.filter(item =>
