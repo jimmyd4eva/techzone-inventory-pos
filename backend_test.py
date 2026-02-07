@@ -629,7 +629,7 @@ class TaxExemptionTester:
             return 1
 
 def main():
-    tester = TaxConfigurationTester()
+    tester = TaxExemptionTester()
     return tester.run_all_tests()
 
 if __name__ == "__main__":
