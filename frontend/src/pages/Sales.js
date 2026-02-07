@@ -18,11 +18,28 @@ const Sales = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [taxSettings, setTaxSettings] = useState({ tax_rate: 0, tax_enabled: false });
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchInventory();
+    fetchTaxSettings();
   }, []);
+
+  const fetchTaxSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTaxSettings({
+        tax_rate: response.data.tax_rate || 0,
+        tax_enabled: response.data.tax_enabled || false
+      });
+    } catch (error) {
+      console.error('Error fetching tax settings:', error);
+    }
+  };
 
   useEffect(() => {
     const filtered = inventory.filter(item =>
