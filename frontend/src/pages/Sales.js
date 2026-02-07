@@ -27,12 +27,32 @@ const Sales = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [showCouponList, setShowCouponList] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchInventory();
     fetchTaxSettings();
+    fetchAvailableCoupons();
   }, []);
+
+  const fetchAvailableCoupons = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/coupons`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Filter only active coupons that haven't exceeded usage limit
+      const active = response.data.filter(c => 
+        c.is_active && 
+        (!c.usage_limit || c.usage_count < c.usage_limit)
+      );
+      setAvailableCoupons(active);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    }
+  };
 
   const fetchTaxSettings = async () => {
     try {
