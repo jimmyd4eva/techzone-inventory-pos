@@ -609,10 +609,17 @@ async def delete_repair_job(job_id: str, current_user: dict = Depends(get_curren
 @api_router.post("/sales", response_model=Sale)
 async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_current_user)):
     check_not_readonly(current_user)
+    
+    # Get tax settings
+    settings = await db.settings.find_one({"id": "app_settings"})
+    tax_rate = 0.0
+    if settings and settings.get('tax_enabled', False):
+        tax_rate = settings.get('tax_rate', 0.0)
+    
     # Calculate totals
     subtotal = sum(item.subtotal for item in sale_data.items)
-    tax = 0  # No tax
-    total = subtotal
+    tax = subtotal * tax_rate
+    total = subtotal + tax
     
     # Get customer name - prioritize the direct customer_name field over customer_id lookup
     customer_name = sale_data.customer_name
