@@ -1,0 +1,282 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, ToggleLeft, ToggleRight } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const Settings = () => {
+  const [settings, setSettings] = useState({
+    tax_rate: 0,
+    tax_enabled: false,
+    currency: 'USD'
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSettings({
+        tax_rate: (response.data.tax_rate || 0) * 100, // Convert to percentage
+        tax_enabled: response.data.tax_enabled || false,
+        currency: response.data.currency || 'USD'
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      setMessage({ type: 'error', text: 'Failed to load settings' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/settings`, {
+        tax_rate: settings.tax_rate / 100, // Convert back to decimal
+        tax_enabled: settings.tax_enabled,
+        currency: settings.currency
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Settings saved successfully!' });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to save settings' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="page-container" data-testid="settings-page">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '50vh',
+          color: '#6b7280'
+        }}>
+          <SettingsIcon size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+          <h2>Access Denied</h2>
+          <p>Only administrators can access settings.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="page-container" data-testid="settings-page">
+        <div className="loading-spinner" style={{ margin: '100px auto' }}></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-container" data-testid="settings-page">
+      <div className="page-header">
+        <h1 data-testid="settings-title">
+          <SettingsIcon size={28} style={{ marginRight: '12px', verticalAlign: 'middle' }} />
+          Settings
+        </h1>
+      </div>
+
+      <div style={{ maxWidth: '600px' }}>
+        {message.text && (
+          <div
+            data-testid="settings-message"
+            style={{
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              backgroundColor: message.type === 'success' ? '#d1fae5' : '#fee2e2',
+              color: message.type === 'success' ? '#065f46' : '#991b1b',
+              border: `1px solid ${message.type === 'success' ? '#a7f3d0' : '#fecaca'}`
+            }}
+          >
+            {message.text}
+          </div>
+        )}
+
+        <div className="card" style={{ padding: '24px' }}>
+          <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151' }}>
+            Tax Configuration
+          </h2>
+
+          {/* Tax Enabled Toggle */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+                Enable Tax
+              </span>
+              <button
+                type="button"
+                data-testid="tax-toggle"
+                onClick={() => setSettings({ ...settings, tax_enabled: !settings.tax_enabled })}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {settings.tax_enabled ? (
+                  <ToggleRight size={40} color="#8b5cf6" />
+                ) : (
+                  <ToggleLeft size={40} color="#9ca3af" />
+                )}
+              </button>
+            </label>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+              When enabled, tax will be applied to all sales
+            </p>
+          </div>
+
+          {/* Tax Rate Input */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+              Tax Rate
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number"
+                data-testid="tax-rate-input"
+                value={settings.tax_rate}
+                onChange={(e) => setSettings({ ...settings, tax_rate: parseFloat(e.target.value) || 0 })}
+                disabled={!settings.tax_enabled}
+                min="0"
+                max="100"
+                step="0.1"
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  backgroundColor: settings.tax_enabled ? '#fff' : '#f3f4f6',
+                  color: settings.tax_enabled ? '#111827' : '#9ca3af'
+                }}
+              />
+              <Percent
+                size={18}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af'
+                }}
+              />
+            </div>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+              Enter tax percentage (e.g., 10 for 10%)
+            </p>
+          </div>
+
+          {/* Currency Selection */}
+          <div style={{ marginBottom: '32px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+              Currency
+            </label>
+            <div style={{ position: 'relative' }}>
+              <select
+                data-testid="currency-select"
+                value={settings.currency}
+                onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  backgroundColor: '#fff',
+                  appearance: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="USD">USD - US Dollar</option>
+                <option value="JMD">JMD - Jamaican Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+              </select>
+              <DollarSign
+                size={18}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div style={{
+            padding: '16px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '8px',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>
+              Preview
+            </h3>
+            <p style={{ fontSize: '15px', color: '#374151' }} data-testid="tax-preview">
+              {settings.tax_enabled 
+                ? `Tax: ${settings.tax_rate}% will be added to sales`
+                : 'Tax is disabled - no tax will be applied'}
+            </p>
+          </div>
+
+          {/* Save Button */}
+          <button
+            data-testid="save-settings-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              backgroundColor: '#8b5cf6',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Save size={20} />
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;
