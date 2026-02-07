@@ -1,0 +1,108 @@
+{
+  "timestamp": "2026-02-07T16:21:12.045370",
+  "total_tests": 20,
+  "passed_tests": 19,
+  "success_rate": 95.0,
+  "test_results": [
+    {
+      "test": "Admin Login (existing)",
+      "status": "FAILED",
+      "details": "Status: 401 (Expected 200) - Invalid credentials"
+    },
+    {
+      "test": "Create Admin User",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Create Cashier User",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "GET /api/settings (default)",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Default tax_rate value",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Default tax_enabled value",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Default currency value",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "PUT /api/settings (admin update)",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "GET /api/settings (verify update)",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Settings update verification",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "PUT /api/settings (non-admin forbidden)",
+      "status": "PASSED",
+      "details": "Status: 403"
+    },
+    {
+      "test": "Set tax to 10% for sales test",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Create sale with tax enabled",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Sale subtotal calculation",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Sale tax calculation",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Sale total calculation",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Disable tax for next test",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Create sale with tax disabled",
+      "status": "PASSED",
+      "details": "Status: 200"
+    },
+    {
+      "test": "Sale tax disabled calculation",
+      "status": "PASSED",
+      "details": ""
+    },
+    {
+      "test": "Sale total with tax disabled",
+      "status": "PASSED",
+      "details": ""
+    }
+  ]
+}
