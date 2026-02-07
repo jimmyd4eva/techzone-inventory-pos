@@ -231,7 +231,7 @@ const Sales = () => {
     return <div className="loading-screen"><div className="loading-spinner"></div></div>;
   }
 
-  const { subtotal, tax, total } = calculateTotal();
+  const { subtotal, tax, total, taxRate } = calculateTotal();
 
   return (
     <div data-testid="sales-page">
