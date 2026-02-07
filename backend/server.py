@@ -619,9 +619,13 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
             "tax_rate": 0.0,
             "tax_enabled": False,
             "currency": "USD",
+            "tax_exempt_categories": [],
             "updated_at": None,
             "updated_by": None
         }
+    # Ensure tax_exempt_categories exists
+    if "tax_exempt_categories" not in settings:
+        settings["tax_exempt_categories"] = []
     return settings
 
 @api_router.put("/settings")
