@@ -157,9 +157,9 @@ const Sales = () => {
 
   const calculateTotal = () => {
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const tax = 0;  // No tax
-    const total = subtotal;
-    return { subtotal, tax, total };
+    const tax = taxSettings.tax_enabled ? subtotal * taxSettings.tax_rate : 0;
+    const total = subtotal + tax;
+    return { subtotal, tax, total, taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 };
   };
 
   const handleCheckout = async () => {
