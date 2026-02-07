@@ -1341,13 +1341,9 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
     category_totals = {}
     taxable_total = 0
     exempt_total = 0
-    actual_tax_by_category = {}
+    total_tax_collected = monthly_result[0]["total_tax"] if monthly_result else 0
     
     for sale in all_sales:
-        sale_subtotal = sale.get('subtotal', 0)
-        sale_tax = sale.get('tax', 0)
-        
-        # Calculate what portion of the sale's tax applies to each item
         for item in sale.get('items', []):
             # Look up item type
             inv_item = await db.inventory.find_one({"id": item.get('item_id')}, {"_id": 0, "type": 1})
@@ -1357,10 +1353,9 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
             # Track by category
             if item_type not in category_totals:
                 category_totals[item_type] = {"sales": 0, "is_exempt": False}
-                actual_tax_by_category[item_type] = 0
             category_totals[item_type]["sales"] += item_subtotal
             
-            # Check if exempt
+            # Check if exempt (using current settings)
             is_exempt = item_type.lower() in [c.lower() for c in exempt_categories]
             category_totals[item_type]["is_exempt"] = is_exempt
             
@@ -1368,27 +1363,22 @@ async def get_tax_summary(current_user: dict = Depends(get_current_user)):
                 exempt_total += item_subtotal
             else:
                 taxable_total += item_subtotal
-                # Allocate actual tax proportionally to taxable items
-                if sale_subtotal > 0 and sale_tax > 0:
-                    # Calculate taxable portion of this sale
-                    taxable_in_sale = sum(
-                        i.get('subtotal', 0) for i in sale.get('items', [])
-                        if not (await db.inventory.find_one({"id": i.get('item_id')}, {"_id": 0, "type": 1}) or {}).get('type', 'other').lower() in [c.lower() for c in exempt_categories]
-                    ) if exempt_categories else sale_subtotal
-                    if taxable_in_sale > 0:
-                        item_tax_portion = (item_subtotal / taxable_in_sale) * sale_tax
-                        actual_tax_by_category[item_type] += item_tax_portion
     
-    # Format category breakdown with actual tax collected
-    category_breakdown = [
-        {
+    # Format category breakdown - allocate actual tax proportionally to taxable categories
+    category_breakdown = []
+    for cat, data in sorted(category_totals.items(), key=lambda x: x[1]["sales"], reverse=True):
+        if data["is_exempt"]:
+            tax_for_category = 0
+        else:
+            # Proportional allocation of actual tax collected
+            tax_for_category = (data["sales"] / taxable_total * total_tax_collected) if taxable_total > 0 else 0
+        
+        category_breakdown.append({
             "category": cat,
             "sales": data["sales"],
             "is_exempt": data["is_exempt"],
-            "tax_collected": actual_tax_by_category.get(cat, 0) if not data["is_exempt"] else 0
-        }
-        for cat, data in sorted(category_totals.items(), key=lambda x: x[1]["sales"], reverse=True)
-    ]
+            "tax_collected": round(tax_for_category, 2)
+        })
     
     return {
         "tax_enabled": tax_enabled,
