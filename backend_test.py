@@ -255,6 +255,85 @@ class CouponAPITester:
         )
         return success
 
+    def test_coupon_analytics(self):
+        """Test GET /api/reports/coupon-analytics"""
+        print("\n=== TESTING COUPON ANALYTICS ===")
+        success, response = self.run_test(
+            "GET /api/reports/coupon-analytics - Get coupon usage analytics",
+            "GET",
+            "reports/coupon-analytics",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(response, dict):
+            # Validate analytics structure
+            summary = response.get('summary', {})
+            coupon_breakdown = response.get('coupon_breakdown', [])
+            all_coupons_status = response.get('all_coupons_status', [])
+            
+            print(f"Analytics Summary:")
+            print(f"  - Total Coupons: {summary.get('total_coupons', 0)}")
+            print(f"  - Active Coupons: {summary.get('active_coupons', 0)}")
+            print(f"  - Usage Rate: {summary.get('coupon_usage_rate', 0)}%")
+            print(f"  - Total Discount Given: ${summary.get('total_discount_given', 0)}")
+            print(f"  - Sales with Coupons: {summary.get('sales_with_coupons', 0)}")
+            
+            # Validate required fields exist
+            required_summary_fields = ['total_coupons', 'active_coupons', 'coupon_usage_rate', 
+                                     'total_discount_given', 'sales_with_coupons', 'month']
+            missing_fields = [field for field in required_summary_fields if field not in summary]
+            
+            if missing_fields:
+                print(f"❌ Missing summary fields: {missing_fields}")
+                return False, response
+            
+            print(f"  - Coupon Breakdown: {len(coupon_breakdown)} entries")
+            print(f"  - All Coupons Status: {len(all_coupons_status)} entries")
+            
+            # Check if SAVE20 coupon appears in analytics (should exist from context)
+            save20_found = any(c.get('code') == 'SAVE20' for c in all_coupons_status)
+            if save20_found:
+                print("✅ SAVE20 coupon found in analytics")
+            else:
+                print("⚠️  SAVE20 coupon not found in analytics")
+        
+        return success, response
+
+    def test_sales_with_coupon_tracking(self):
+        """Test that sales properly track coupon usage"""
+        print("\n=== TESTING SALES WITH COUPON TRACKING ===")
+        
+        # First get existing sales to check coupon tracking
+        success, response = self.run_test(
+            "GET /api/sales - Check sales with coupon tracking",
+            "GET",
+            "sales",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(response, list):
+            sales_with_coupons = [s for s in response if s.get('coupon_code')]
+            print(f"Found {len(sales_with_coupons)} sales with coupons out of {len(response)} total sales")
+            
+            for sale in sales_with_coupons[:3]:  # Show first 3
+                print(f"  - Sale {sale.get('id', 'N/A')[:8]}: {sale.get('coupon_code')} (${sale.get('discount', 0)} discount)")
+            
+            # Validate sale structure includes coupon fields
+            if sales_with_coupons:
+                sample_sale = sales_with_coupons[0]
+                required_fields = ['coupon_code', 'discount', 'coupon_id']
+                missing_fields = [field for field in required_fields if field not in sample_sale]
+                
+                if missing_fields:
+                    print(f"❌ Missing coupon fields in sales: {missing_fields}")
+                    return False, response
+                else:
+                    print("✅ Sales properly track coupon information")
+        
+        return success, response
+
     def run_all_tests(self):
         """Run all coupon API tests"""
         print("🧪 Starting Coupon API Testing...")
