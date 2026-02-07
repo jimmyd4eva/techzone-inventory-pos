@@ -7,6 +7,7 @@
 4. Add tax reporting
 5. Add PDF export for tax reports
 6. Add coupon/discount feature
+7. Add coupon usage analytics
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -16,47 +17,42 @@
 
 ## What's Been Implemented
 
-### Feb 7, 2026 - Tax Features
+### Tax Features
 - Removed hardcoded 10% tax
 - Configurable tax rate in Settings (0-100%)
-- Category-based tax exemptions (Parts, Screens, etc.)
+- Category-based tax exemptions
 - Tax reporting with daily/weekly/monthly stats
 - Taxable vs Exempt visual breakdown
 - PDF export for tax reports
 
-### Feb 7, 2026 - Coupon Feature
-- **Backend Endpoints**:
-  - GET /api/coupons - List all coupons
-  - POST /api/coupons - Create coupon (admin)
-  - PUT /api/coupons/{id} - Update coupon
-  - DELETE /api/coupons/{id} - Delete coupon
-  - POST /api/coupons/validate - Validate & calculate discount
-  - POST /api/coupons/{id}/increment-usage - Track usage
+### Coupon Feature
+- Coupon management (CRUD operations)
+- Discount types: percentage and fixed amount
+- Coupon options: min purchase, max discount, usage limit, validity dates
+- Sales integration with coupon input and apply button
+- Automatic usage count tracking
 
-- **Coupon Model**:
-  - Code (unique, uppercase)
-  - Discount type (percentage or fixed)
-  - Discount value
-  - Minimum purchase requirement
-  - Maximum discount (for percentage)
-  - Usage limit & tracking
-  - Validity dates
-  - Active/inactive status
-
-- **Frontend**:
-  - Coupons page with table view
-  - Add/Edit coupon modal
-  - Toggle active status
-  - Sales page coupon input
-  - Apply/remove coupon
-  - Discount display in cart
+### Coupon Analytics (NEW)
+- **Backend**: `/api/reports/coupon-analytics` endpoint
+  - Summary stats: total coupons, usage rate, total discounts
+  - Coupon breakdown by popularity
+  - All coupons status with utilization
+  
+- **Frontend Reports Page** - Coupons Tab:
+  - Summary cards (total coupons, usage rate, discounts given, revenue)
+  - Most Popular Coupons table (code, discount, times used, revenue)
+  - All Coupons Status table with utilization progress bars
+  
+- **Sale Tracking**:
+  - Sales now store coupon_code, coupon_id, and discount fields
+  - Backend processes coupons and increments usage on checkout
 
 ## Test Results
 - Backend: 100% success
 - Frontend: 100% success
 
 ## User Personas
-- **Admin**: Full access - manage coupons, tax settings, reports
+- **Admin**: Full access - manage coupons, view analytics, configure settings
 - **Cashier/Technician**: Apply coupons during sales
 
 ## Backlog
