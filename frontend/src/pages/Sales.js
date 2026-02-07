@@ -305,6 +305,7 @@ const Sales = () => {
         setCart([]);
         clearCustomer();
         setPaymentMethod('cash');
+        removeCoupon();
         fetchInventory();
       }
     } catch (error) {
