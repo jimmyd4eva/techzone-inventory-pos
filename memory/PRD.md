@@ -8,6 +8,7 @@
 5. Add PDF export for tax reports
 6. Add coupon/discount feature
 7. Add coupon usage analytics
+8. Make coupons selectable at checkout
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -18,42 +19,32 @@
 ## What's Been Implemented
 
 ### Tax Features
-- Removed hardcoded 10% tax
 - Configurable tax rate in Settings (0-100%)
 - Category-based tax exemptions
-- Tax reporting with daily/weekly/monthly stats
-- Taxable vs Exempt visual breakdown
+- Tax reporting with visual charts
 - PDF export for tax reports
 
 ### Coupon Feature
 - Coupon management (CRUD operations)
 - Discount types: percentage and fixed amount
-- Coupon options: min purchase, max discount, usage limit, validity dates
-- Sales integration with coupon input and apply button
-- Automatic usage count tracking
+- Min purchase, max discount, usage limit, validity dates
+- Coupon usage tracking and analytics
 
-### Coupon Analytics (NEW)
-- **Backend**: `/api/reports/coupon-analytics` endpoint
-  - Summary stats: total coupons, usage rate, total discounts
-  - Coupon breakdown by popularity
-  - All coupons status with utilization
-  
-- **Frontend Reports Page** - Coupons Tab:
-  - Summary cards (total coupons, usage rate, discounts given, revenue)
-  - Most Popular Coupons table (code, discount, times used, revenue)
-  - All Coupons Status table with utilization progress bars
-  
-- **Sale Tracking**:
-  - Sales now store coupon_code, coupon_id, and discount fields
-  - Backend processes coupons and increments usage on checkout
+### Coupon Selection at Checkout (NEW)
+- **"View Available Coupons" button** on Sales page
+- Expandable list showing all active coupons
+- Each coupon shows: code, discount badge, description, min purchase
+- Coupons not meeting minimum are grayed out
+- **Click to apply** - no need to type code manually
+- Applied coupon shows with X button to remove
 
 ## Test Results
 - Backend: 100% success
-- Frontend: 100% success
+- Frontend: 95% (minor toggle UI note)
 
 ## User Personas
-- **Admin**: Full access - manage coupons, view analytics, configure settings
-- **Cashier/Technician**: Apply coupons during sales
+- **Admin**: Full access - manage coupons, configure settings
+- **Cashier**: Select coupons from list during checkout
 
 ## Backlog
 - None
