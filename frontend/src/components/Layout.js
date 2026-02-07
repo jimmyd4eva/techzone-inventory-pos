@@ -81,6 +81,12 @@ const Layout = ({ user, onLogout }) => {
               </NavLink>
             </li>
             <li>
+              <NavLink to="/coupons" data-testid="nav-coupons">
+                <Ticket size={20} />
+                Coupons
+              </NavLink>
+            </li>
+            <li>
               <NavLink to="/reports" data-testid="nav-reports">
                 <FileText size={20} />
                 Reports
