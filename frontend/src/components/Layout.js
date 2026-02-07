@@ -94,6 +94,14 @@ const Layout = ({ user, onLogout }) => {
                 </NavLink>
               </li>
             )}
+            {user?.role === 'admin' && (
+              <li>
+                <NavLink to="/settings" data-testid="nav-settings">
+                  <Settings size={20} />
+                  Settings
+                </NavLink>
+              </li>
+            )}
           </ul>
         </nav>
         
