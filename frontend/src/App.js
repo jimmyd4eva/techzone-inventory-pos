@@ -68,6 +68,7 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="reports" element={<Reports />} />
           <Route path="users" element={<Users />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="payment-success" element={<PaymentSuccess />} />
           <Route path="payment-success-paypal" element={<PaymentSuccessPayPal />} />
         </Route>
