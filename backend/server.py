@@ -604,6 +604,42 @@ async def delete_repair_job(job_id: str, current_user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Repair job not found")
     return {"message": "Repair job deleted successfully"}
 
+# ============ SETTINGS ENDPOINTS ============
+
+@api_router.get("/settings")
+async def get_settings(current_user: dict = Depends(get_current_user)):
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        return {
+            "id": "app_settings",
+            "tax_rate": 0.0,
+            "tax_enabled": False,
+            "currency": "USD",
+            "updated_at": None,
+            "updated_by": None
+        }
+    return settings
+
+@api_router.put("/settings")
+async def update_settings(settings_data: SettingsUpdate, current_user: dict = Depends(get_current_user)):
+    # Only admin can update settings
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can update settings")
+    
+    update_data = {k: v for k, v in settings_data.model_dump().items() if v is not None}
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    update_data['updated_by'] = current_user.get('username')
+    
+    await db.settings.update_one(
+        {"id": "app_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    return settings
+
 # ============ SALES ENDPOINTS ============
 
 @api_router.post("/sales", response_model=Sale)
