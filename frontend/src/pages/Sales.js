@@ -619,7 +619,7 @@ const Sales = () => {
                       onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
                     />
                     <button
-                      onClick={applyCoupon}
+                      onClick={() => applyCoupon()}
                       data-testid="apply-coupon-btn"
                       disabled={!couponCode.trim() || cart.length === 0}
                       style={{
@@ -643,6 +643,116 @@ const Sales = () => {
                       color: '#dc2626' 
                     }} data-testid="coupon-error">
                       {couponError}
+                    </div>
+                  )}
+
+                  {/* Available Coupons List */}
+                  {availableCoupons.length > 0 && cart.length > 0 && (
+                    <div style={{ marginTop: '12px' }}>
+                      <button
+                        onClick={() => setShowCouponList(!showCouponList)}
+                        data-testid="show-coupons-btn"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          backgroundColor: 'transparent',
+                          border: '1px dashed #c4b5fd',
+                          borderRadius: '6px',
+                          color: '#7c3aed',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        {showCouponList ? '▲ Hide' : '▼ View'} Available Coupons ({availableCoupons.length})
+                      </button>
+                      
+                      {showCouponList && (
+                        <div style={{
+                          marginTop: '8px',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          border: '1px solid #e9d5ff',
+                          borderRadius: '8px',
+                          backgroundColor: '#fff'
+                        }}>
+                          {availableCoupons.map((coupon) => {
+                            const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+                            const meetsMinimum = cartSubtotal >= (coupon.min_purchase || 0);
+                            
+                            return (
+                              <button
+                                key={coupon.id}
+                                data-testid={`select-coupon-${coupon.code}`}
+                                onClick={() => meetsMinimum && selectCoupon(coupon)}
+                                disabled={!meetsMinimum}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  backgroundColor: meetsMinimum ? '#fff' : '#f9fafb',
+                                  border: 'none',
+                                  borderBottom: '1px solid #f3e8ff',
+                                  cursor: meetsMinimum ? 'pointer' : 'not-allowed',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  opacity: meetsMinimum ? 1 : 0.6,
+                                  transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => meetsMinimum && (e.target.style.backgroundColor = '#faf5ff')}
+                                onMouseLeave={(e) => meetsMinimum && (e.target.style.backgroundColor = '#fff')}
+                              >
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{
+                                      fontFamily: 'monospace',
+                                      fontWeight: '700',
+                                      fontSize: '14px',
+                                      color: '#7c3aed'
+                                    }}>
+                                      {coupon.code}
+                                    </span>
+                                    <span style={{
+                                      backgroundColor: '#d1fae5',
+                                      color: '#065f46',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}>
+                                      {coupon.discount_type === 'percentage' 
+                                        ? `${coupon.discount_value}% OFF` 
+                                        : `$${coupon.discount_value} OFF`}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                                    {coupon.description || 'No description'}
+                                    {coupon.min_purchase > 0 && (
+                                      <span style={{ 
+                                        marginLeft: '8px',
+                                        color: meetsMinimum ? '#059669' : '#dc2626'
+                                      }}>
+                                        • Min ${coupon.min_purchase}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div style={{
+                                  color: meetsMinimum ? '#8b5cf6' : '#9ca3af',
+                                  fontSize: '18px'
+                                }}>
+                                  →
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
