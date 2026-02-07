@@ -317,6 +317,209 @@ class TaxExemptionTester:
                 
         return success
 
+    def test_tax_exempt_categories_get(self):
+        """Test GET /api/settings returns tax_exempt_categories array"""
+        print("\n=== TESTING TAX EXEMPT CATEGORIES GET ===")
+        success, response = self.run_test(
+            "Get Settings with Tax Exempt Categories",
+            "GET",
+            "settings",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success:
+            if 'tax_exempt_categories' in response:
+                self.log_test("tax_exempt_categories field exists", True, 
+                            f"Current exemptions: {response['tax_exempt_categories']}")
+            else:
+                self.log_test("tax_exempt_categories field exists", False, 
+                            "tax_exempt_categories field missing from response")
+        return success
+
+    def test_tax_exempt_categories_update(self):
+        """Test PUT /api/settings can update tax_exempt_categories"""
+        print("\n=== TESTING TAX EXEMPT CATEGORIES UPDATE ===")
+        
+        # Set up tax exemptions for 'part' and 'screen' categories
+        tax_data = {
+            "tax_rate": 0.10,  # 10% tax
+            "tax_enabled": True,
+            "tax_exempt_categories": ["part", "screen"]
+        }
+        
+        success, response = self.run_test(
+            "Update Tax Exempt Categories",
+            "PUT",
+            "settings",
+            200,
+            data=tax_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success:
+            expected_exemptions = ["part", "screen"]
+            actual_exemptions = response.get('tax_exempt_categories', [])
+            
+            if set(actual_exemptions) == set(expected_exemptions):
+                self.log_test("Tax exempt categories updated correctly", True,
+                            f"Set exemptions: {actual_exemptions}")
+            else:
+                self.log_test("Tax exempt categories updated correctly", False,
+                            f"Expected {expected_exemptions}, got {actual_exemptions}")
+        return success
+
+    def create_test_inventory_items(self):
+        """Create test inventory items for different categories"""
+        print("\n=== CREATING TEST INVENTORY ITEMS ===")
+        
+        test_items = [
+            {
+                "name": "Test iPhone",
+                "type": "phone",  # Taxable
+                "sku": "TEST-PHONE-001",
+                "quantity": 10,
+                "cost_price": 800.0,
+                "selling_price": 1000.0
+            },
+            {
+                "name": "Test Screen",
+                "type": "screen",  # Tax exempt
+                "sku": "TEST-SCREEN-001",
+                "quantity": 20,
+                "cost_price": 50.0,
+                "selling_price": 100.0
+            },
+            {
+                "name": "Test Part",
+                "type": "part",  # Tax exempt
+                "sku": "TEST-PART-001",
+                "quantity": 15,
+                "cost_price": 20.0,
+                "selling_price": 40.0
+            },
+            {
+                "name": "Test Accessory",
+                "type": "accessory",  # Taxable
+                "sku": "TEST-ACC-001",
+                "quantity": 25,
+                "cost_price": 5.0,
+                "selling_price": 15.0
+            }
+        ]
+        
+        created_items = []
+        for item_data in test_items:
+            success, response = self.run_test(
+                f"Create {item_data['name']}",
+                "POST",
+                "inventory",
+                200,
+                data=item_data,
+                headers={"Authorization": f"Bearer {self.admin_token}"}
+            )
+            
+            if success:
+                created_items.append(response)
+                print(f"✅ Created: {item_data['name']} ({item_data['type']})")
+            else:
+                print(f"❌ Failed to create: {item_data['name']}")
+        
+        return created_items
+
+    def test_sales_tax_calculation_with_exemptions(self, inventory_items):
+        """Test that sales API calculates tax only on non-exempt items"""
+        print("\n=== TESTING SALES TAX CALCULATION WITH EXEMPTIONS ===")
+        
+        if len(inventory_items) < 4:
+            self.log_test("Sales tax calculation with exemptions", False, 
+                        "Not enough test inventory items created")
+            return False
+
+        # Create a sale with mixed item types
+        sale_items = []
+        total_subtotal = 0
+        expected_taxable_amount = 0
+        
+        for item in inventory_items:
+            sale_items.append({
+                "item_id": item['id'],
+                "item_name": item['name'],
+                "quantity": 1,
+                "price": item['selling_price'],
+                "subtotal": item['selling_price']
+            })
+            
+            total_subtotal += item['selling_price']
+            
+            # Only phone and accessory should be taxable (not part or screen)
+            if item['type'] not in ['part', 'screen']:
+                expected_taxable_amount += item['selling_price']
+
+        sale_data = {
+            "items": sale_items,
+            "payment_method": "cash",
+            "created_by": "admin"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Mixed Categories",
+            "POST",
+            "sales",
+            201,
+            data=sale_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+
+        if success:
+            actual_subtotal = response.get('subtotal', 0)
+            actual_tax = response.get('tax', 0)
+            actual_total = response.get('total', 0)
+            
+            expected_tax = expected_taxable_amount * 0.10  # 10% tax rate
+            expected_total = total_subtotal + expected_tax
+            
+            print(f"Subtotal: ${actual_subtotal:.2f} (expected: ${total_subtotal:.2f})")
+            print(f"Taxable amount: ${expected_taxable_amount:.2f}")
+            print(f"Tax: ${actual_tax:.2f} (expected: ${expected_tax:.2f})")
+            print(f"Total: ${actual_total:.2f} (expected: ${expected_total:.2f})")
+            
+            # Check calculations
+            subtotal_correct = abs(actual_subtotal - total_subtotal) < 0.01
+            tax_correct = abs(actual_tax - expected_tax) < 0.01
+            total_correct = abs(actual_total - expected_total) < 0.01
+            
+            if subtotal_correct and tax_correct and total_correct:
+                self.log_test("Tax calculation with exemptions correct", True,
+                            f"Only taxable items (${expected_taxable_amount:.2f}) were taxed")
+            else:
+                self.log_test("Tax calculation with exemptions correct", False,
+                            f"Tax calculation incorrect. Expected tax: ${expected_tax:.2f}, got: ${actual_tax:.2f}")
+            
+            return success and subtotal_correct and tax_correct and total_correct
+        
+        return False
+
+    def cleanup_test_inventory(self, inventory_items):
+        """Clean up test inventory items"""
+        print("\n=== CLEANING UP TEST INVENTORY ===")
+        
+        for item in inventory_items:
+            try:
+                success, _ = self.run_test(
+                    f"Delete {item['name']}",
+                    "DELETE",
+                    f"inventory/{item['id']}",
+                    200,
+                    headers={"Authorization": f"Bearer {self.admin_token}"}
+                )
+                if success:
+                    print(f"✅ Deleted: {item['name']}")
+                else:
+                    print(f"❌ Failed to delete: {item['name']}")
+            except Exception as e:
+                print(f"❌ Error deleting {item['name']}: {e}")
+
     def test_non_admin_access(self):
         """Test that non-admin users cannot update settings"""
         print("\n=== TESTING NON-ADMIN ACCESS RESTRICTION ===")
