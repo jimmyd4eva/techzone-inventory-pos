@@ -202,6 +202,20 @@ class CheckoutRequest(BaseModel):
     sale_id: str
     origin_url: str
 
+class Settings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "app_settings"
+    tax_rate: float = 0.0  # Tax rate as decimal (e.g., 0.1 for 10%)
+    tax_enabled: bool = False
+    currency: str = "USD"
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_by: Optional[str] = None
+
+class SettingsUpdate(BaseModel):
+    tax_rate: Optional[float] = None
+    tax_enabled: Optional[bool] = None
+    currency: Optional[str] = None
+
 # ============ AUTH UTILITIES ============
 
 def create_token(user_id: str, role: str, username: str = None) -> str:
