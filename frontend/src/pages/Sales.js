@@ -438,6 +438,12 @@ const Sales = () => {
               <span>Subtotal:</span>
               <span data-testid="cart-subtotal">${subtotal.toFixed(2)}</span>
             </div>
+            {taxSettings.tax_enabled && taxSettings.tax_exempt_categories.length > 0 && taxableSubtotal !== subtotal && (
+              <div className="summary-row" style={{ fontSize: '13px', color: '#6b7280' }}>
+                <span>Taxable Amount:</span>
+                <span data-testid="cart-taxable">${taxableSubtotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className="summary-row">
               <span>Tax ({taxRate.toFixed(0)}%):</span>
               <span data-testid="cart-tax">${tax.toFixed(2)}</span>
