@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, TrendingUp, Package, Calendar, Receipt, PieChart, BarChart3, CheckCircle, XCircle, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, Calendar, Receipt, PieChart, BarChart3, CheckCircle, XCircle, Download, Ticket, Percent, Hash } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -11,6 +11,7 @@ const Reports = () => {
   const [monthlySales, setMonthlySales] = useState({ month: '', total_sales: 0, total_transactions: 0 });
   const [lowStockItems, setLowStockItems] = useState([]);
   const [taxReport, setTaxReport] = useState(null);
+  const [couponAnalytics, setCouponAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sales');
   const [downloading, setDownloading] = useState(false);
@@ -23,7 +24,7 @@ const Reports = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [salesResponse, weeklySalesResponse, monthlySalesResponse, lowStockResponse, taxResponse] = await Promise.all([
+      const [salesResponse, weeklySalesResponse, monthlySalesResponse, lowStockResponse, taxResponse, couponResponse] = await Promise.all([
         axios.get(`${API}/reports/daily-sales`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -38,6 +39,9 @@ const Reports = () => {
         }),
         axios.get(`${API}/reports/tax-summary`, {
           headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/reports/coupon-analytics`, {
+          headers: { Authorization: `Bearer ${token}` }
         })
       ]);
 
@@ -46,6 +50,7 @@ const Reports = () => {
       setMonthlySales(monthlySalesResponse.data);
       setLowStockItems(lowStockResponse.data);
       setTaxReport(taxResponse.data);
+      setCouponAnalytics(couponResponse.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
     } finally {
