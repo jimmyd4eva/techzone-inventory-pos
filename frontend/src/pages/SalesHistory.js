@@ -351,7 +351,8 @@ const SalesHistory = () => {
         <>
           <Receipt 
             sale={selectedSale} 
-            onClose={() => setSelectedSale(null)} 
+            onClose={() => setSelectedSale(null)}
+            businessSettings={businessSettings}
           />
           {/* Test button to verify clicks work */}
           <button
