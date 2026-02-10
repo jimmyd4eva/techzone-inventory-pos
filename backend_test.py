@@ -496,14 +496,23 @@ class TechZoneAPITester:
         return True, {}
 
     def run_all_tests(self):
-        """Run all coupon API tests"""
-        print("🧪 Starting Coupon API Testing...")
+        """Run all API tests"""
+        print("🧪 Starting TechZone API Testing...")
         print("=" * 60)
         
         # Test login first
         if not self.test_admin_login():
             print("❌ Admin login failed, stopping tests")
             return False
+
+        # Test Settings API (Business Info & Points System)
+        self.test_settings_api()
+        
+        # Test Customer Points System
+        self.test_customer_points_system()
+        
+        # Test Sales Points Integration
+        self.test_sales_points_integration()
 
         # Test GET coupons
         success, coupons = self.test_get_coupons()
@@ -564,7 +573,7 @@ class TechZoneAPITester:
         return self.tests_passed == self.tests_run
 
 def main():
-    tester = CouponAPITester()
+    tester = TechZoneAPITester()
     success = tester.run_all_tests()
     return 0 if success else 1
 
