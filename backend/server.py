@@ -927,14 +927,43 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                 # Increment usage count
                 await db.coupons.update_one({"id": coupon_id}, {"$inc": {"usage_count": 1}})
     
-    total = subtotal + tax - discount
+    # Handle points redemption
+    points_used = 0
+    points_discount = 0
+    points_earned = 0
+    customer = None
+    
+    if sale_data.customer_id:
+        customer = await db.customers.find_one({"id": sale_data.customer_id})
+    
+    # Check points settings
+    points_enabled = settings.get('points_enabled', False) if settings else False
+    points_per_dollar = settings.get('points_per_dollar', 0.002) if settings else 0.002  # 1 point per $500
+    points_threshold = settings.get('points_redemption_threshold', 3500) if settings else 3500
+    points_value = settings.get('points_value', 1) if settings else 1
+    
+    if points_enabled and customer:
+        customer_total_spent = customer.get('total_spent', 0)
+        customer_points = customer.get('points_balance', 0)
+        
+        # Handle points redemption if requested and eligible
+        if sale_data.points_to_use > 0 and customer_total_spent >= points_threshold:
+            # Use up to available points, but not more than sale total after other discounts
+            max_points_can_use = min(sale_data.points_to_use, customer_points)
+            max_discount_from_points = subtotal + tax - discount  # Can't discount more than remaining
+            points_discount = min(max_points_can_use * points_value, max_discount_from_points)
+            points_used = points_discount / points_value  # Actual points used
+    
+    total = subtotal + tax - discount - points_discount
+    
+    # Calculate points earned from this purchase (after all discounts applied)
+    if points_enabled and customer:
+        points_earned = total * points_per_dollar
     
     # Get customer name - prioritize the direct customer_name field over customer_id lookup
     customer_name = sale_data.customer_name
-    if not customer_name and sale_data.customer_id:
-        customer = await db.customers.find_one({"id": sale_data.customer_id})
-        if customer:
-            customer_name = customer['name']
+    if not customer_name and customer:
+        customer_name = customer['name']
     
     # Determine payment status
     payment_status = "completed" if sale_data.payment_method == "cash" else "pending"
@@ -949,6 +978,9 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
         discount=discount,
         coupon_code=coupon_code,
         coupon_id=coupon_id,
+        points_used=points_used,
+        points_discount=points_discount,
+        points_earned=points_earned,
         total=total,
         payment_status=payment_status,
         created_by=sale_data.created_by
@@ -964,6 +996,20 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
             await db.inventory.update_one(
                 {"id": item.item_id},
                 {"$inc": {"quantity": -item.quantity}}
+            )
+        
+        # Update customer points if applicable
+        if points_enabled and customer and sale_data.customer_id:
+            await db.customers.update_one(
+                {"id": sale_data.customer_id},
+                {
+                    "$inc": {
+                        "total_spent": total,
+                        "points_balance": points_earned - points_used,
+                        "points_earned": points_earned,
+                        "points_redeemed": points_used
+                    }
+                }
             )
     
     return sale
