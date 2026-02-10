@@ -278,13 +278,23 @@ const Sales = () => {
     
     const tax = taxSettings.tax_enabled ? taxableSubtotal * taxSettings.tax_rate : 0;
     const discount = couponDiscount;
-    const total = subtotal + tax - discount;
+    
+    // Calculate points discount
+    const pointsDiscount = pointsToUse * pointsSettings.points_value;
+    
+    // Calculate points to be earned from this purchase
+    const totalAfterDiscounts = subtotal + tax - discount - pointsDiscount;
+    const pointsEarned = pointsSettings.points_enabled ? Math.floor(totalAfterDiscounts * pointsSettings.points_per_dollar) : 0;
+    
+    const total = Math.max(0, subtotal + tax - discount - pointsDiscount);
     return { 
       subtotal, 
       taxableSubtotal,
       tax, 
       discount,
-      total: Math.max(0, total), 
+      pointsDiscount,
+      pointsEarned,
+      total, 
       taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 
     };
   };
