@@ -785,6 +785,58 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
     settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
     return settings
 
+@api_router.post("/upload/logo")
+async def upload_logo(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """Upload a logo image file"""
+    # Only admin can upload logo
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can upload logo")
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}")
+    
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB")
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'
+    filename = f"logo_{uuid.uuid4().hex[:8]}.{file_ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # Return the URL path that can be used to access the file
+    logo_url = f"/api/uploads/{filename}"
+    
+    return {"logo_url": logo_url, "filename": filename}
+
+@api_router.get("/uploads/{filename}")
+async def get_uploaded_file(filename: str):
+    """Serve uploaded files"""
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Determine content type
+    ext = filename.split('.')[-1].lower()
+    content_types = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'svg': 'image/svg+xml'
+    }
+    content_type = content_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(file_path, media_type=content_type)
+
 # ============ COUPON ENDPOINTS ============
 
 @api_router.get("/coupons")
