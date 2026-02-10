@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -11,6 +11,38 @@ const Login = ({ onLogin }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [businessSettings, setBusinessSettings] = useState({
+    business_name: 'TECHZONE',
+    business_address: '30 Giltress Street, Kingston 2, JA',
+    business_phone: '876-633-9251 / 876-843-2416',
+    business_logo: '/techzone-logo.jpg'
+  });
+
+  useEffect(() => {
+    fetchPublicSettings();
+  }, []);
+
+  const fetchPublicSettings = async () => {
+    try {
+      // Try to fetch settings without auth (for login page display)
+      const response = await axios.get(`${API}/settings/public`);
+      setBusinessSettings({
+        business_name: response.data.business_name || 'TECHZONE',
+        business_address: response.data.business_address || '30 Giltress Street, Kingston 2, JA',
+        business_phone: response.data.business_phone || '876-633-9251 / 876-843-2416',
+        business_logo: response.data.business_logo || '/techzone-logo.jpg'
+      });
+    } catch (error) {
+      // Keep defaults if API fails (expected on first load)
+      console.log('Using default business settings');
+    }
+  };
+
+  // Split business name for colored display
+  const nameParts = businessSettings.business_name.split('');
+  const midPoint = Math.ceil(nameParts.length / 2);
+  const firstPart = nameParts.slice(0, midPoint).join('');
+  const secondPart = nameParts.slice(midPoint).join('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,8 +65,8 @@ const Login = ({ onLogin }) => {
         <div className="login-logo">
           <div style={{ overflow: 'hidden', height: '100px', marginBottom: '8px' }}>
             <img 
-              src="/techzone-logo.jpg" 
-              alt="Techzone Logo" 
+              src={businessSettings.business_logo || '/techzone-logo.jpg'} 
+              alt={`${businessSettings.business_name} Logo`}
               style={{ 
                 width: '288px', 
                 height: 'auto', 
@@ -42,6 +74,7 @@ const Login = ({ onLogin }) => {
                 objectFit: 'cover',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
               }}
+              onError={(e) => { e.target.src = '/techzone-logo.jpg'; }}
             />
           </div>
           <p style={{ 
@@ -50,7 +83,7 @@ const Login = ({ onLogin }) => {
             marginBottom: '4px',
             lineHeight: '1.4'
           }}>
-            30 Giltress Street, Kingston 2, JA
+            {businessSettings.business_address}
           </p>
           <p style={{ 
             fontSize: '14px', 
@@ -58,11 +91,11 @@ const Login = ({ onLogin }) => {
             marginBottom: '16px',
             lineHeight: '1.4'
           }}>
-            876-633-9251 / 876-843-2416
+            {businessSettings.business_phone}
           </p>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-            <span style={{ color: '#1e3a8a' }}>Tech</span>
-            <span style={{ color: '#dc2626' }}>zone</span>
+            <span style={{ color: '#1e3a8a' }}>{firstPart}</span>
+            <span style={{ color: '#dc2626' }}>{secondPart}</span>
             {' '}
             <span style={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
