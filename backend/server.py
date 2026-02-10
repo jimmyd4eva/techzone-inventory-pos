@@ -84,6 +84,11 @@ class Customer(BaseModel):
     email: Optional[str] = None
     phone: str
     address: Optional[str] = None
+    # Points system
+    total_spent: float = 0  # Total amount spent by customer
+    points_balance: float = 0  # Current points balance
+    points_earned: float = 0  # Total points ever earned
+    points_redeemed: float = 0  # Total points ever redeemed
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCreate(BaseModel):
