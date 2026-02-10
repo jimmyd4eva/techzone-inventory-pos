@@ -706,6 +706,19 @@ async def delete_repair_job(job_id: str, current_user: dict = Depends(get_curren
 
 # ============ SETTINGS ENDPOINTS ============
 
+@api_router.get("/settings/public")
+async def get_public_settings():
+    """Get public business info for display (no auth required)"""
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    
+    # Return only public business info
+    return {
+        "business_name": settings.get("business_name", "TECHZONE") if settings else "TECHZONE",
+        "business_address": settings.get("business_address", "30 Giltress Street, Kingston 2, JA") if settings else "30 Giltress Street, Kingston 2, JA",
+        "business_phone": settings.get("business_phone", "876-633-9251 / 876-843-2416") if settings else "876-633-9251 / 876-843-2416",
+        "business_logo": settings.get("business_logo") if settings else None
+    }
+
 @api_router.get("/settings")
 async def get_settings(current_user: dict = Depends(get_current_user)):
     # Define default settings structure
