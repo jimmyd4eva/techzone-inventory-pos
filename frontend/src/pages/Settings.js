@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -31,8 +31,10 @@ const Settings = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [activeSection, setActiveSection] = useState('business');
+  const fileInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
