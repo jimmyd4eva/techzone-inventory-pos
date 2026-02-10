@@ -222,6 +222,16 @@ class Settings(BaseModel):
     currency: str = "USD"
     # Category-specific tax exemptions (categories listed here are TAX EXEMPT)
     tax_exempt_categories: List[str] = []
+    # Business info
+    business_name: str = "TECHZONE"
+    business_address: str = "30 Giltress Street, Kingston 2, JA"
+    business_phone: str = "876-633-9251 / 876-843-2416"
+    business_logo: Optional[str] = None
+    # Points system
+    points_enabled: bool = False
+    points_per_dollar: float = 0.002  # 1 point per $500 = 0.002 points per $1
+    points_redemption_threshold: float = 3500  # Min spend to redeem points
+    points_value: float = 1  # Each point worth $1 in discount
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -230,6 +240,14 @@ class SettingsUpdate(BaseModel):
     tax_enabled: Optional[bool] = None
     currency: Optional[str] = None
     tax_exempt_categories: Optional[List[str]] = None
+    business_name: Optional[str] = None
+    business_address: Optional[str] = None
+    business_phone: Optional[str] = None
+    business_logo: Optional[str] = None
+    points_enabled: Optional[bool] = None
+    points_per_dollar: Optional[float] = None
+    points_redemption_threshold: Optional[float] = None
+    points_value: Optional[float] = None
 
 # ============ COUPON MODELS ============
 
