@@ -373,7 +373,18 @@ const Sales = () => {
     return <div className="loading-screen"><div className="loading-spinner"></div></div>;
   }
 
-  const { subtotal, taxableSubtotal, tax, discount, total, taxRate } = calculateTotal();
+  const { subtotal, taxableSubtotal, tax, discount, pointsDiscount, pointsEarned, total, taxRate } = calculateTotal();
+
+  // Check if customer can redeem points
+  const canRedeemPoints = selectedCustomer && 
+    pointsSettings.points_enabled && 
+    selectedCustomer.points_info?.can_redeem && 
+    selectedCustomer.points_balance > 0;
+  
+  const maxPointsToUse = selectedCustomer ? Math.min(
+    selectedCustomer.points_balance || 0,
+    Math.floor((subtotal + tax - discount) / pointsSettings.points_value) // Can't discount more than sale total
+  ) : 0;
 
   return (
     <div data-testid="sales-page">
