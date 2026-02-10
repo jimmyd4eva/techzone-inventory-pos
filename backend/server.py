@@ -510,6 +510,21 @@ async def get_customer(customer_id: str, current_user: dict = Depends(get_curren
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
+    # Get settings for points info
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    points_enabled = settings.get('points_enabled', False) if settings else False
+    points_threshold = settings.get('points_redemption_threshold', 3500) if settings else 3500
+    points_value = settings.get('points_value', 1) if settings else 1
+    
+    # Add points info
+    customer['points_info'] = {
+        'points_enabled': points_enabled,
+        'can_redeem': customer.get('total_spent', 0) >= points_threshold,
+        'threshold': points_threshold,
+        'points_value': points_value,
+        'spend_to_unlock': max(0, points_threshold - customer.get('total_spent', 0))
+    }
+    
     # Get repair history
     repairs = await db.repair_jobs.find({"customer_id": customer_id}, {"_id": 0}).to_list(100)
     customer['repair_history'] = repairs
