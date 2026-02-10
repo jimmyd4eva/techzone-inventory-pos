@@ -187,7 +187,8 @@ const Customers = () => {
                   <th>Name</th>
                   <th>Phone</th>
                   <th>Email</th>
-                  <th>Address</th>
+                  <th>Points</th>
+                  <th>Total Spent</th>
                   <th>Joined</th>
                   <th>Actions</th>
                 </tr>
@@ -210,7 +211,26 @@ const Customers = () => {
                     <td>{customer.name}</td>
                     <td>{customer.phone}</td>
                     <td>{customer.email || '-'}</td>
-                    <td>{customer.address || '-'}</td>
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        color: '#f59e0b',
+                        background: '#fef3c7',
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        ⭐ {(customer.points_balance || 0).toFixed(0)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '500', color: '#059669' }}>
+                        ${(customer.total_spent || 0).toFixed(2)}
+                      </span>
+                    </td>
                     <td>{new Date(customer.created_at).toLocaleDateString()}</td>
                     <td>
                       <div className="action-buttons">
