@@ -324,8 +324,57 @@ const Settings = () => {
 
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Logo URL
+                Logo
               </label>
+              
+              {/* File Upload Option */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                marginBottom: '12px',
+                flexWrap: 'wrap'
+              }}>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                  data-testid="logo-file-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 16px',
+                    backgroundColor: '#8b5cf6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    opacity: uploading ? 0.7 : 1
+                  }}
+                  data-testid="upload-logo-btn"
+                >
+                  <Upload size={16} />
+                  {uploading ? 'Uploading...' : 'Upload from Computer'}
+                </button>
+                <span style={{ 
+                  fontSize: '13px', 
+                  color: '#6b7280', 
+                  alignSelf: 'center' 
+                }}>
+                  or enter URL below
+                </span>
+              </div>
+
+              {/* URL Input Option */}
               <div style={{ position: 'relative' }}>
                 <Image size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                 <input
@@ -333,7 +382,7 @@ const Settings = () => {
                   data-testid="business-logo-input"
                   value={settings.business_logo}
                   onChange={(e) => setSettings({ ...settings, business_logo: e.target.value })}
-                  placeholder="https://example.com/logo.png"
+                  placeholder="https://example.com/logo.png or upload a file above"
                   style={{
                     width: '100%',
                     padding: '12px 16px 12px 40px',
@@ -343,15 +392,42 @@ const Settings = () => {
                   }}
                 />
               </div>
+              
+              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
+                Supported formats: JPG, PNG, GIF, WebP, SVG (max 5MB)
+              </p>
+
               {settings.business_logo && (
                 <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                  <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>Logo Preview:</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <p style={{ fontSize: '13px', color: '#6b7280' }}>Logo Preview:</p>
+                    <button
+                      type="button"
+                      onClick={() => setSettings({ ...settings, business_logo: '' })}
+                      style={{
+                        fontSize: '12px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
                   <img 
                     src={settings.business_logo} 
                     alt="Logo preview" 
-                    style={{ maxHeight: '60px', maxWidth: '200px', objectFit: 'contain' }}
-                    onError={(e) => e.target.style.display = 'none'}
+                    style={{ maxHeight: '80px', maxWidth: '250px', objectFit: 'contain' }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
                   />
+                  <p style={{ display: 'none', fontSize: '13px', color: '#ef4444' }}>
+                    Failed to load image. Please check the URL.
+                  </p>
                 </div>
               )}
             </div>
