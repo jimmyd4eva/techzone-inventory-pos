@@ -334,6 +334,167 @@ class TechZoneAPITester:
         
         return success, response
 
+    def test_settings_api(self):
+        """Test settings API endpoints"""
+        print("\n=== TESTING SETTINGS API ===")
+        
+        # Test GET settings
+        success, settings = self.run_test(
+            "GET /api/settings - Get current settings",
+            "GET",
+            "settings",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(settings, dict):
+            # Check for business info fields
+            business_fields = ['business_name', 'business_address', 'business_phone', 'business_logo']
+            points_fields = ['points_enabled', 'points_redemption_threshold', 'points_value']
+            
+            missing_business = [f for f in business_fields if f not in settings]
+            missing_points = [f for f in points_fields if f not in settings]
+            
+            if missing_business:
+                print(f"❌ Missing business info fields: {missing_business}")
+                return False, settings
+            
+            if missing_points:
+                print(f"❌ Missing points system fields: {missing_points}")
+                return False, settings
+            
+            print("✅ Settings API has all required business info and points fields")
+            print(f"  - Business Name: {settings.get('business_name')}")
+            print(f"  - Points Enabled: {settings.get('points_enabled')}")
+            print(f"  - Points Threshold: ${settings.get('points_redemption_threshold')}")
+            print(f"  - Points Value: ${settings.get('points_value')}")
+        
+        # Test PUT settings (update business info and points)
+        update_data = {
+            "business_name": "TECHZONE UPDATED",
+            "business_address": "123 Test Street, Test City",
+            "business_phone": "555-123-4567",
+            "business_logo": "https://example.com/logo.png",
+            "points_enabled": True,
+            "points_redemption_threshold": 3500,
+            "points_value": 1
+        }
+        
+        success, updated_settings = self.run_test(
+            "PUT /api/settings - Update business info and points",
+            "PUT",
+            "settings",
+            200,
+            data=update_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(updated_settings, dict):
+            print("✅ Settings updated successfully")
+            print(f"  - Updated Business Name: {updated_settings.get('business_name')}")
+            print(f"  - Points Enabled: {updated_settings.get('points_enabled')}")
+        
+        return success, updated_settings
+
+    def test_customer_points_system(self):
+        """Test customer points system functionality"""
+        print("\n=== TESTING CUSTOMER POINTS SYSTEM ===")
+        
+        # First get customers to test points info
+        success, customers = self.run_test(
+            "GET /api/customers - Get customers list",
+            "GET",
+            "customers",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(customers, list) and len(customers) > 0:
+            customer = customers[0]
+            customer_id = customer.get('id')
+            
+            # Check if customer has points fields
+            points_fields = ['total_spent', 'points_balance', 'points_earned', 'points_redeemed']
+            missing_fields = [f for f in points_fields if f not in customer]
+            
+            if missing_fields:
+                print(f"❌ Customer missing points fields: {missing_fields}")
+                return False, {}
+            
+            print("✅ Customer model has all required points fields")
+            print(f"  - Total Spent: ${customer.get('total_spent', 0)}")
+            print(f"  - Points Balance: {customer.get('points_balance', 0)}")
+            
+            # Test GET customer by ID with points_info
+            success, customer_detail = self.run_test(
+                f"GET /api/customers/{customer_id} - Get customer with points info",
+                "GET",
+                f"customers/{customer_id}",
+                200,
+                headers={"Authorization": f"Bearer {self.admin_token}"}
+            )
+            
+            if success and isinstance(customer_detail, dict):
+                points_info = customer_detail.get('points_info')
+                if not points_info:
+                    print("❌ Customer detail missing points_info")
+                    return False, {}
+                
+                required_points_info = ['points_enabled', 'can_redeem', 'threshold', 'points_value', 'spend_to_unlock']
+                missing_info = [f for f in required_points_info if f not in points_info]
+                
+                if missing_info:
+                    print(f"❌ Missing points_info fields: {missing_info}")
+                    return False, {}
+                
+                print("✅ Customer points_info has all required fields")
+                print(f"  - Can Redeem: {points_info.get('can_redeem')}")
+                print(f"  - Threshold: ${points_info.get('threshold')}")
+                print(f"  - Spend to Unlock: ${points_info.get('spend_to_unlock')}")
+                
+                return True, customer_detail
+        
+        print("⚠️  No customers found to test points system")
+        return True, {}
+
+    def test_sales_points_integration(self):
+        """Test that sales properly update customer points"""
+        print("\n=== TESTING SALES POINTS INTEGRATION ===")
+        
+        # Get existing sales to check points fields
+        success, sales = self.run_test(
+            "GET /api/sales - Check sales with points tracking",
+            "GET",
+            "sales",
+            200,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        if success and isinstance(sales, list) and len(sales) > 0:
+            sample_sale = sales[0]
+            
+            # Check if sales have points fields
+            points_fields = ['points_used', 'points_discount', 'points_earned']
+            missing_fields = [f for f in points_fields if f not in sample_sale]
+            
+            if missing_fields:
+                print(f"❌ Sale missing points fields: {missing_fields}")
+                return False, {}
+            
+            print("✅ Sales model has all required points fields")
+            
+            # Check for sales with points activity
+            sales_with_points = [s for s in sales if s.get('points_used', 0) > 0 or s.get('points_earned', 0) > 0]
+            print(f"Found {len(sales_with_points)} sales with points activity out of {len(sales)} total sales")
+            
+            for sale in sales_with_points[:3]:  # Show first 3
+                print(f"  - Sale {sale.get('id', 'N/A')[:8]}: Earned {sale.get('points_earned', 0)}, Used {sale.get('points_used', 0)}")
+            
+            return True, sales
+        
+        print("⚠️  No sales found to test points integration")
+        return True, {}
+
     def run_all_tests(self):
         """Run all coupon API tests"""
         print("🧪 Starting Coupon API Testing...")
