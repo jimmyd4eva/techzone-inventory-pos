@@ -72,8 +72,14 @@ const Sales = () => {
         tax_enabled: response.data.tax_enabled || false,
         tax_exempt_categories: response.data.tax_exempt_categories || []
       });
+      setPointsSettings({
+        points_enabled: response.data.points_enabled || false,
+        points_per_dollar: response.data.points_per_dollar || 0.002,
+        points_redemption_threshold: response.data.points_redemption_threshold || 3500,
+        points_value: response.data.points_value || 1
+      });
     } catch (error) {
-      console.error('Error fetching tax settings:', error);
+      console.error('Error fetching settings:', error);
     }
   };
 
