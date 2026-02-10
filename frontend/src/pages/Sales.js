@@ -312,13 +312,15 @@ const Sales = () => {
         created_by: user.username,
         customer_id: selectedCustomer ? selectedCustomer.id : undefined,
         customer_name: selectedCustomer ? selectedCustomer.name : (customerName || undefined),
-        coupon_code: appliedCoupon ? appliedCoupon.code : undefined
+        coupon_code: appliedCoupon ? appliedCoupon.code : undefined,
+        points_to_use: pointsToUse
       };
 
       console.log('Submitting sale with customer data:', {
         customer_id: saleData.customer_id,
         customer_name: saleData.customer_name,
-        coupon_code: saleData.coupon_code
+        coupon_code: saleData.coupon_code,
+        points_to_use: saleData.points_to_use
       });
 
       const response = await axios.post(`${API}/sales`, saleData, {
