@@ -577,14 +577,28 @@ const Sales = () => {
             </div>
             {discount > 0 && (
               <div className="summary-row" style={{ color: '#059669' }}>
-                <span>Discount:</span>
+                <span>Coupon Discount:</span>
                 <span data-testid="cart-discount">-${discount.toFixed(2)}</span>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div className="summary-row" style={{ color: '#8b5cf6' }}>
+                <span>Points Discount:</span>
+                <span data-testid="cart-points-discount">-${pointsDiscount.toFixed(2)}</span>
               </div>
             )}
             <div className="summary-row total">
               <span>Total:</span>
               <span data-testid="cart-total">${total.toFixed(2)}</span>
             </div>
+            {pointsSettings.points_enabled && pointsEarned > 0 && (
+              <div className="summary-row" style={{ color: '#8b5cf6', fontSize: '13px', marginTop: '8px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Star size={14} /> Points to Earn:
+                </span>
+                <span data-testid="points-to-earn">+{pointsEarned} pts</span>
+              </div>
+            )}
 
             {/* Coupon Code Section */}
             <div style={{ 
