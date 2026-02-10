@@ -317,22 +317,14 @@ const Settings = () => {
 
           {/* Tax Enabled Toggle */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                 Enable Tax
               </span>
               <button
                 type="button"
                 data-testid="tax-toggle"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Tax toggle clicked, current value:', settings.tax_enabled);
-                  setSettings(prev => {
-                    console.log('Setting tax_enabled from', prev.tax_enabled, 'to', !prev.tax_enabled);
-                    return { ...prev, tax_enabled: !prev.tax_enabled };
-                  });
-                }}
+                onClick={() => setSettings(prev => ({ ...prev, tax_enabled: !prev.tax_enabled }))}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -343,12 +335,12 @@ const Settings = () => {
                 }}
               >
                 {settings.tax_enabled ? (
-                  <ToggleRight size={40} color="#8b5cf6" style={{ pointerEvents: 'none' }} />
+                  <ToggleRight size={40} color="#8b5cf6" />
                 ) : (
-                  <ToggleLeft size={40} color="#9ca3af" style={{ pointerEvents: 'none' }} />
+                  <ToggleLeft size={40} color="#9ca3af" />
                 )}
               </button>
-            </label>
+            </div>
             <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
               When enabled, tax will be applied to sales based on product category
             </p>
