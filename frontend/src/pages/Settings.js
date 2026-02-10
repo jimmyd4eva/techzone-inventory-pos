@@ -202,6 +202,113 @@ const Settings = () => {
           </div>
         )}
 
+        {/* Business Info Section */}
+        {activeSection === 'business' && (
+          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+            <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Building size={20} />
+              Business Information
+            </h2>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+                Business Name
+              </label>
+              <input
+                type="text"
+                data-testid="business-name-input"
+                value={settings.business_name}
+                onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+                Address
+              </label>
+              <textarea
+                data-testid="business-address-input"
+                value={settings.business_address}
+                onChange={(e) => setSettings({ ...settings, business_address: e.target.value })}
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+                Phone Number
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Phone size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input
+                  type="text"
+                  data-testid="business-phone-input"
+                  value={settings.business_phone}
+                  onChange={(e) => setSettings({ ...settings, business_phone: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px 12px 40px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
+                Logo URL
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Image size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input
+                  type="text"
+                  data-testid="business-logo-input"
+                  value={settings.business_logo}
+                  onChange={(e) => setSettings({ ...settings, business_logo: e.target.value })}
+                  placeholder="https://example.com/logo.png"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px 12px 40px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+              {settings.business_logo && (
+                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>Logo Preview:</p>
+                  <img 
+                    src={settings.business_logo} 
+                    alt="Logo preview" 
+                    style={{ maxHeight: '60px', maxWidth: '200px', objectFit: 'contain' }}
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tax Section */}
+        {activeSection === 'tax' && (
         <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
           <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151' }}>
             Tax Configuration
