@@ -44,19 +44,23 @@ const Settings = () => {
       const response = await axios.get(`${API}/settings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSettings({
+      console.log('Fetched settings from API:', response.data);
+      console.log('tax_enabled raw value:', response.data.tax_enabled, typeof response.data.tax_enabled);
+      const newSettings = {
         tax_rate: (response.data.tax_rate || 0) * 100,
-        tax_enabled: response.data.tax_enabled || false,
+        tax_enabled: response.data.tax_enabled === true,
         currency: response.data.currency || 'USD',
         tax_exempt_categories: response.data.tax_exempt_categories || [],
         business_name: response.data.business_name || 'TECHZONE',
         business_address: response.data.business_address || '',
         business_phone: response.data.business_phone || '',
         business_logo: response.data.business_logo || '',
-        points_enabled: response.data.points_enabled || false,
+        points_enabled: response.data.points_enabled === true,
         points_redemption_threshold: response.data.points_redemption_threshold || 3500,
         points_value: response.data.points_value || 1
-      });
+      };
+      console.log('Setting state to:', newSettings);
+      setSettings(newSettings);
     } catch (error) {
       console.error('Error fetching settings:', error);
       setMessage({ type: 'error', text: 'Failed to load settings' });
