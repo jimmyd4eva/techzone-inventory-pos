@@ -67,6 +67,15 @@
   3. Persist updated settings back to database if any fields were missing
 - **File Modified**: `/app/backend/server.py` (lines 709-750)
 
+### Toggle buttons not working in Settings - FIXED
+- **Issue**: Tax and Points System toggles weren't working (clicking had no visible effect)
+- **Root Cause 1**: Original toggle buttons were inside `<label>` elements, causing double-click events (click bubbles up to label, which triggers another click on the button)
+- **Root Cause 2**: Custom toggle icons (`ToggleLeft`/`ToggleRight` from Lucide) were visually too similar, making state changes hard to see
+- **Fix**: 
+  1. Replaced custom toggle buttons with Shadcn's `Switch` component
+  2. Added explicit boolean comparison for settings values (`=== true` instead of `|| false`)
+- **Files Modified**: `/app/frontend/src/pages/Settings.js`
+
 ## Next Tasks
 - None - all requested features implemented and working
 
