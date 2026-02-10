@@ -78,6 +78,20 @@
   2. Added explicit boolean comparison for settings values (`=== true` instead of `|| false`)
 - **Files Modified**: `/app/frontend/src/pages/Settings.js`
 
+### Dynamic Business Info Display - IMPLEMENTED
+- **Issue**: Business info (name, address, phone, logo) was hardcoded in multiple components
+- **Solution**: 
+  1. Updated Receipt component to accept `businessSettings` prop
+  2. Updated Layout (sidebar) to fetch settings on mount
+  3. Updated Login page to use public settings endpoint
+  4. Added `/api/settings/public` endpoint (no auth required)
+- **Files Modified**: 
+  - `/app/frontend/src/components/Receipt.js`
+  - `/app/frontend/src/components/Layout.js`
+  - `/app/frontend/src/pages/Login.js`
+  - `/app/frontend/src/pages/SalesHistory.js`
+  - `/app/backend/server.py`
+
 ## Next Tasks
 - None - all requested features implemented and working
 
