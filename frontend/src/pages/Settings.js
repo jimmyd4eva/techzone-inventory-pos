@@ -326,25 +326,12 @@ const Settings = () => {
               <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                 Enable Tax
               </span>
-              <button
-                type="button"
+              <Switch
                 data-testid="tax-toggle"
-                onClick={() => setSettings(prev => ({ ...prev, tax_enabled: !prev.tax_enabled }))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                {settings.tax_enabled ? (
-                  <ToggleRight size={40} color="#8b5cf6" />
-                ) : (
-                  <ToggleLeft size={40} color="#9ca3af" />
-                )}
-              </button>
+                checked={settings.tax_enabled}
+                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, tax_enabled: checked }))}
+                className="data-[state=checked]:bg-violet-500"
+              />
             </div>
             <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
               When enabled, tax will be applied to sales based on product category
