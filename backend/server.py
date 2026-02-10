@@ -702,12 +702,26 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
             "tax_enabled": False,
             "currency": "USD",
             "tax_exempt_categories": [],
+            "business_name": "TECHZONE",
+            "business_address": "30 Giltress Street, Kingston 2, JA",
+            "business_phone": "876-633-9251 / 876-843-2416",
+            "business_logo": None,
+            "points_enabled": False,
+            "points_per_dollar": 0.002,
+            "points_redemption_threshold": 3500,
+            "points_value": 1,
             "updated_at": None,
             "updated_by": None
         }
-    # Ensure tax_exempt_categories exists
+    # Ensure fields exist
     if "tax_exempt_categories" not in settings:
         settings["tax_exempt_categories"] = []
+    if "business_name" not in settings:
+        settings["business_name"] = "TECHZONE"
+    if "business_address" not in settings:
+        settings["business_address"] = "30 Giltress Street, Kingston 2, JA"
+    if "business_phone" not in settings:
+        settings["business_phone"] = "876-633-9251 / 876-843-2416"
     return settings
 
 @api_router.put("/settings")
