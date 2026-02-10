@@ -708,35 +708,45 @@ async def delete_repair_job(job_id: str, current_user: dict = Depends(get_curren
 
 @api_router.get("/settings")
 async def get_settings(current_user: dict = Depends(get_current_user)):
+    # Define default settings structure
+    default_settings = {
+        "id": "app_settings",
+        "tax_rate": 0.0,
+        "tax_enabled": False,
+        "currency": "USD",
+        "tax_exempt_categories": [],
+        "business_name": "TECHZONE",
+        "business_address": "30 Giltress Street, Kingston 2, JA",
+        "business_phone": "876-633-9251 / 876-843-2416",
+        "business_logo": None,
+        "points_enabled": False,
+        "points_per_dollar": 0.002,
+        "points_redemption_threshold": 3500,
+        "points_value": 1,
+        "updated_at": None,
+        "updated_by": None
+    }
+    
     settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
     if not settings:
-        # Return default settings
-        return {
-            "id": "app_settings",
-            "tax_rate": 0.0,
-            "tax_enabled": False,
-            "currency": "USD",
-            "tax_exempt_categories": [],
-            "business_name": "TECHZONE",
-            "business_address": "30 Giltress Street, Kingston 2, JA",
-            "business_phone": "876-633-9251 / 876-843-2416",
-            "business_logo": None,
-            "points_enabled": False,
-            "points_per_dollar": 0.002,
-            "points_redemption_threshold": 3500,
-            "points_value": 1,
-            "updated_at": None,
-            "updated_by": None
-        }
-    # Ensure fields exist
-    if "tax_exempt_categories" not in settings:
-        settings["tax_exempt_categories"] = []
-    if "business_name" not in settings:
-        settings["business_name"] = "TECHZONE"
-    if "business_address" not in settings:
-        settings["business_address"] = "30 Giltress Street, Kingston 2, JA"
-    if "business_phone" not in settings:
-        settings["business_phone"] = "876-633-9251 / 876-843-2416"
+        # Create default settings in database and return
+        await db.settings.insert_one(default_settings.copy())
+        return default_settings
+    
+    # Merge defaults with existing settings - fill in any missing fields
+    needs_update = False
+    for key, default_value in default_settings.items():
+        if key not in settings:
+            settings[key] = default_value
+            needs_update = True
+    
+    # Persist the updated settings back to database if any fields were missing
+    if needs_update:
+        await db.settings.update_one(
+            {"id": "app_settings"},
+            {"$set": settings}
+        )
+    
     return settings
 
 @api_router.put("/settings")
