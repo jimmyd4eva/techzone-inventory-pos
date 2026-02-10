@@ -548,18 +548,14 @@ const Settings = () => {
 
             {/* Points Enabled Toggle */}
             <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                   Enable Points System
                 </span>
                 <button
                   type="button"
                   data-testid="points-toggle"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSettings(prev => ({ ...prev, points_enabled: !prev.points_enabled }));
-                  }}
+                  onClick={() => setSettings(prev => ({ ...prev, points_enabled: !prev.points_enabled }))}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -570,12 +566,12 @@ const Settings = () => {
                   }}
                 >
                   {settings.points_enabled ? (
-                    <ToggleRight size={40} color="#8b5cf6" style={{ pointerEvents: 'none' }} />
+                    <ToggleRight size={40} color="#8b5cf6" />
                   ) : (
-                    <ToggleLeft size={40} color="#9ca3af" style={{ pointerEvents: 'none' }} />
+                    <ToggleLeft size={40} color="#9ca3af" />
                   )}
                 </button>
-              </label>
+              </div>
               <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
                 When enabled, customers earn points on purchases
               </p>
