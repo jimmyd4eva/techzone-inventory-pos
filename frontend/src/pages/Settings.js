@@ -143,6 +143,12 @@ const Settings = () => {
     c => !settings.tax_exempt_categories.includes(c.id)
   );
 
+  const sectionButtons = [
+    { id: 'business', label: 'Business Info', icon: Building },
+    { id: 'tax', label: 'Tax', icon: Percent },
+    { id: 'points', label: 'Points System', icon: Star }
+  ];
+
   return (
     <div className="page-container" data-testid="settings-page">
       <div className="page-header">
@@ -153,6 +159,33 @@ const Settings = () => {
       </div>
 
       <div style={{ maxWidth: '700px' }}>
+        {/* Section Tabs */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          {sectionButtons.map(section => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              data-testid={`section-${section.id}`}
+              style={{
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: activeSection === section.id ? '#8b5cf6' : '#f3f4f6',
+                color: activeSection === section.id ? '#fff' : '#374151',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <section.icon size={18} />
+              {section.label}
+            </button>
+          ))}
+        </div>
+
         {message.text && (
           <div
             data-testid="settings-message"
