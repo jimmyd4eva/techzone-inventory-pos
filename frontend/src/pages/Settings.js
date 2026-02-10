@@ -324,20 +324,24 @@ const Settings = () => {
               <button
                 type="button"
                 data-testid="tax-toggle"
-                onClick={() => setSettings({ ...settings, tax_enabled: !settings.tax_enabled })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSettings(prev => ({ ...prev, tax_enabled: !prev.tax_enabled }));
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: 0,
+                  padding: '4px',
                   display: 'flex',
                   alignItems: 'center'
                 }}
               >
                 {settings.tax_enabled ? (
-                  <ToggleRight size={40} color="#8b5cf6" />
+                  <ToggleRight size={40} color="#8b5cf6" style={{ pointerEvents: 'none' }} />
                 ) : (
-                  <ToggleLeft size={40} color="#9ca3af" />
+                  <ToggleLeft size={40} color="#9ca3af" style={{ pointerEvents: 'none' }} />
                 )}
               </button>
             </label>
@@ -555,20 +559,24 @@ const Settings = () => {
                 <button
                   type="button"
                   data-testid="points-toggle"
-                  onClick={() => setSettings({ ...settings, points_enabled: !settings.points_enabled })}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSettings(prev => ({ ...prev, points_enabled: !prev.points_enabled }));
+                  }}
                   style={{
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    padding: 0,
+                    padding: '4px',
                     display: 'flex',
                     alignItems: 'center'
                   }}
                 >
                   {settings.points_enabled ? (
-                    <ToggleRight size={40} color="#8b5cf6" />
+                    <ToggleRight size={40} color="#8b5cf6" style={{ pointerEvents: 'none' }} />
                   ) : (
-                    <ToggleLeft size={40} color="#9ca3af" />
+                    <ToggleLeft size={40} color="#9ca3af" style={{ pointerEvents: 'none' }} />
                   )}
                 </button>
               </label>
