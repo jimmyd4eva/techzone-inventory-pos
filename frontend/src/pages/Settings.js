@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, ToggleLeft, ToggleRight, Tag, Check } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, ToggleLeft, ToggleRight, Tag, Check, Building, Phone, Image, Star } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -19,11 +19,19 @@ const Settings = () => {
     tax_rate: 0,
     tax_enabled: false,
     currency: 'USD',
-    tax_exempt_categories: []
+    tax_exempt_categories: [],
+    business_name: 'TECHZONE',
+    business_address: '',
+    business_phone: '',
+    business_logo: '',
+    points_enabled: false,
+    points_redemption_threshold: 3500,
+    points_value: 1
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [activeSection, setActiveSection] = useState('business');
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
@@ -40,7 +48,14 @@ const Settings = () => {
         tax_rate: (response.data.tax_rate || 0) * 100,
         tax_enabled: response.data.tax_enabled || false,
         currency: response.data.currency || 'USD',
-        tax_exempt_categories: response.data.tax_exempt_categories || []
+        tax_exempt_categories: response.data.tax_exempt_categories || [],
+        business_name: response.data.business_name || 'TECHZONE',
+        business_address: response.data.business_address || '',
+        business_phone: response.data.business_phone || '',
+        business_logo: response.data.business_logo || '',
+        points_enabled: response.data.points_enabled || false,
+        points_redemption_threshold: response.data.points_redemption_threshold || 3500,
+        points_value: response.data.points_value || 1
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
