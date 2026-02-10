@@ -1,22 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Wrench, Users as UsersIcon, FileText, LogOut, UserCog, Receipt, Settings, Ticket } from 'lucide-react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const Layout = ({ user, onLogout }) => {
+  const [businessSettings, setBusinessSettings] = useState({
+    business_name: 'TECHZONE',
+    business_address: '30 Giltress Street, Kingston 2, JA',
+    business_phone: '876-633-9251 / 876-843-2416',
+    business_logo: '/techzone-logo.jpg'
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const response = await axios.get(`${API}/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBusinessSettings({
+        business_name: response.data.business_name || 'TECHZONE',
+        business_address: response.data.business_address || '30 Giltress Street, Kingston 2, JA',
+        business_phone: response.data.business_phone || '876-633-9251 / 876-843-2416',
+        business_logo: response.data.business_logo || '/techzone-logo.jpg'
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
+  // Split business name for colored display
+  const nameParts = businessSettings.business_name.split('');
+  const midPoint = Math.ceil(nameParts.length / 2);
+  const firstPart = nameParts.slice(0, midPoint).join('');
+  const secondPart = nameParts.slice(midPoint).join('');
+
   return (
     <div className="layout">
       <aside className="sidebar" data-testid="sidebar">
         <div className="sidebar-logo">
           <div style={{ overflow: 'hidden', height: '80px', marginBottom: '8px' }}>
             <img 
-              src="/techzone-logo.jpg" 
-              alt="Techzone Logo" 
+              src={businessSettings.business_logo || '/techzone-logo.jpg'} 
+              alt={`${businessSettings.business_name} Logo`}
               style={{ 
                 width: '288px', 
                 height: 'auto', 
                 borderRadius: '8px', 
                 objectFit: 'cover'
               }}
+              onError={(e) => { e.target.src = '/techzone-logo.jpg'; }}
             />
           </div>
           <p style={{ 
@@ -25,7 +65,7 @@ const Layout = ({ user, onLogout }) => {
             marginBottom: '4px',
             lineHeight: '1.4'
           }}>
-            30 Giltress Street, Kingston 2, JA
+            {businessSettings.business_address}
           </p>
           <p style={{ 
             fontSize: '14px', 
@@ -33,11 +73,11 @@ const Layout = ({ user, onLogout }) => {
             marginBottom: '12px',
             lineHeight: '1.4'
           }}>
-            876-633-9251 / 876-843-2416
+            {businessSettings.business_phone}
           </p>
           <h1 data-testid="app-title" style={{ margin: 0, fontSize: '1.5rem' }}>
-            <span style={{ color: '#1e3a8a' }}>Tech</span>
-            <span style={{ color: '#dc2626' }}>zone</span>
+            <span style={{ color: '#1e3a8a' }}>{firstPart}</span>
+            <span style={{ color: '#dc2626' }}>{secondPart}</span>
           </h1>
           <p>Inventory System</p>
         </div>
