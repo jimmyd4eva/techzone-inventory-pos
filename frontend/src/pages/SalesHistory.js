@@ -14,10 +14,12 @@ const SalesHistory = () => {
   const [selectedSale, setSelectedSale] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Sales per page
+  const [businessSettings, setBusinessSettings] = useState(null);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchSales();
+    fetchSettings();
   }, []);
 
   useEffect(() => {
