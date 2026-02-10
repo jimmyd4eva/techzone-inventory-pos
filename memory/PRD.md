@@ -32,10 +32,12 @@
 - Coupon usage analytics
 
 ### Business Info (Settings)
-- Business Name (editable)
-- Address (editable textarea)
-- Phone Number (editable)
-- Logo URL (editable with preview)
+- Business Name (editable) - displays across Login, Sidebar, Receipts
+- Address (editable textarea) - displays across Login, Sidebar, Receipts
+- Phone Number (editable) - displays across Login, Sidebar, Receipts
+- Logo URL (editable with preview) - displays across Login, Sidebar, Receipts
+- **Dynamic display**: All business info is pulled from Settings API and displayed in real-time
+- **Public endpoint**: `/api/settings/public` for unauthenticated pages (Login)
 
 ### Customer Points System
 - Enable/disable toggle
