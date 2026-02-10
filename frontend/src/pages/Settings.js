@@ -68,6 +68,54 @@ const Settings = () => {
     }
   };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Invalid file type. Please upload a JPG, PNG, GIF, WebP, or SVG image.' });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'File too large. Maximum size is 5MB.' });
+      return;
+    }
+
+    setUploading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/upload/logo`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      // Update settings with new logo URL
+      const logoUrl = `${BACKEND_URL}${response.data.logo_url}`;
+      setSettings({ ...settings, business_logo: logoUrl });
+      setMessage({ type: 'success', text: 'Logo uploaded successfully!' });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to upload logo' });
+    } finally {
+      setUploading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setMessage({ type: '', text: '' });
