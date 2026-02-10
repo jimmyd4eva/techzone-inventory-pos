@@ -309,6 +309,7 @@ const Settings = () => {
 
         {/* Tax Section */}
         {activeSection === 'tax' && (
+        <>
         <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
           <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151' }}>
             Tax Configuration
