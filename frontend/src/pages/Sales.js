@@ -203,6 +203,7 @@ const Sales = () => {
     setCustomerAccountNumber(customer.account_number);
     setCustomerName(customer.name);
     setShowCustomerDropdown(false);
+    setPointsToUse(0); // Reset points when selecting new customer
   };
 
   const clearCustomer = () => {
@@ -211,6 +212,7 @@ const Sales = () => {
     setCustomerName('');
     setCustomerSearchResults([]);
     setShowCustomerDropdown(false);
+    setPointsToUse(0); // Reset points when clearing customer
   };
 
   const addToCart = (item) => {
