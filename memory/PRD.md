@@ -35,9 +35,13 @@
 - Business Name (editable) - displays across Login, Sidebar, Receipts
 - Address (editable textarea) - displays across Login, Sidebar, Receipts
 - Phone Number (editable) - displays across Login, Sidebar, Receipts
-- Logo URL (editable with preview) - displays across Login, Sidebar, Receipts
+- Logo - **Two options**:
+  1. **Upload from Computer** - Upload JPG, PNG, GIF, WebP, or SVG (max 5MB)
+  2. **Enter URL** - Use an external image URL
+- Logo preview with "Remove" button
 - **Dynamic display**: All business info is pulled from Settings API and displayed in real-time
 - **Public endpoint**: `/api/settings/public` for unauthenticated pages (Login)
+- **Upload endpoint**: `/api/upload/logo` for file uploads
 
 ### Customer Points System
 - Enable/disable toggle
