@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Minus, Trash2, Search } from 'lucide-react';
+import { Plus, Minus, Trash2, Search, Star } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -23,6 +23,13 @@ const Sales = () => {
     tax_enabled: false,
     tax_exempt_categories: []
   });
+  const [pointsSettings, setPointsSettings] = useState({
+    points_enabled: false,
+    points_per_dollar: 0.002,
+    points_redemption_threshold: 3500,
+    points_value: 1
+  });
+  const [pointsToUse, setPointsToUse] = useState(0);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
