@@ -48,8 +48,8 @@
 
 ## Test Results
 - Backend: 100%
-- Frontend: 95%
-- Overall: 98%
+- Frontend: 100%
+- Overall: 100%
 
 ## User Flow - Points
 1. Customer makes purchases
@@ -57,5 +57,20 @@
 3. After $3,500 total spend, can redeem points
 4. Each point = $1 discount
 
+## Bug Fixes (December 2025)
+### "Failed to load settings" bug - FIXED
+- **Issue**: Settings page showed "Failed to load settings" on deployed app after adding new fields (business_info, points_enabled, etc.)
+- **Root Cause**: Production database had existing settings document missing new fields; endpoint wasn't handling missing fields properly
+- **Fix**: Updated `GET /api/settings` endpoint to:
+  1. Define complete default settings structure
+  2. Merge existing settings with defaults (fill missing fields)
+  3. Persist updated settings back to database if any fields were missing
+- **File Modified**: `/app/backend/server.py` (lines 709-750)
+
 ## Next Tasks
-- Deploy to production
+- None - all requested features implemented and working
+
+## Future/Backlog Tasks
+- **Email Reporting (P2)**: Automatically send weekly/monthly tax and sales summaries
+- **Personalized Coupons (P2)**: Generate exclusive discount codes based on purchase history
+- **Backend Refactoring (P3)**: Split large `server.py` into modular structure (routes, models, services)
