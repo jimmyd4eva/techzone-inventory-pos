@@ -133,6 +133,7 @@ const SalesHistory = () => {
                     <th>Items</th>
                     <th>Total</th>
                     <th>Payment</th>
+                    <th>Coupon</th>
                     <th>Status</th>
                     <th>Cashier</th>
                     <th>Actions</th>
@@ -178,6 +179,23 @@ const SalesHistory = () => {
                         <span className={`badge ${sale.payment_method}`}>
                           {sale.payment_method}
                         </span>
+                      </td>
+                      <td>
+                        {sale.coupon_code ? (
+                          <span style={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                            backgroundColor: '#d1fae5',
+                            color: '#065f46',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontWeight: '600'
+                          }}>
+                            {sale.coupon_code}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>-</span>
+                        )}
                       </td>
                       <td>
                         <span className={`badge ${sale.payment_status}`}>
