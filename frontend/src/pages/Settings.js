@@ -544,25 +544,12 @@ const Settings = () => {
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                   Enable Points System
                 </span>
-                <button
-                  type="button"
+                <Switch
                   data-testid="points-toggle"
-                  onClick={() => setSettings(prev => ({ ...prev, points_enabled: !prev.points_enabled }))}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  {settings.points_enabled ? (
-                    <ToggleRight size={40} color="#8b5cf6" />
-                  ) : (
-                    <ToggleLeft size={40} color="#9ca3af" />
-                  )}
-                </button>
+                  checked={settings.points_enabled}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, points_enabled: checked }))}
+                  className="data-[state=checked]:bg-violet-500"
+                />
               </div>
               <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
                 When enabled, customers earn points on purchases
