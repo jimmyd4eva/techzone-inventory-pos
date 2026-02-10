@@ -69,6 +69,18 @@ const SalesHistory = () => {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBusinessSettings(response.data);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
   const handleDeleteSale = async (saleId) => {
     if (!window.confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
       return;
