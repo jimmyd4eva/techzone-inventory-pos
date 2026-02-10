@@ -75,7 +75,14 @@ const Settings = () => {
         tax_rate: settings.tax_rate / 100,
         tax_enabled: settings.tax_enabled,
         currency: settings.currency,
-        tax_exempt_categories: settings.tax_exempt_categories
+        tax_exempt_categories: settings.tax_exempt_categories,
+        business_name: settings.business_name,
+        business_address: settings.business_address,
+        business_phone: settings.business_phone,
+        business_logo: settings.business_logo || null,
+        points_enabled: settings.points_enabled,
+        points_redemption_threshold: settings.points_redemption_threshold,
+        points_value: settings.points_value
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
