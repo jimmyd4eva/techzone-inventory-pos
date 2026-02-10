@@ -1,7 +1,14 @@
 import React from 'react';
 import './Receipt.css';
 
-const Receipt = ({ sale, onClose }) => {
+const Receipt = ({ sale, onClose, businessSettings }) => {
+  // Use business settings or defaults
+  const businessName = businessSettings?.business_name || 'TECHZONE';
+  const businessAddress = businessSettings?.business_address || '30 Giltress Street, Kingston 2, JA';
+  const businessPhone = businessSettings?.business_phone || '876-633-9251';
+  const businessLogo = businessSettings?.business_logo || '/techzone-logo.jpg';
+  const taxRate = businessSettings?.tax_rate || 0.10;
+  
   const handlePrint = () => {
     try {
       console.log('🖨️ Print button clicked - calling window.print()');
@@ -29,6 +36,12 @@ const Receipt = ({ sale, onClose }) => {
     });
   };
 
+  // Split business name for colored display (first half blue, second half red)
+  const nameParts = businessName.split('');
+  const midPoint = Math.ceil(nameParts.length / 2);
+  const firstPart = nameParts.slice(0, midPoint).join('');
+  const secondPart = nameParts.slice(midPoint).join('');
+
   return (
     <div className="receipt-overlay">
       <div className="receipt-modal">
@@ -45,17 +58,18 @@ const Receipt = ({ sale, onClose }) => {
           <div className="receipt-header">
             <div style={{ overflow: 'hidden', height: '95px', margin: '0 auto 12px', width: '230px' }}>
               <img 
-                src="/techzone-logo.jpg" 
-                alt="Techzone Logo" 
+                src={businessLogo} 
+                alt={`${businessName} Logo`}
                 style={{ width: '230px', height: 'auto', display: 'block' }}
+                onError={(e) => { e.target.src = '/techzone-logo.jpg'; }}
               />
             </div>
             <h1 className="receipt-title">
-              <span className="text-blue">Tech</span>
-              <span className="text-red">zone</span>
+              <span className="text-blue">{firstPart}</span>
+              <span className="text-red">{secondPart}</span>
             </h1>
-            <p className="receipt-address">30 Giltress Street, Kingston 2, JA</p>
-            <p className="receipt-contact">876-633-9251</p>
+            <p className="receipt-address">{businessAddress}</p>
+            <p className="receipt-contact">{businessPhone}</p>
             <div className="receipt-divider"></div>
           </div>
 
@@ -111,7 +125,7 @@ const Receipt = ({ sale, onClose }) => {
               <span>${sale.subtotal.toFixed(2)}</span>
             </div>
             <div className="receipt-row">
-              <span>Tax (10%):</span>
+              <span>Tax ({(taxRate * 100).toFixed(0)}%):</span>
               <span>${sale.tax.toFixed(2)}</span>
             </div>
             <div className="receipt-row receipt-total">
