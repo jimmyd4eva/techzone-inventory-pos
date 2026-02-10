@@ -189,6 +189,9 @@ class Sale(BaseModel):
     discount: float = 0  # Coupon discount amount
     coupon_code: Optional[str] = None
     coupon_id: Optional[str] = None
+    points_used: float = 0  # Points redeemed for this sale
+    points_discount: float = 0  # Discount from points
+    points_earned: float = 0  # Points earned from this sale
     total: float
     payment_status: str  # completed, pending
     stripe_session_id: Optional[str] = None
@@ -202,6 +205,7 @@ class SaleCreate(BaseModel):
     customer_name: Optional[str] = None
     payment_method: str
     coupon_code: Optional[str] = None
+    points_to_use: float = 0  # Points customer wants to redeem
     created_by: str
 
 class PaymentTransaction(BaseModel):
