@@ -327,7 +327,11 @@ const Settings = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setSettings(prev => ({ ...prev, tax_enabled: !prev.tax_enabled }));
+                  console.log('Tax toggle clicked, current value:', settings.tax_enabled);
+                  setSettings(prev => {
+                    console.log('Setting tax_enabled from', prev.tax_enabled, 'to', !prev.tax_enabled);
+                    return { ...prev, tax_enabled: !prev.tax_enabled };
+                  });
                 }}
                 style={{
                   background: 'none',
