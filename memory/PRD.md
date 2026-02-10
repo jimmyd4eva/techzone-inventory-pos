@@ -44,13 +44,22 @@
 - **Upload endpoint**: `/api/upload/logo` for file uploads
 
 ### Customer Points System
-- Enable/disable toggle
+- Enable/disable toggle in Settings
 - Earn rate: 1 point per $500 spent (0.002 per $1)
-- Redemption threshold: $3,500 total spend required
-- Point value: $1 per point in discount
-- Customer tracking: total_spent, points_balance, points_earned, points_redeemed
-- Sale tracking: points_used, points_discount, points_earned
-- Automatic points update on completed sales
+- Redemption threshold: configurable minimum total spend to redeem
+- Point value: configurable dollar value per point
+- **Customer tracking**: total_spent, points_balance, points_earned, points_redeemed
+- **Sale tracking**: points_used, points_discount, points_earned
+- **Automatic points update on completed sales**
+- **UI Integration**:
+  - **Customers page**: Shows Points and Total Spent columns
+  - **Sales page**: ⭐ Loyalty Points section appears when customer is selected
+    - Shows available points and total spent
+    - Shows eligibility status (eligible if threshold met)
+    - "Use All" button to redeem all available points
+    - Input field to specify how many points to use
+    - Points discount applied to total
+    - "Points to Earn" shown in cart summary
 
 ## Test Results
 - Backend: 100%
