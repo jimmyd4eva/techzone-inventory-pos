@@ -2136,6 +2136,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@app.on_event("startup")
+async def startup_event():
+    """Create default admin user if no users exist"""
+    try:
+        users_count = await db.users.count_documents({})
+        if users_count == 0:
+            # Create default admin user
+            default_admin = {
+                "id": str(uuid.uuid4()),
+                "username": "admin",
+                "email": "admin@techzone.com",
+                "password_hash": bcrypt.hash("admin123"),
+                "role": "admin",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.users.insert_one(default_admin)
+            print("✅ Created default admin user: admin / admin123")
+    except Exception as e:
+        print(f"Startup error: {e}")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
