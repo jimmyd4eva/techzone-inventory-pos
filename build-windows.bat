@@ -28,12 +28,12 @@ cd ..
 
 echo [2/5] Installing frontend dependencies...
 cd frontend
-call npm install --legacy-peer-deps
+call npm install --legacy-peer-deps --no-audit
 cd ..
 
 echo [3/5] Building frontend...
 cd frontend
-call npm run build --legacy-peer-deps
+call npm run build
 cd ..
 
 echo [4/5] Copying frontend build to desktop...
@@ -42,7 +42,7 @@ xcopy /E /I /Q frontend\build desktop\frontend-build
 
 echo [5/5] Building Windows installer...
 cd desktop
-call npm install --legacy-peer-deps
+call npm install --legacy-peer-deps --no-audit
 call npm run build:win
 cd ..
 
