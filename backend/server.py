@@ -62,13 +62,17 @@ PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'test')
 PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', 'test')
 PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')
 
-# Initialize PayPal client
-if PAYPAL_MODE == 'live':
-    paypal_environment = LiveEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
-else:
-    paypal_environment = SandboxEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
-
-paypal_client = PayPalHttpClient(paypal_environment)
+# Initialize PayPal client (only if available)
+paypal_client = None
+if PAYPAL_AVAILABLE and PayPalHttpClient:
+    try:
+        if PAYPAL_MODE == 'live':
+            paypal_environment = LiveEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
+        else:
+            paypal_environment = SandboxEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_SECRET)
+        paypal_client = PayPalHttpClient(paypal_environment)
+    except Exception as e:
+        print(f"PayPal initialization skipped: {e}")
 
 # Create the main app
 app = FastAPI()
