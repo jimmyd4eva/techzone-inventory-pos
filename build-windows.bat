@@ -30,8 +30,8 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo Using Python: %PYTHON_CMD%
 %PYTHON_CMD% --version
-
 echo.
+
 echo [1/5] Installing backend dependencies...
 cd backend
 %PYTHON_CMD% -m pip install -r requirements.txt -q
@@ -40,12 +40,12 @@ cd ..
 
 echo [2/5] Installing frontend dependencies...
 cd frontend
-call npm install --silent
+call npm install
 cd ..
 
 echo [3/5] Building frontend...
 cd frontend
-call npm run build
+call npx craco build
 cd ..
 
 echo [4/5] Copying frontend build to desktop...
@@ -54,8 +54,8 @@ xcopy /E /I /Q frontend\build desktop\frontend-build
 
 echo [5/5] Building Windows installer...
 cd desktop
-call npm install --silent
-call npm run build:win
+call npm install
+call npx electron-builder --win
 cd ..
 
 echo.
