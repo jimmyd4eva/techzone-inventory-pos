@@ -22,7 +22,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [1/5] Installing backend dependencies...
 cd backend
-pip install -r requirements.txt -q
+pip install -r requirements-desktop.txt -q
 pip install aiosqlite -q
 cd ..
 
