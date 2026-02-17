@@ -28,7 +28,7 @@ cd ..
 
 echo [2/5] Installing frontend dependencies...
 cd frontend
-call npm install
+call npm install --legacy-peer-deps
 cd ..
 
 echo [3/5] Building frontend...
@@ -42,7 +42,7 @@ xcopy /E /I /Q frontend\build desktop\frontend-build
 
 echo [5/5] Building Windows installer...
 cd desktop
-call npm install
+call npm install --legacy-peer-deps
 call node_modules\.bin\electron-builder --win
 cd ..
 
