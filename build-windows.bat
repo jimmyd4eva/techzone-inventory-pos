@@ -12,18 +12,30 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-:: Check for Python
+:: Check for Python (try both python and py)
 where python >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Python not found. Please install Python from https://python.org/
-    pause
-    exit /b 1
+    where py >nul 2>nul
+    if %ERRORLEVEL% NEQ 0 (
+        echo ERROR: Python not found. Please install Python from https://python.org/
+        echo Make sure to check "Add Python to PATH" during installation!
+        pause
+        exit /b 1
+    ) else (
+        set PYTHON_CMD=py
+    )
+) else (
+    set PYTHON_CMD=python
 )
 
+echo Using Python: %PYTHON_CMD%
+%PYTHON_CMD% --version
+
+echo.
 echo [1/5] Installing backend dependencies...
 cd backend
-pip install -r requirements.txt -q
-pip install aiosqlite -q
+%PYTHON_CMD% -m pip install -r requirements.txt -q
+%PYTHON_CMD% -m pip install aiosqlite -q
 cd ..
 
 echo [2/5] Installing frontend dependencies...
