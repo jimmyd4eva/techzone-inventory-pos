@@ -33,7 +33,7 @@ cd ..
 
 echo [3/5] Building frontend...
 cd frontend
-call npm run build
+call npx craco build
 cd ..
 
 echo [4/5] Copying frontend build to desktop...
@@ -43,7 +43,7 @@ xcopy /E /I /Q frontend\build desktop\frontend-build
 echo [5/5] Building Windows installer...
 cd desktop
 call npm install --legacy-peer-deps --no-audit
-call npm run build:win
+call npx electron-builder --win
 cd ..
 
 echo.
