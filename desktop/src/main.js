@@ -67,12 +67,12 @@ async function startBackend() {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     
+    // Use python -m uvicorn instead of uvicorn directly (more reliable)
     backendProcess = spawn(pythonPath, [
       '-m', 'uvicorn',
       'server:app',
       '--host', '127.0.0.1',
-      '--port', String(BACKEND_PORT),
-      '--reload'
+      '--port', String(BACKEND_PORT)
     ], {
       cwd: backendPath,
       env: env,
