@@ -28,12 +28,12 @@ cd ..
 
 echo [2/5] Installing frontend dependencies...
 cd frontend
-call npm install --legacy-peer-deps
+call yarn install
 cd ..
 
 echo [3/5] Building frontend...
 cd frontend
-call node_modules\.bin\craco build
+call yarn build
 cd ..
 
 echo [4/5] Copying frontend build to desktop...
@@ -42,8 +42,8 @@ xcopy /E /I /Q frontend\build desktop\frontend-build
 
 echo [5/5] Building Windows installer...
 cd desktop
-call npm install --legacy-peer-deps
-call node_modules\.bin\electron-builder --win
+call yarn install
+call yarn build:win
 cd ..
 
 echo.
