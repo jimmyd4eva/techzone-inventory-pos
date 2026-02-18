@@ -1023,6 +1023,10 @@ async def request_activation_code(request: ActivationRequest):
     """Generate and send activation code to email - NO AUTH REQUIRED"""
     email = request.email.lower().strip()
     
+    # Validate email
+    if not email or '@' not in email:
+        raise HTTPException(status_code=400, detail="Valid email address is required")
+    
     # Generate 6-digit code
     code = generate_activation_code()
     
@@ -1051,7 +1055,7 @@ async def request_activation_code(request: ActivationRequest):
         # Email failed but code is saved - return it for testing/manual use
         return {
             "success": True,
-            "message": f"Activation code generated (email service unavailable). Code: {code}",
+            "message": f"Activation code generated (email service unavailable). Valid for 12 hours. Code: {code}",
             "code": code  # Only include for debugging when email fails
         }
 
