@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
