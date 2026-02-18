@@ -435,7 +435,10 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
     for user in users:
-        if isinstance(user['created_at'], str):
+        # Handle missing or string created_at
+        if 'created_at' not in user or user['created_at'] is None:
+            user['created_at'] = datetime.now(timezone.utc)
+        elif isinstance(user['created_at'], str):
             user['created_at'] = datetime.fromisoformat(user['created_at'])
     return users
 
