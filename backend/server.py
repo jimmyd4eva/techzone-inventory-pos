@@ -397,8 +397,17 @@ async def login(credentials: UserLogin):
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Verify password
-    if not bcrypt.verify(credentials.password, user_doc['password_hash']):
+    # Verify password using bcrypt directly (Python 3.14 compatible)
+    import bcrypt as bc
+    try:
+        password_valid = bc.checkpw(
+            credentials.password.encode('utf-8'), 
+            user_doc['password_hash'].encode('utf-8')
+        )
+    except Exception:
+        password_valid = False
+    
+    if not password_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Create token
