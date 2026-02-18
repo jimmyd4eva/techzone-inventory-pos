@@ -993,7 +993,8 @@ const Settings = () => {
           </div>
         )}
 
-        {/* Save Button */}
+        {/* Save Button - only show for settings that need saving */}
+        {activeSection !== 'devices' && (
         <button
           data-testid="save-settings-btn"
           onClick={handleSave}
@@ -1019,6 +1020,7 @@ const Settings = () => {
           <Save size={20} />
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
+        )}
       </div>
     </div>
   );
