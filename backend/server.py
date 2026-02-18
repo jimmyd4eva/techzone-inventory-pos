@@ -334,6 +334,131 @@ class CouponUpdate(BaseModel):
     valid_from: Optional[str] = None
     valid_until: Optional[str] = None
 
+# ============ ACTIVATION MODELS ============
+
+class ActivationCode(BaseModel):
+    """Activation code for device licensing"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str  # 6-digit activation code
+    email: str  # Email this code was sent to
+    device_id: Optional[str] = None  # Device ID this code is for
+    is_used: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(hours=12))
+
+class ActivatedDevice(BaseModel):
+    """Record of an activated device"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    device_id: str  # Unique device identifier (generated from hardware/browser fingerprint)
+    activation_code: str  # The code used to activate
+    activated_email: str  # Email address that activated this device
+    activated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActivationRequest(BaseModel):
+    """Request to generate activation code"""
+    email: str
+
+class ActivationVerify(BaseModel):
+    """Request to verify activation code"""
+    code: str
+    device_id: str
+
+class ActivationCheckRequest(BaseModel):
+    """Request to check if device is activated"""
+    device_id: str
+
+# ============ EMAIL UTILITY ============
+
+def send_activation_email(to_email: str, activation_code: str) -> bool:
+    """Send activation code via Gmail SMTP"""
+    sender_email = os.environ.get('EMAIL_ADDRESS', 'zonetech4eva@gmail.com')
+    sender_password = os.environ.get('EMAIL_PASSWORD', '')
+    
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set, cannot send activation email")
+        return False
+    
+    # Create message
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f'Your TechZone POS Activation Code: {activation_code}'
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    
+    # Plain text version
+    text = f"""
+Your TechZone POS Activation Code
+
+Your activation code is: {activation_code}
+
+This code is valid for 12 hours and can only be used once.
+Enter this code in the activation screen to unlock your device.
+
+If you didn't request this code, please ignore this email.
+
+- TechZone Team
+    """
+    
+    # HTML version
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center;">
+            <h1 style="color: white; margin: 0;">TechZone POS</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Device Activation</p>
+        </div>
+        
+        <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 16px;">Your activation code is:</p>
+            
+            <div style="background: white; border: 2px dashed #667eea; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #667eea;">{activation_code}</span>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px;">
+                <strong>Important:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>This code is valid for <strong>12 hours</strong></li>
+                    <li>Can only be used <strong>once</strong></li>
+                    <li>Activates only <strong>this device</strong></li>
+                </ul>
+            </p>
+            
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
+                If you didn't request this code, please ignore this email.
+            </p>
+        </div>
+        
+        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 20px;">
+            © 2024 TechZone POS - All rights reserved
+        </p>
+    </body>
+    </html>
+    """
+    
+    part1 = MIMEText(text, 'plain')
+    part2 = MIMEText(html, 'html')
+    msg.attach(part1)
+    msg.attach(part2)
+    
+    try:
+        # Gmail SMTP
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Activation email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send activation email: {e}")
+        return False
+
+def generate_activation_code() -> str:
+    """Generate a 6-digit activation code"""
+    return ''.join(random.choices(string.digits, k=6))
+
 # ============ AUTH UTILITIES ============
 
 def create_token(user_id: str, role: str, username: str = None) -> str:
