@@ -8,6 +8,11 @@ import os
 import logging
 import io
 import shutil
+import smtplib
+import random
+import string
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
@@ -43,6 +48,12 @@ ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 load_dotenv(ROOT_DIR / '.env')
+
+# Email configuration
+EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS', 'jimmyd4eva@hotmail.com')
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', '')
+SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp-mail.outlook.com')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
