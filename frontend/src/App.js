@@ -126,12 +126,22 @@ function App() {
     setUser(null);
   };
 
-  if (loading) {
+  const handleActivated = () => {
+    setIsActivated(true);
+  };
+
+  // Show loading while checking activation and auth
+  if (loading || checkingActivation) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
       </div>
     );
+  }
+
+  // Show activation screen if device is not activated
+  if (!isActivated) {
+    return <Activation onActivated={handleActivated} />;
   }
 
   return (
