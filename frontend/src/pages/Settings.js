@@ -263,7 +263,8 @@ const Settings = () => {
   const sectionButtons = [
     { id: 'business', label: 'Business Info', icon: Building },
     { id: 'tax', label: 'Tax', icon: Percent },
-    { id: 'points', label: 'Points System', icon: Star }
+    { id: 'points', label: 'Points System', icon: Star },
+    { id: 'devices', label: 'Devices', icon: Shield }
   ];
 
   return (
