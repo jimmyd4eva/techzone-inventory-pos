@@ -109,5 +109,5 @@ npm start
 ## Cloud Version
 
 The cloud version is still available at:
-- **URL:** https://salestax.preview.emergentagent.com
+- **URL:** https://device-lock-1.preview.emergentagent.com
 - **Login:** admin / admin123
