@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import '@/App.css';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -15,10 +16,93 @@ import Settings from './pages/Settings';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentSuccessPayPal from './pages/PaymentSuccessPayPal';
 import Layout from './components/Layout';
+import Activation from './pages/Activation';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Generate device ID (same as in Activation.js)
+const getDeviceId = () => {
+  const stored = localStorage.getItem('device_id');
+  if (stored) return stored;
+  
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('TechZone', 2, 2);
+  const canvasData = canvas.toDataURL();
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    canvasData.slice(-50)
+  ].join('|');
+  
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  const deviceId = 'DEV-' + Math.abs(hash).toString(36).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+  localStorage.setItem('device_id', deviceId);
+  return deviceId;
+};
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isActivated, setIsActivated] = useState(false);
+  const [checkingActivation, setCheckingActivation] = useState(true);
+
+  // Check device activation status
+  useEffect(() => {
+    const checkActivation = async () => {
+      const deviceId = getDeviceId();
+      
+      // First check local storage for cached activation
+      const cachedActivation = localStorage.getItem('device_activated');
+      if (cachedActivation === 'true') {
+        // Verify with server
+        try {
+          const response = await axios.post(`${API_URL}/api/activation/check`, {
+            device_id: deviceId
+          });
+          if (response.data.is_activated) {
+            setIsActivated(true);
+          } else {
+            // Server says not activated, clear local cache
+            localStorage.removeItem('device_activated');
+            setIsActivated(false);
+          }
+        } catch (err) {
+          // If server unreachable, trust local cache
+          console.log('Could not verify activation with server');
+          setIsActivated(true);
+        }
+      } else {
+        // No local cache, check server
+        try {
+          const response = await axios.post(`${API_URL}/api/activation/check`, {
+            device_id: deviceId
+          });
+          if (response.data.is_activated) {
+            localStorage.setItem('device_activated', 'true');
+            setIsActivated(true);
+          }
+        } catch (err) {
+          console.log('Could not check activation status');
+        }
+      }
+      setCheckingActivation(false);
+    };
+
+    checkActivation();
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
