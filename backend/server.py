@@ -369,8 +369,9 @@ async def register(user_data: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    # Hash password
-    password_hash = bcrypt.hash(user_data.password)
+    # Hash password using bcrypt directly (Python 3.14 compatible)
+    import bcrypt as bc
+    password_hash = bc.hashpw(user_data.password.encode('utf-8'), bc.gensalt()).decode('utf-8')
     
     # Create user
     user = User(
