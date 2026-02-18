@@ -34,6 +34,9 @@ const Settings = () => {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [activeSection, setActiveSection] = useState('business');
+  const [devices, setDevices] = useState([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [revokingDevice, setRevokingDevice] = useState(null);
   const fileInputRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
 
