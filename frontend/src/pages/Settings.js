@@ -44,6 +44,69 @@ const Settings = () => {
     fetchSettings();
   }, []);
 
+  useEffect(() => {
+    if (activeSection === 'devices') {
+      fetchDevices();
+    }
+  }, [activeSection]);
+
+  const fetchDevices = async () => {
+    setLoadingDevices(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/activation/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDevices(response.data);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      setMessage({ type: 'error', text: 'Failed to load activated devices' });
+    } finally {
+      setLoadingDevices(false);
+    }
+  };
+
+  const handleRevokeDevice = async (deviceId) => {
+    if (!window.confirm('Are you sure you want to revoke this device activation? The user will need to re-activate.')) {
+      return;
+    }
+
+    setRevokingDevice(deviceId);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/activation/revoke/${encodeURIComponent(deviceId)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDevices(devices.filter(d => d.device_id !== deviceId));
+      setMessage({ type: 'success', text: 'Device activation revoked successfully' });
+    } catch (error) {
+      console.error('Error revoking device:', error);
+      setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to revoke device' });
+    } finally {
+      setRevokingDevice(null);
+    }
+  };
+
+  const exportDevices = () => {
+    const csvContent = [
+      ['Device ID', 'Activated Email', 'Activation Code', 'Activated At'].join(','),
+      ...devices.map(d => [
+        d.device_id,
+        d.activated_email,
+        d.activation_code,
+        new Date(d.activated_at).toLocaleString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `activated_devices_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('token');
