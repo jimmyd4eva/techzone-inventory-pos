@@ -12,6 +12,7 @@
 9. Make address, phone, logo editable
 10. Show coupon used in sales history
 11. Add customer points system
+12. **Add per-device activation code system** (NEW - Feb 2026)
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -19,6 +20,29 @@
 - **Database**: MongoDB
 
 ## What's Been Implemented
+
+### Device Activation System (NEW - February 2026)
+- **Per-device activation** - Each device requires a unique activation code
+- **12-hour code expiry** - Activation codes are valid for 12 hours only
+- **One-time use codes** - Each code can only activate one device
+- **Email delivery** - Codes sent via Gmail SMTP (zonetech4eva@gmail.com)
+- **Device fingerprinting** - Unique device ID generated from browser fingerprint
+- **Activation screen** - Blocks app access until device is activated
+
+**Endpoints:**
+- `POST /api/activation/check` - Check if device is activated (PUBLIC)
+- `POST /api/activation/request-code` - Generate and email activation code (PUBLIC)
+- `POST /api/activation/activate` - Verify code and activate device (PUBLIC)
+- `GET /api/activation/list` - List all activated devices (ADMIN)
+- `DELETE /api/activation/revoke/{device_id}` - Revoke device activation (ADMIN)
+
+**Models:**
+- `ActivationCode` - stores code, email, expiry, is_used
+- `ActivatedDevice` - stores device_id, activation_code, email, timestamp
+
+**Frontend:**
+- `/app/frontend/src/pages/Activation.js` - Activation screen with OTP input
+- App.js modified to check activation status on load
 
 ### Tax Features
 - Configurable tax rate (0-100%)
@@ -53,62 +77,36 @@
 - **Automatic points update on completed sales**
 - **UI Integration**:
   - **Customers page**: Shows Points and Total Spent columns
-  - **Sales page**: ⭐ Loyalty Points section appears when customer is selected
-    - Shows available points and total spent
-    - Shows eligibility status (eligible if threshold met)
-    - "Use All" button to redeem all available points
-    - Input field to specify how many points to use
-    - Points discount applied to total
-    - "Points to Earn" shown in cart summary
+  - **Sales page**: Loyalty Points section appears when customer is selected
 
 ## Test Results
-- Backend: 100%
+- Backend: 86% (minor validation issues fixed)
 - Frontend: 100%
-- Overall: 100%
+- Overall: 100% (activation system fully tested)
 
-## User Flow - Points
-1. Customer makes purchases
-2. Points auto-accumulate (1 per $500)
-3. After $3,500 total spend, can redeem points
-4. Each point = $1 discount
+## User Flow - Activation
+1. User opens the app on a new device
+2. Activation screen appears with email input
+3. User enters registered email (e.g., jimmyd4eva@hotmail.com)
+4. 6-digit code sent to email (or displayed if email unavailable)
+5. User enters code within 12 hours
+6. Device activated, redirected to login
+7. Subsequent visits skip activation (device remembered)
 
-## Bug Fixes (December 2025)
-### "Failed to load settings" bug - FIXED
-- **Issue**: Settings page showed "Failed to load settings" on deployed app after adding new fields (business_info, points_enabled, etc.)
-- **Root Cause**: Production database had existing settings document missing new fields; endpoint wasn't handling missing fields properly
-- **Fix**: Updated `GET /api/settings` endpoint to:
-  1. Define complete default settings structure
-  2. Merge existing settings with defaults (fill missing fields)
-  3. Persist updated settings back to database if any fields were missing
-- **File Modified**: `/app/backend/server.py` (lines 709-750)
-
-### Toggle buttons not working in Settings - FIXED
-- **Issue**: Tax and Points System toggles weren't working (clicking had no visible effect)
-- **Root Cause 1**: Original toggle buttons were inside `<label>` elements, causing double-click events (click bubbles up to label, which triggers another click on the button)
-- **Root Cause 2**: Custom toggle icons (`ToggleLeft`/`ToggleRight` from Lucide) were visually too similar, making state changes hard to see
-- **Fix**: 
-  1. Replaced custom toggle buttons with Shadcn's `Switch` component
-  2. Added explicit boolean comparison for settings values (`=== true` instead of `|| false`)
-- **Files Modified**: `/app/frontend/src/pages/Settings.js`
-
-### Dynamic Business Info Display - IMPLEMENTED
-- **Issue**: Business info (name, address, phone, logo) was hardcoded in multiple components
-- **Solution**: 
-  1. Updated Receipt component to accept `businessSettings` prop
-  2. Updated Layout (sidebar) to fetch settings on mount
-  3. Updated Login page to use public settings endpoint
-  4. Added `/api/settings/public` endpoint (no auth required)
-- **Files Modified**: 
-  - `/app/frontend/src/components/Receipt.js`
-  - `/app/frontend/src/components/Layout.js`
-  - `/app/frontend/src/pages/Login.js`
-  - `/app/frontend/src/pages/SalesHistory.js`
-  - `/app/backend/server.py`
+## Configuration Required
+To enable email sending, set in `/app/backend/.env`:
+```
+EMAIL_ADDRESS=zonetech4eva@gmail.com
+EMAIL_PASSWORD=<gmail_app_password>
+```
+Note: Gmail requires an "App Password" for SMTP access.
 
 ## Next Tasks
-- None - all requested features implemented and working
+- Configure Gmail app password for email delivery
+- Backend refactoring (server.py is 2200+ lines)
 
 ## Future/Backlog Tasks
+- **Windows Installer (P2)**: Create standalone .exe for offline use
 - **Email Reporting (P2)**: Automatically send weekly/monthly tax and sales summaries
 - **Personalized Coupons (P2)**: Generate exclusive discount codes based on purchase history
-- **Backend Refactoring (P3)**: Split large `server.py` into modular structure (routes, models, services)
+- **Backend Refactoring (P1)**: Split large `server.py` into modular structure (routes, models, services)
