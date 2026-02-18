@@ -36,6 +36,12 @@
 - `GET /api/activation/list` - List all activated devices (ADMIN)
 - `DELETE /api/activation/revoke/{device_id}` - Revoke device activation (ADMIN)
 
+**Admin Device Management UI** (Settings → Devices tab):
+- View all activated devices with device ID, email, and activation time
+- Revoke device activations (requires re-activation)
+- Export activated devices list to CSV
+- Stats showing total devices and unique emails
+
 **Models:**
 - `ActivationCode` - stores code, email, expiry, is_used
 - `ActivatedDevice` - stores device_id, activation_code, email, timestamp
