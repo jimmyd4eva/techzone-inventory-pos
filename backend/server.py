@@ -1004,6 +1004,131 @@ async def get_uploaded_file(filename: str):
     
     return FileResponse(file_path, media_type=content_type)
 
+# ============ ACTIVATION ENDPOINTS ============
+
+@api_router.post("/activation/check")
+async def check_device_activation(request: ActivationCheckRequest):
+    """Check if a device is activated - NO AUTH REQUIRED"""
+    device = await db.activated_devices.find_one({"device_id": request.device_id}, {"_id": 0})
+    if device:
+        return {
+            "is_activated": True,
+            "activated_at": device.get("activated_at"),
+            "activated_email": device.get("activated_email")
+        }
+    return {"is_activated": False}
+
+@api_router.post("/activation/request-code")
+async def request_activation_code(request: ActivationRequest):
+    """Generate and send activation code to email - NO AUTH REQUIRED"""
+    email = request.email.lower().strip()
+    
+    # Generate 6-digit code
+    code = generate_activation_code()
+    
+    # Create activation record with 12-hour expiry
+    activation = ActivationCode(
+        code=code,
+        email=email,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=12)
+    )
+    
+    # Store in database
+    doc = activation.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['expires_at'] = doc['expires_at'].isoformat()
+    await db.activation_codes.insert_one(doc)
+    
+    # Send email
+    email_sent = send_activation_email(email, code)
+    
+    if email_sent:
+        return {
+            "success": True,
+            "message": f"Activation code sent to {email}. Valid for 12 hours."
+        }
+    else:
+        # Email failed but code is saved - return it for testing/manual use
+        return {
+            "success": True,
+            "message": f"Activation code generated (email service unavailable). Code: {code}",
+            "code": code  # Only include for debugging when email fails
+        }
+
+@api_router.post("/activation/activate")
+async def activate_device(request: ActivationVerify):
+    """Verify activation code and activate device - NO AUTH REQUIRED"""
+    code = request.code.strip()
+    device_id = request.device_id.strip()
+    
+    # Check if device is already activated
+    existing_device = await db.activated_devices.find_one({"device_id": device_id})
+    if existing_device:
+        return {
+            "success": True,
+            "message": "Device is already activated",
+            "already_activated": True
+        }
+    
+    # Find valid activation code
+    now = datetime.now(timezone.utc)
+    activation = await db.activation_codes.find_one({
+        "code": code,
+        "is_used": False
+    }, {"_id": 0})
+    
+    if not activation:
+        raise HTTPException(status_code=400, detail="Invalid activation code")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(activation['expires_at'].replace('Z', '+00:00'))
+    if now > expires_at:
+        raise HTTPException(status_code=400, detail="Activation code has expired. Please request a new one.")
+    
+    # Mark code as used
+    await db.activation_codes.update_one(
+        {"code": code},
+        {"$set": {"is_used": True, "device_id": device_id}}
+    )
+    
+    # Create activated device record
+    activated = ActivatedDevice(
+        device_id=device_id,
+        activation_code=code,
+        activated_email=activation['email']
+    )
+    
+    doc = activated.model_dump()
+    doc['activated_at'] = doc['activated_at'].isoformat()
+    await db.activated_devices.insert_one(doc)
+    
+    return {
+        "success": True,
+        "message": "Device activated successfully!",
+        "activated_email": activation['email']
+    }
+
+@api_router.get("/activation/list")
+async def list_activated_devices(current_user: dict = Depends(get_current_user)):
+    """List all activated devices - ADMIN ONLY"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can view activated devices")
+    
+    devices = await db.activated_devices.find({}, {"_id": 0}).sort("activated_at", -1).to_list(1000)
+    return devices
+
+@api_router.delete("/activation/revoke/{device_id}")
+async def revoke_device_activation(device_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke a device's activation - ADMIN ONLY"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can revoke activations")
+    
+    result = await db.activated_devices.delete_one({"device_id": device_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    return {"message": "Device activation revoked successfully"}
+
 # ============ COUPON ENDPOINTS ============
 
 @api_router.get("/coupons")
