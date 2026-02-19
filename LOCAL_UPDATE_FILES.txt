@@ -1,0 +1,791 @@
+================================================================================
+TECHZONE POS - LOCAL UPDATE FILES
+================================================================================
+Copy these files to your local project to add the Device Activation System.
+
+================================================================================
+FILE 1: frontend/src/pages/Activation.js (NEW FILE - CREATE THIS)
+================================================================================
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '../components/ui/input-otp';
+import { Mail, Key, CheckCircle, Loader2, Shield, AlertCircle } from 'lucide-react';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Generate a unique device ID based on browser fingerprint
+const generateDeviceId = () => {
+  const stored = localStorage.getItem('device_id');
+  if (stored) return stored;
+  
+  // Create a fingerprint from available browser data
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('TechZone', 2, 2);
+  const canvasData = canvas.toDataURL();
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    canvasData.slice(-50)
+  ].join('|');
+  
+  // Create a hash from the fingerprint
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  const deviceId = 'DEV-' + Math.abs(hash).toString(36).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+  localStorage.setItem('device_id', deviceId);
+  return deviceId;
+};
+
+export default function Activation({ onActivated }) {
+  const [step, setStep] = useState('email'); // 'email', 'code', 'success'
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [deviceId] = useState(generateDeviceId());
+  const [businessInfo, setBusinessInfo] = useState({
+    business_name: 'TechZone POS',
+    business_logo: null
+  });
+
+  useEffect(() => {
+    // Fetch business info for branding
+    const fetchBusinessInfo = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/settings/public`);
+        setBusinessInfo(response.data);
+      } catch (err) {
+        console.log('Could not fetch business info');
+      }
+    };
+    fetchBusinessInfo();
+  }, []);
+
+  const handleRequestCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/activation/request-code`, {
+        email: email
+      });
+      
+      if (response.data.success) {
+        setStep('code');
+        // If code is returned (email service unavailable), show it
+        if (response.data.code) {
+          setError(`Email unavailable. Use code: ${response.data.code}`);
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to send activation code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleActivate = async () => {
+    if (code.length !== 6) {
+      setError('Please enter all 6 digits');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/activation/activate`, {
+        code: code,
+        device_id: deviceId
+      });
+      
+      if (response.data.success) {
+        setStep('success');
+        // Wait a moment to show success, then proceed
+        setTimeout(() => {
+          localStorage.setItem('device_activated', 'true');
+          localStorage.setItem('activation_email', response.data.activated_email);
+          onActivated();
+        }, 2000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid or expired code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          {businessInfo.business_logo ? (
+            <img 
+              src={businessInfo.business_logo.startsWith('/api') ? `${API_URL}${businessInfo.business_logo}` : businessInfo.business_logo} 
+              alt="Logo" 
+              className="h-16 mx-auto mb-4"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-white">{businessInfo.business_name}</h1>
+          <p className="text-purple-200 mt-1">Device Activation Required</p>
+        </div>
+
+        <Card className="border-0 shadow-2xl bg-white/10 backdrop-blur-lg">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-white text-xl">
+              {step === 'email' && 'Activate Your Device'}
+              {step === 'code' && 'Enter Activation Code'}
+              {step === 'success' && 'Activation Successful!'}
+            </CardTitle>
+            <CardDescription className="text-purple-200">
+              {step === 'email' && 'Enter your registered email to receive an activation code'}
+              {step === 'code' && 'Check your email for the 6-digit code'}
+              {step === 'success' && 'Your device is now activated'}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-6 pt-4">
+            {step === 'email' && (
+              <form onSubmit={handleRequestCode} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-purple-200">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="pl-10 bg-white/10 border-purple-500/30 text-white placeholder:text-purple-300/50 focus:border-purple-400"
+                      required
+                      data-testid="activation-email-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-purple-500/20 rounded-lg p-3 text-sm text-purple-200">
+                  <p className="font-medium mb-1">Device ID:</p>
+                  <code className="text-xs bg-black/20 px-2 py-1 rounded block overflow-x-auto">
+                    {deviceId}
+                  </code>
+                </div>
+
+                {error && (
+                  <div className="bg-red-500/20 text-red-200 p-3 rounded-lg text-sm flex items-start gap-2" data-testid="activation-error">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                  disabled={loading}
+                  data-testid="request-code-btn"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending Code...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Activation Code
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+
+            {step === 'code' && (
+              <div className="space-y-6">
+                <div className="flex justify-center">
+                  <InputOTP 
+                    maxLength={6} 
+                    value={code} 
+                    onChange={setCode}
+                    data-testid="activation-code-input"
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                      <InputOTPSlot index={1} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                      <InputOTPSlot index={2} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                      <InputOTPSlot index={3} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                      <InputOTPSlot index={4} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                      <InputOTPSlot index={5} className="bg-white/10 border-purple-500/30 text-white text-lg" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <p className="text-center text-purple-200 text-sm">
+                  Code sent to: <span className="font-medium text-white">{email}</span>
+                </p>
+
+                {error && (
+                  <div className="bg-red-500/20 text-red-200 p-3 rounded-lg text-sm flex items-start gap-2" data-testid="activation-error">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setStep('email');
+                      setCode('');
+                      setError('');
+                    }}
+                    className="flex-1 border-purple-500/30 text-purple-200 hover:bg-purple-500/20"
+                    data-testid="back-btn"
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={handleActivate}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                    disabled={loading || code.length !== 6}
+                    data-testid="activate-btn"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <Key className="w-4 h-4 mr-2" />
+                        Activate
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <button 
+                  onClick={handleRequestCode}
+                  className="w-full text-purple-300 text-sm hover:text-white transition-colors"
+                  disabled={loading}
+                  data-testid="resend-code-btn"
+                >
+                  Didn't receive the code? Click to resend
+                </button>
+              </div>
+            )}
+
+            {step === 'success' && (
+              <div className="text-center py-4">
+                <div className="w-20 h-20 bg-green-500/20 rounded-full mx-auto flex items-center justify-center mb-4">
+                  <CheckCircle className="w-10 h-10 text-green-400" />
+                </div>
+                <p className="text-green-300 text-lg font-medium">Device Activated!</p>
+                <p className="text-purple-200 text-sm mt-2">Redirecting to application...</p>
+                <Loader2 className="w-5 h-5 text-purple-400 animate-spin mx-auto mt-4" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-purple-300/60 text-xs mt-6">
+          Each activation code is valid for 12 hours and can only be used on one device.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+FILE 2: frontend/src/App.js (REPLACE ENTIRE FILE)
+================================================================================
+
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
+import '@/App.css';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Inventory from './pages/Inventory';
+import Sales from './pages/Sales';
+import SalesHistory from './pages/SalesHistory';
+import Repairs from './pages/Repairs';
+import Customers from './pages/Customers';
+import Coupons from './pages/Coupons';
+import Reports from './pages/Reports';
+import Users from './pages/Users';
+import Settings from './pages/Settings';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentSuccessPayPal from './pages/PaymentSuccessPayPal';
+import Layout from './components/Layout';
+import Activation from './pages/Activation';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Generate device ID (same as in Activation.js)
+const getDeviceId = () => {
+  const stored = localStorage.getItem('device_id');
+  if (stored) return stored;
+  
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('TechZone', 2, 2);
+  const canvasData = canvas.toDataURL();
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    canvasData.slice(-50)
+  ].join('|');
+  
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  const deviceId = 'DEV-' + Math.abs(hash).toString(36).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+  localStorage.setItem('device_id', deviceId);
+  return deviceId;
+};
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isActivated, setIsActivated] = useState(false);
+  const [checkingActivation, setCheckingActivation] = useState(true);
+
+  // Check device activation status
+  useEffect(() => {
+    const checkActivation = async () => {
+      const deviceId = getDeviceId();
+      
+      // First check local storage for cached activation
+      const cachedActivation = localStorage.getItem('device_activated');
+      if (cachedActivation === 'true') {
+        // Verify with server
+        try {
+          const response = await axios.post(`${API_URL}/api/activation/check`, {
+            device_id: deviceId
+          });
+          if (response.data.is_activated) {
+            setIsActivated(true);
+          } else {
+            // Server says not activated, clear local cache
+            localStorage.removeItem('device_activated');
+            setIsActivated(false);
+          }
+        } catch (err) {
+          // If server unreachable, trust local cache
+          console.log('Could not verify activation with server');
+          setIsActivated(true);
+        }
+      } else {
+        // No local cache, check server
+        try {
+          const response = await axios.post(`${API_URL}/api/activation/check`, {
+            device_id: deviceId
+          });
+          if (response.data.is_activated) {
+            localStorage.setItem('device_activated', 'true');
+            setIsActivated(true);
+          }
+        } catch (err) {
+          console.log('Could not check activation status');
+        }
+      }
+      setCheckingActivation(false);
+    };
+
+    checkActivation();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      setUser(JSON.parse(userData));
+    }
+    setLoading(false);
+  }, []);
+
+  const handleLogin = (userData, token) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const handleActivated = () => {
+    setIsActivated(true);
+  };
+
+  // Show loading while checking activation and auth
+  if (loading || checkingActivation) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  // Show activation screen if device is not activated
+  if (!isActivated) {
+    return <Activation onActivated={handleActivated} />;
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />}
+        />
+        <Route
+          path="/"
+          element={user ? <Layout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="sales" element={<Sales />} />
+          <Route path="sales-history" element={<SalesHistory />} />
+          <Route path="repairs" element={<Repairs />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="coupons" element={<Coupons />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="users" element={<Users />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="payment-success" element={<PaymentSuccess />} />
+          <Route path="payment-success-paypal" element={<PaymentSuccessPayPal />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+
+
+================================================================================
+FILE 3: backend/.env (UPDATE - ADD THESE LINES)
+================================================================================
+
+EMAIL_ADDRESS=zonetech4eva@gmail.com
+EMAIL_PASSWORD=dkfwxlznsumfmgpw
+
+
+================================================================================
+FILE 4: backend/server.py - SECTION A: ADD TO IMPORTS (at top of file)
+================================================================================
+
+import smtplib
+import random
+import string
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+================================================================================
+FILE 4: backend/server.py - SECTION B: ADD ACTIVATION MODELS 
+(Add after the CouponUpdate class, before AUTH UTILITIES)
+================================================================================
+
+# ============ ACTIVATION MODELS ============
+
+class ActivationCode(BaseModel):
+    """Activation code for device licensing"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str  # 6-digit activation code
+    email: str  # Email this code was sent to
+    device_id: Optional[str] = None  # Device ID this code is for
+    is_used: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(hours=12))
+
+class ActivatedDevice(BaseModel):
+    """Record of an activated device"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    device_id: str  # Unique device identifier (generated from hardware/browser fingerprint)
+    activation_code: str  # The code used to activate
+    activated_email: str  # Email address that activated this device
+    activated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActivationRequest(BaseModel):
+    """Request to generate activation code"""
+    email: str
+
+class ActivationVerify(BaseModel):
+    """Request to verify activation code"""
+    code: str
+    device_id: str
+
+class ActivationCheckRequest(BaseModel):
+    """Request to check if device is activated"""
+    device_id: str
+
+# ============ EMAIL UTILITY ============
+
+def send_activation_email(to_email: str, activation_code: str) -> bool:
+    """Send activation code via Gmail SMTP"""
+    sender_email = os.environ.get('EMAIL_ADDRESS', 'zonetech4eva@gmail.com')
+    sender_password = os.environ.get('EMAIL_PASSWORD', '')
+    
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set, cannot send activation email")
+        return False
+    
+    # Create message
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f'Your TechZone POS Activation Code: {activation_code}'
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    
+    # Plain text version
+    text = f"""
+Your TechZone POS Activation Code
+
+Your activation code is: {activation_code}
+
+This code is valid for 12 hours and can only be used once.
+Enter this code in the activation screen to unlock your device.
+
+If you didn't request this code, please ignore this email.
+
+- TechZone Team
+    """
+    
+    # HTML version
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center;">
+            <h1 style="color: white; margin: 0;">TechZone POS</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Device Activation</p>
+        </div>
+        
+        <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 16px;">Your activation code is:</p>
+            
+            <div style="background: white; border: 2px dashed #667eea; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #667eea;">{activation_code}</span>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px;">
+                <strong>Important:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>This code is valid for <strong>12 hours</strong></li>
+                    <li>Can only be used <strong>once</strong></li>
+                    <li>Activates only <strong>this device</strong></li>
+                </ul>
+            </p>
+            
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
+                If you didn't request this code, please ignore this email.
+            </p>
+        </div>
+        
+        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 20px;">
+            2024 TechZone POS - All rights reserved
+        </p>
+    </body>
+    </html>
+    """
+    
+    part1 = MIMEText(text, 'plain')
+    part2 = MIMEText(html, 'html')
+    msg.attach(part1)
+    msg.attach(part2)
+    
+    try:
+        # Gmail SMTP
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Activation email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send activation email: {e}")
+        return False
+
+def generate_activation_code() -> str:
+    """Generate a 6-digit activation code"""
+    return ''.join(random.choices(string.digits, k=6))
+
+
+================================================================================
+FILE 4: backend/server.py - SECTION C: ADD ACTIVATION ENDPOINTS
+(Add after the uploads endpoint, before COUPON ENDPOINTS)
+================================================================================
+
+# ============ ACTIVATION ENDPOINTS ============
+
+@api_router.post("/activation/check")
+async def check_device_activation(request: ActivationCheckRequest):
+    """Check if a device is activated - NO AUTH REQUIRED"""
+    device = await db.activated_devices.find_one({"device_id": request.device_id}, {"_id": 0})
+    if device:
+        return {
+            "is_activated": True,
+            "activated_at": device.get("activated_at"),
+            "activated_email": device.get("activated_email")
+        }
+    return {"is_activated": False}
+
+@api_router.post("/activation/request-code")
+async def request_activation_code(request: ActivationRequest):
+    """Generate and send activation code to email - NO AUTH REQUIRED"""
+    email = request.email.lower().strip()
+    
+    # Validate email
+    if not email or '@' not in email:
+        raise HTTPException(status_code=400, detail="Valid email address is required")
+    
+    # Generate 6-digit code
+    code = generate_activation_code()
+    
+    # Create activation record with 12-hour expiry
+    activation = ActivationCode(
+        code=code,
+        email=email,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=12)
+    )
+    
+    # Store in database
+    doc = activation.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['expires_at'] = doc['expires_at'].isoformat()
+    await db.activation_codes.insert_one(doc)
+    
+    # Send email
+    email_sent = send_activation_email(email, code)
+    
+    if email_sent:
+        return {
+            "success": True,
+            "message": f"Activation code sent to {email}. Valid for 12 hours."
+        }
+    else:
+        # Email failed but code is saved - return it for testing/manual use
+        return {
+            "success": True,
+            "message": f"Activation code generated (email service unavailable). Valid for 12 hours. Code: {code}",
+            "code": code  # Only include for debugging when email fails
+        }
+
+@api_router.post("/activation/activate")
+async def activate_device(request: ActivationVerify):
+    """Verify activation code and activate device - NO AUTH REQUIRED"""
+    code = request.code.strip()
+    device_id = request.device_id.strip()
+    
+    # Check if device is already activated
+    existing_device = await db.activated_devices.find_one({"device_id": device_id})
+    if existing_device:
+        return {
+            "success": True,
+            "message": "Device is already activated",
+            "already_activated": True
+        }
+    
+    # Find valid activation code
+    now = datetime.now(timezone.utc)
+    activation = await db.activation_codes.find_one({
+        "code": code,
+        "is_used": False
+    }, {"_id": 0})
+    
+    if not activation:
+        raise HTTPException(status_code=400, detail="Invalid activation code")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(activation['expires_at'].replace('Z', '+00:00'))
+    if now > expires_at:
+        raise HTTPException(status_code=400, detail="Activation code has expired. Please request a new one.")
+    
+    # Mark code as used
+    await db.activation_codes.update_one(
+        {"code": code},
+        {"$set": {"is_used": True, "device_id": device_id}}
+    )
+    
+    # Create activated device record
+    activated = ActivatedDevice(
+        device_id=device_id,
+        activation_code=code,
+        activated_email=activation['email']
+    )
+    
+    doc = activated.model_dump()
+    doc['activated_at'] = doc['activated_at'].isoformat()
+    await db.activated_devices.insert_one(doc)
+    
+    return {
+        "success": True,
+        "message": "Device activated successfully!",
+        "activated_email": activation['email']
+    }
+
+@api_router.get("/activation/list")
+async def list_activated_devices(current_user: dict = Depends(get_current_user)):
+    """List all activated devices - ADMIN ONLY"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can view activated devices")
+    
+    devices = await db.activated_devices.find({}, {"_id": 0}).sort("activated_at", -1).to_list(1000)
+    return devices
+
+@api_router.delete("/activation/revoke/{device_id}")
+async def revoke_device_activation(device_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke a device's activation - ADMIN ONLY"""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can revoke activations")
+    
+    result = await db.activated_devices.delete_one({"device_id": device_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    return {"message": "Device activation revoked successfully"}
+
+
+================================================================================
+FILE 5: frontend/src/pages/Settings.js (REPLACE ENTIRE FILE)
+NOTE: This file is very long. See next section.
+================================================================================
+
