@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, ShoppingBag, Wrench, AlertTriangle } from 'lucide-react';
+import { DollarSign, Package, Wrench, Users } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -10,7 +10,9 @@ const Dashboard = () => {
     today_sales: 0,
     today_transactions: 0,
     pending_repairs: 0,
-    low_stock_items: 0
+    low_stock_items: 0,
+    total_stock_items: 0,
+    total_customers: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -63,10 +65,38 @@ const Dashboard = () => {
           </div>
         </div>
 
+        <div className="stat-card" data-testid="stat-stock-items">
+          <div className="stat-card-header">
+            <h3>Stock Items</h3>
+            <div className="stat-icon blue">
+              <Package size={20} color="white" />
+            </div>
+          </div>
+          <div className="stat-value" data-testid="stock-items-value">
+            {stats.total_stock_items}
+          </div>
+          <div className="stat-label">
+            {stats.low_stock_items > 0 ? `${stats.low_stock_items} low stock` : 'All stocked'}
+          </div>
+        </div>
+
+        <div className="stat-card" data-testid="stat-total-customers">
+          <div className="stat-card-header">
+            <h3>Total Customers</h3>
+            <div className="stat-icon green">
+              <Users size={20} color="white" />
+            </div>
+          </div>
+          <div className="stat-value" data-testid="total-customers-value">
+            {stats.total_customers}
+          </div>
+          <div className="stat-label">Registered</div>
+        </div>
+
         <div className="stat-card" data-testid="stat-pending-repairs">
           <div className="stat-card-header">
             <h3>Pending Repairs</h3>
-            <div className="stat-icon blue">
+            <div className="stat-icon orange">
               <Wrench size={20} color="white" />
             </div>
           </div>
@@ -74,32 +104,6 @@ const Dashboard = () => {
             {stats.pending_repairs}
           </div>
           <div className="stat-label">Active jobs</div>
-        </div>
-
-        <div className="stat-card" data-testid="stat-low-stock">
-          <div className="stat-card-header">
-            <h3>Low Stock Items</h3>
-            <div className="stat-icon orange">
-              <AlertTriangle size={20} color="white" />
-            </div>
-          </div>
-          <div className="stat-value" data-testid="low-stock-value">
-            {stats.low_stock_items}
-          </div>
-          <div className="stat-label">Need reorder</div>
-        </div>
-
-        <div className="stat-card" data-testid="stat-total-customers">
-          <div className="stat-card-header">
-            <h3>Total Customers</h3>
-            <div className="stat-icon green">
-              <ShoppingBag size={20} color="white" />
-            </div>
-          </div>
-          <div className="stat-value" data-testid="total-customers-value">
-            {stats.total_customers}
-          </div>
-          <div className="stat-label">Registered</div>
         </div>
       </div>
 
@@ -114,7 +118,7 @@ const Dashboard = () => {
               onClick={() => window.location.href = '/sales'}
               data-testid="quick-new-sale-btn"
             >
-              <ShoppingBag size={18} />
+              <Package size={18} />
               New Sale
             </button>
             <button 
