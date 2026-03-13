@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "69963d2f5fce53510748a624",
+    "id": "7e205364-635c-4399-a382-bca104dbcd24",
+    "device_id": "DEV-K91PVV-MLSJG1ER",
+    "activation_code": "675642",
+    "activated_email": "richyestas@gmail.com",
+    "activated_at": "2026-02-18T22:29:03.938258+00:00"
+  },
+  {
+    "_id": "6998a8daa5ef5184dde183ed",
+    "id": "53da43a0-e266-4f18-9eac-c5c105e77137",
+    "device_id": "DEV-K91PVV-MLSJA6P3",
+    "activation_code": "139916",
+    "activated_email": "richyestas@gmail.com",
+    "activated_at": "2026-02-20T18:32:58.949578+00:00"
+  }
+]

@@ -1,0 +1,222 @@
+[
+  {
+    "_id": "69962ca97c621b22e086c81d",
+    "id": "f6901984-12b6-430d-ba54-632741c87d92",
+    "code": "287331",
+    "email": "test@example.com",
+    "device_id": "TEST-DEVICE-123",
+    "is_used": true,
+    "created_at": "2026-02-18T21:18:33.992063+00:00",
+    "expires_at": "2026-02-19T09:18:33.992029+00:00"
+  },
+  {
+    "_id": "69962cce7c621b22e086c81f",
+    "id": "9853c116-ee8e-47da-9b1a-ad754da4b63a",
+    "code": "382188",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:19:10.100464+00:00",
+    "expires_at": "2026-02-19T09:19:10.100428+00:00"
+  },
+  {
+    "_id": "69962ce07c621b22e086c820",
+    "id": "1a950047-3f5e-4470-b0a8-61aef22e1ccf",
+    "code": "500811",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:19:28.934295+00:00",
+    "expires_at": "2026-02-19T09:19:28.934259+00:00"
+  },
+  {
+    "_id": "69962d107c621b22e086c821",
+    "id": "307342ca-58f2-4525-965d-bb5e70f503f7",
+    "code": "386324",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": "BROWSER-TEST-DEVICE-2",
+    "is_used": true,
+    "created_at": "2026-02-18T21:20:16.023619+00:00",
+    "expires_at": "2026-02-19T09:20:16.023585+00:00"
+  },
+  {
+    "_id": "69962d6d4c504378e5d27dd8",
+    "id": "b3a5de72-0ea5-4ddc-a9da-c9b0104fd3c4",
+    "code": "599365",
+    "email": "test_dbe9f905@example.com",
+    "device_id": "TEST-DEV-5001DA94",
+    "is_used": true,
+    "created_at": "2026-02-18T21:21:49.125906+00:00",
+    "expires_at": "2026-02-19T09:21:49.125872+00:00"
+  },
+  {
+    "_id": "69962d6e4c504378e5d27dda",
+    "id": "77e30c83-46d6-446c-906e-65ed6adf9f91",
+    "code": "671236",
+    "email": "test2_7f621afb@example.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:21:50.019588+00:00",
+    "expires_at": "2026-02-19T09:21:50.019551+00:00"
+  },
+  {
+    "_id": "69962d6e4c504378e5d27ddb",
+    "id": "b49b2c45-d4b8-452d-8d24-11fa0ac31558",
+    "code": "022430",
+    "email": "expiry_test_49696976@example.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:21:50.266256+00:00",
+    "expires_at": "2026-02-19T09:21:50.266224+00:00"
+  },
+  {
+    "_id": "69962d6e4c504378e5d27ddc",
+    "id": "a587c090-a83f-43d8-b0dc-6d91e20a4d82",
+    "code": "512254",
+    "email": "",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:21:50.452676+00:00",
+    "expires_at": "2026-02-19T09:21:50.452644+00:00"
+  },
+  {
+    "_id": "69962d6e4c504378e5d27ddd",
+    "id": "924c21ce-6556-48b1-9384-5cd5df9a98e1",
+    "code": "862824",
+    "email": "noauth@test.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:21:50.874397+00:00",
+    "expires_at": "2026-02-19T09:21:50.874366+00:00"
+  },
+  {
+    "_id": "69962d8b4c504378e5d27dde",
+    "id": "df935ea5-4daa-4d0e-887d-094d87892bc8",
+    "code": "530751",
+    "email": "playwright_test@example.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:22:19.898166+00:00",
+    "expires_at": "2026-02-19T09:22:19.898128+00:00"
+  },
+  {
+    "_id": "69962da34c504378e5d27ddf",
+    "id": "12a1408a-d2b9-4d74-a17d-ab39f5211a1e",
+    "code": "950589",
+    "email": "complete_test@example.com",
+    "device_id": "DEV-TCBVZZ-MLSJG8CP",
+    "is_used": true,
+    "created_at": "2026-02-18T21:22:43.152737+00:00",
+    "expires_at": "2026-02-19T09:22:43.152702+00:00"
+  },
+  {
+    "_id": "69962dad4c504378e5d27de1",
+    "id": "27667dea-6961-4669-9405-f4a4a3219b01",
+    "code": "024462",
+    "email": "richyestas@gmail.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:22:53.877139+00:00",
+    "expires_at": "2026-02-19T09:22:53.877111+00:00"
+  },
+  {
+    "_id": "69962dd44c504378e5d27de2",
+    "id": "7955343b-2e32-4c24-9e68-6e288cf1cd1e",
+    "code": "553988",
+    "email": "fulltest@example.com",
+    "device_id": "DEV-TCBVZZ-MLSJHASX",
+    "is_used": true,
+    "created_at": "2026-02-18T21:23:32.979857+00:00",
+    "expires_at": "2026-02-19T09:23:32.979813+00:00"
+  },
+  {
+    "_id": "69962e18bae6d6c2e184a79e",
+    "id": "d8036d05-0c61-40b9-a1dd-60c5489e0c4e",
+    "code": "655851",
+    "email": "test@test.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T21:24:40.246524+00:00",
+    "expires_at": "2026-02-19T09:24:40.246494+00:00"
+  },
+  {
+    "_id": "699631bcbae6d6c2e184a79f",
+    "id": "6d739fa2-3c44-46b9-8c76-0c710468d0c6",
+    "code": "101629",
+    "email": "admin@techzone.com",
+    "device_id": "DEV-B72LCM-MLSK2NZU",
+    "is_used": true,
+    "created_at": "2026-02-18T21:40:12.819177+00:00",
+    "expires_at": "2026-02-19T09:40:12.819144+00:00"
+  },
+  {
+    "_id": "69963700a48af1d2a6d5e4bc",
+    "id": "1d69b09e-54ef-416f-9101-5cd8ea915c47",
+    "code": "634129",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T22:02:40.539922+00:00",
+    "expires_at": "2026-02-19T10:02:40.539889+00:00"
+  },
+  {
+    "_id": "699637b15fce53510748a61e",
+    "id": "75459115-7b84-42c1-ab8f-7b649f395dfe",
+    "code": "051099",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": null,
+    "is_used": false,
+    "created_at": "2026-02-18T22:05:37.460892+00:00",
+    "expires_at": "2026-02-19T10:05:37.460856+00:00"
+  },
+  {
+    "_id": "6996387f5fce53510748a61f",
+    "id": "0465ca36-b0ef-48dc-9043-4d3373879a6c",
+    "code": "576521",
+    "email": "jimmyd4eva@hotmail.com",
+    "device_id": "DEV-K91PVV-MLSJG1ER",
+    "is_used": true,
+    "created_at": "2026-02-18T22:09:03.090313+00:00",
+    "expires_at": "2026-02-19T10:09:03.090279+00:00"
+  },
+  {
+    "_id": "699639ef5fce53510748a621",
+    "id": "47464c0f-6a67-450c-ba40-4594603a3fe5",
+    "code": "046515",
+    "email": "richyestas@gmail.com",
+    "device_id": "DEV-K91PVV-MLSJA6P3",
+    "is_used": true,
+    "created_at": "2026-02-18T22:15:11.169558+00:00",
+    "expires_at": "2026-02-19T10:15:11.169528+00:00"
+  },
+  {
+    "_id": "69963d125fce53510748a623",
+    "id": "88c58bc3-bf96-412c-9a1d-97d1d5a6b4e2",
+    "code": "675642",
+    "email": "richyestas@gmail.com",
+    "device_id": "DEV-K91PVV-MLSJG1ER",
+    "is_used": true,
+    "created_at": "2026-02-18T22:28:34.423609+00:00",
+    "expires_at": "2026-02-19T10:28:34.423574+00:00"
+  },
+  {
+    "_id": "699735da992e694267f4bdff",
+    "id": "58a1dc57-ecac-4c72-ba8a-cf39c4f6e640",
+    "code": "640952",
+    "email": "richyestas@gmail.com",
+    "device_id": "DEV-K91PVV-MLTNOFGP",
+    "is_used": true,
+    "created_at": "2026-02-19T16:10:02.451687+00:00",
+    "expires_at": "2026-02-20T04:10:02.451654+00:00"
+  },
+  {
+    "_id": "6998a8baa5ef5184dde183ec",
+    "id": "041eb31b-22bb-465f-8fa8-db37bb03fc34",
+    "code": "139916",
+    "email": "richyestas@gmail.com",
+    "device_id": "DEV-K91PVV-MLSJA6P3",
+    "is_used": true,
+    "created_at": "2026-02-20T18:32:26.203679+00:00",
+    "expires_at": "2026-02-21T06:32:26.203646+00:00"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "_id": "69876677af6c6c1b0c9e47c7",
+    "id": "app_settings",
+    "currency": "JMD",
+    "tax_enabled": false,
+    "tax_rate": 0.05,
+    "updated_at": "2026-02-11T23:43:05.593773+00:00",
+    "updated_by": "Ian Miller",
+    "tax_exempt_categories": [
+      "accessory"
+    ],
+    "business_address": "30 Giltress Street, Kingston 2, JA",
+    "business_logo": "https://salestax.preview.emergentagent.com/api/uploads/logo_4b7b7a93.jpg",
+    "business_name": "Techzone",
+    "business_phone": "(876) 843-2416 / (876) 633-9251",
+    "points_enabled": true,
+    "points_redemption_threshold": 3500.0,
+    "points_value": 15.0,
+    "points_per_dollar": 0.002
+  }
+]
