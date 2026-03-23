@@ -29,6 +29,11 @@ const Sales = () => {
     points_redemption_threshold: 3500,
     points_value: 1
   });
+  const [dualPricingSettings, setDualPricingSettings] = useState({
+    dual_pricing_enabled: false,
+    cash_discount_percent: 0,
+    card_surcharge_percent: 0
+  });
   const [pointsToUse, setPointsToUse] = useState(0);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -77,6 +82,11 @@ const Sales = () => {
         points_per_dollar: response.data.points_per_dollar || 0.002,
         points_redemption_threshold: response.data.points_redemption_threshold || 3500,
         points_value: response.data.points_value || 1
+      });
+      setDualPricingSettings({
+        dual_pricing_enabled: response.data.dual_pricing_enabled || false,
+        cash_discount_percent: response.data.cash_discount_percent || 0,
+        card_surcharge_percent: response.data.card_surcharge_percent || 0
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -215,8 +225,18 @@ const Sales = () => {
     setPointsToUse(0); // Reset points when clearing customer
   };
 
+  // Get the appropriate price based on customer type
+  const getItemPrice = (item) => {
+    if (selectedCustomer?.customer_type === 'wholesale' && item.wholesale_price) {
+      return item.wholesale_price;
+    }
+    return item.selling_price;
+  };
+
   const addToCart = (item) => {
     const existingItem = cart.find(i => i.item_id === item.id);
+    const price = getItemPrice(item);
+    
     if (existingItem) {
       if (existingItem.quantity < item.quantity) {
         setCart(cart.map(i =>
@@ -230,13 +250,35 @@ const Sales = () => {
         item_id: item.id,
         item_name: item.name,
         quantity: 1,
-        price: item.selling_price,
-        subtotal: item.selling_price,
+        price: price,
+        retail_price: item.selling_price,
+        wholesale_price: item.wholesale_price,
+        subtotal: price,
         image_url: item.image_url,
         gsm_arena_url: item.gsm_arena_url
       }]);
     }
   };
+
+  // Update cart prices when customer changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      setCart(cart.map(cartItem => {
+        const invItem = inventory.find(i => i.id === cartItem.item_id);
+        if (invItem) {
+          const newPrice = selectedCustomer?.customer_type === 'wholesale' && invItem.wholesale_price 
+            ? invItem.wholesale_price 
+            : invItem.selling_price;
+          return {
+            ...cartItem,
+            price: newPrice,
+            subtotal: cartItem.quantity * newPrice
+          };
+        }
+        return cartItem;
+      }));
+    }
+  }, [selectedCustomer?.customer_type]);
 
   const updateQuantity = (itemId, change) => {
     const item = cart.find(i => i.item_id === itemId);
@@ -282,11 +324,25 @@ const Sales = () => {
     // Calculate points discount
     const pointsDiscount = pointsToUse * pointsSettings.points_value;
     
+    // Calculate payment method adjustment (cash discount or card surcharge)
+    let paymentAdjustment = 0;
+    let paymentAdjustmentLabel = '';
+    if (dualPricingSettings.dual_pricing_enabled) {
+      const baseTotal = subtotal + tax - discount - pointsDiscount;
+      if (paymentMethod === 'cash' && dualPricingSettings.cash_discount_percent > 0) {
+        paymentAdjustment = -(baseTotal * (dualPricingSettings.cash_discount_percent / 100));
+        paymentAdjustmentLabel = `Cash Discount (${dualPricingSettings.cash_discount_percent}%)`;
+      } else if ((paymentMethod === 'stripe' || paymentMethod === 'paypal') && dualPricingSettings.card_surcharge_percent > 0) {
+        paymentAdjustment = baseTotal * (dualPricingSettings.card_surcharge_percent / 100);
+        paymentAdjustmentLabel = `Card Fee (${dualPricingSettings.card_surcharge_percent}%)`;
+      }
+    }
+    
     // Calculate points to be earned from this purchase
-    const totalAfterDiscounts = subtotal + tax - discount - pointsDiscount;
+    const totalAfterDiscounts = subtotal + tax - discount - pointsDiscount + paymentAdjustment;
     const pointsEarned = pointsSettings.points_enabled ? Math.floor(totalAfterDiscounts * pointsSettings.points_per_dollar) : 0;
     
-    const total = Math.max(0, subtotal + tax - discount - pointsDiscount);
+    const total = Math.max(0, subtotal + tax - discount - pointsDiscount + paymentAdjustment);
     return { 
       subtotal, 
       taxableSubtotal,
@@ -294,6 +350,8 @@ const Sales = () => {
       discount,
       pointsDiscount,
       pointsEarned,
+      paymentAdjustment,
+      paymentAdjustmentLabel,
       total, 
       taxRate: taxSettings.tax_enabled ? taxSettings.tax_rate * 100 : 0 
     };
@@ -373,7 +431,7 @@ const Sales = () => {
     return <div className="loading-screen"><div className="loading-spinner"></div></div>;
   }
 
-  const { subtotal, taxableSubtotal, tax, discount, pointsDiscount, pointsEarned, total, taxRate } = calculateTotal();
+  const { subtotal, taxableSubtotal, tax, discount, pointsDiscount, pointsEarned, paymentAdjustment, paymentAdjustmentLabel, total, taxRate } = calculateTotal();
 
   // Check if customer can redeem points
   const canRedeemPoints = selectedCustomer && 
@@ -466,7 +524,16 @@ const Sales = () => {
                     <h4>{item.name}</h4>
                     <p>{item.type}</p>
                     <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Stock: {item.quantity}</p>
-                    <div className="price">${item.selling_price.toFixed(2)}</div>
+                    {selectedCustomer?.customer_type === 'wholesale' && item.wholesale_price ? (
+                      <div>
+                        <div className="price" style={{ color: '#1d4ed8' }}>${item.wholesale_price.toFixed(2)}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                          ${item.selling_price.toFixed(2)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="price">${item.selling_price.toFixed(2)}</div>
+                    )}
                   </div>
                 ))
               )}
@@ -585,6 +652,14 @@ const Sales = () => {
               <div className="summary-row" style={{ color: '#8b5cf6' }}>
                 <span>Points Discount:</span>
                 <span data-testid="cart-points-discount">-${pointsDiscount.toFixed(2)}</span>
+              </div>
+            )}
+            {paymentAdjustment !== 0 && (
+              <div className="summary-row" style={{ color: paymentAdjustment < 0 ? '#059669' : '#dc2626' }}>
+                <span>{paymentAdjustmentLabel}:</span>
+                <span data-testid="cart-payment-adjustment">
+                  {paymentAdjustment < 0 ? '-' : '+'}${Math.abs(paymentAdjustment).toFixed(2)}
+                </span>
               </div>
             )}
             <div className="summary-row total">
@@ -1017,7 +1092,19 @@ const Sales = () => {
                         onMouseEnter={(e) => e.target.style.background = '#f8fafc'}
                         onMouseLeave={(e) => e.target.style.background = 'white'}
                       >
-                        <div style={{ fontWeight: '600', color: '#1e293b' }}>{customer.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: '600', color: '#1e293b' }}>{customer.name}</span>
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: '600',
+                            padding: '1px 4px',
+                            borderRadius: '3px',
+                            background: customer.customer_type === 'wholesale' ? '#dbeafe' : '#f0fdf4',
+                            color: customer.customer_type === 'wholesale' ? '#1d4ed8' : '#166534'
+                          }}>
+                            {(customer.customer_type || 'retail').toUpperCase()}
+                          </span>
+                        </div>
                         <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                           {customer.account_number} • {customer.phone}
                         </div>
@@ -1031,16 +1118,33 @@ const Sales = () => {
                 <div style={{
                   marginTop: '12px',
                   padding: '10px',
-                  background: '#e0f2fe',
+                  background: selectedCustomer.customer_type === 'wholesale' ? '#dbeafe' : '#e0f2fe',
                   borderRadius: '6px',
-                  border: '1px solid #7dd3fc'
+                  border: selectedCustomer.customer_type === 'wholesale' ? '1px solid #93c5fd' : '1px solid #7dd3fc'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontWeight: '600', color: '#0c4a6e' }}>{selectedCustomer.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: '600', color: '#0c4a6e' }}>{selectedCustomer.name}</span>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: '600',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: selectedCustomer.customer_type === 'wholesale' ? '#1d4ed8' : '#059669',
+                          color: 'white'
+                        }}>
+                          {(selectedCustomer.customer_type || 'retail').toUpperCase()}
+                        </span>
+                      </div>
                       <div style={{ fontSize: '0.85rem', color: '#075985' }}>
                         {selectedCustomer.account_number} • {selectedCustomer.phone}
                       </div>
+                      {selectedCustomer.customer_type === 'wholesale' && (
+                        <div style={{ fontSize: '0.75rem', color: '#1d4ed8', marginTop: '4px' }}>
+                          Wholesale prices applied
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={clearCustomer}

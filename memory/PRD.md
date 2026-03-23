@@ -108,11 +108,52 @@ EMAIL_PASSWORD=<gmail_app_password>
 Note: Gmail requires an "App Password" for SMTP access.
 
 ## Next Tasks
-- Configure Gmail app password for email delivery
-- Backend refactoring (server.py is 2200+ lines)
+- Test dual pricing feature with real customers
 
 ## Future/Backlog Tasks
 - **Windows Installer (P2)**: Create standalone .exe for offline use
 - **Email Reporting (P2)**: Automatically send weekly/monthly tax and sales summaries
 - **Personalized Coupons (P2)**: Generate exclusive discount codes based on purchase history
 - **Backend Refactoring (P1)**: Split large `server.py` into modular structure (routes, models, services)
+
+---
+
+## Dual Pricing Feature (NEW - March 2026)
+
+### What it does:
+1. **Retail vs Wholesale Pricing**
+   - Each inventory item can have a separate wholesale price
+   - Customers can be marked as "Retail" or "Wholesale"
+   - Wholesale customers automatically see wholesale prices at checkout
+
+2. **Cash vs Card Pricing**
+   - Cash Discount: Apply a percentage discount for cash payments
+   - Card Surcharge: Apply a percentage fee for card payments (Stripe/PayPal)
+
+### How to use:
+
+#### Step 1: Enable Dual Pricing
+- Go to **Settings → Pricing** tab
+- Toggle "Enable Dual Pricing"
+- Set Cash Discount % (e.g., 2% for 2% off on cash)
+- Set Card Surcharge % (e.g., 3% for 3% fee on cards)
+
+#### Step 2: Set Wholesale Prices
+- Go to **Inventory**
+- Edit an item
+- Enter the **Wholesale Price** (leave empty to use retail price)
+
+#### Step 3: Mark Wholesale Customers
+- Go to **Customers**
+- Edit a customer
+- Change **Customer Type** to "Wholesale"
+
+#### Step 4: Make a Sale
+- Select a wholesale customer → prices automatically switch to wholesale
+- Select Cash payment → discount applied
+- Select Card payment → surcharge applied
+
+### Database Changes:
+- `inventory` collection: Added `wholesale_price` field
+- `customers` collection: Added `customer_type` field (retail/wholesale)
+- `settings` collection: Added `dual_pricing_enabled`, `cash_discount_percent`, `card_surcharge_percent`

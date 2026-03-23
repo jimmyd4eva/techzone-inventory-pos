@@ -117,6 +117,7 @@ class Customer(BaseModel):
     email: Optional[str] = None
     phone: str
     address: Optional[str] = None
+    customer_type: str = "retail"  # retail or wholesale
     # Points system
     total_spent: float = 0  # Total amount spent by customer
     points_balance: float = 0  # Current points balance
@@ -130,6 +131,7 @@ class CustomerCreate(BaseModel):
     email: Optional[str] = None
     phone: str
     address: Optional[str] = None
+    customer_type: str = "retail"  # retail or wholesale
 
 class InventoryItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -142,7 +144,8 @@ class InventoryItem(BaseModel):
     gsm_arena_url: Optional[str] = None
     quantity: int
     cost_price: float
-    selling_price: float
+    selling_price: float  # Retail price
+    wholesale_price: Optional[float] = None  # Wholesale price (if different)
     supplier: Optional[str] = None
     low_stock_threshold: int = 10
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -157,6 +160,7 @@ class InventoryItemCreate(BaseModel):
     quantity: int
     cost_price: float
     selling_price: float
+    wholesale_price: Optional[float] = None
     supplier: Optional[str] = None
     low_stock_threshold: int = 10
 
@@ -170,6 +174,7 @@ class InventoryItemUpdate(BaseModel):
     quantity: Optional[int] = None
     cost_price: Optional[float] = None
     selling_price: Optional[float] = None
+    wholesale_price: Optional[float] = None
     supplier: Optional[str] = None
     low_stock_threshold: Optional[int] = None
 
@@ -274,6 +279,10 @@ class Settings(BaseModel):
     points_per_dollar: float = 0.002  # 1 point per $500 = 0.002 points per $1
     points_redemption_threshold: float = 3500  # Min spend to redeem points
     points_value: float = 1  # Each point worth $1 in discount
+    # Dual pricing settings
+    dual_pricing_enabled: bool = False
+    cash_discount_percent: float = 0  # Discount percentage for cash payments
+    card_surcharge_percent: float = 0  # Surcharge percentage for card payments
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -288,6 +297,11 @@ class SettingsUpdate(BaseModel):
     business_logo: Optional[str] = None
     points_enabled: Optional[bool] = None
     points_per_dollar: Optional[float] = None
+    points_redemption_threshold: Optional[float] = None
+    points_value: Optional[float] = None
+    dual_pricing_enabled: Optional[bool] = None
+    cash_discount_percent: Optional[float] = None
+    card_surcharge_percent: Optional[float] = None
     points_redemption_threshold: Optional[float] = None
     points_value: Optional[float] = None
 

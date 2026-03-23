@@ -19,7 +19,8 @@ const Customers = () => {
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    customer_type: 'retail'
   });
 
   useEffect(() => {
@@ -114,7 +115,8 @@ const Customers = () => {
         name: customer.name,
         email: customer.email || '',
         phone: customer.phone,
-        address: customer.address || ''
+        address: customer.address || '',
+        customer_type: customer.customer_type || 'retail'
       });
     } else {
       setEditingCustomer(null);
@@ -123,7 +125,8 @@ const Customers = () => {
         name: '',
         email: '',
         phone: '',
-        address: ''
+        address: '',
+        customer_type: 'retail'
       });
     }
     setShowModal(true);
@@ -185,6 +188,7 @@ const Customers = () => {
                 <tr>
                   <th>Account #</th>
                   <th>Name</th>
+                  <th>Type</th>
                   <th>Phone</th>
                   <th>Email</th>
                   <th>Points</th>
@@ -209,6 +213,18 @@ const Customers = () => {
                       </code>
                     </td>
                     <td>{customer.name}</td>
+                    <td>
+                      <span style={{
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        background: customer.customer_type === 'wholesale' ? '#dbeafe' : '#f0fdf4',
+                        color: customer.customer_type === 'wholesale' ? '#1d4ed8' : '#166534'
+                      }}>
+                        {(customer.customer_type || 'retail').toUpperCase()}
+                      </span>
+                    </td>
                     <td>{customer.phone}</td>
                     <td>{customer.email || '-'}</td>
                     <td>
@@ -336,6 +352,18 @@ const Customers = () => {
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     data-testid="customer-address-input"
                   />
+                </div>
+                <div className="form-group">
+                  <label>Customer Type</label>
+                  <select
+                    value={formData.customer_type}
+                    onChange={(e) => setFormData({ ...formData, customer_type: e.target.value })}
+                    data-testid="customer-type-select"
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                  >
+                    <option value="retail">Retail (Standard Pricing)</option>
+                    <option value="wholesale">Wholesale (Bulk Pricing)</option>
+                  </select>
                 </div>
               </div>
               <div className="modal-footer">

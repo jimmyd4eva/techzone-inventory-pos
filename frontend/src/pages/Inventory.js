@@ -24,6 +24,7 @@ const Inventory = () => {
     quantity: 0,
     cost_price: 0,
     selling_price: 0,
+    wholesale_price: 0,
     supplier: '',
     low_stock_threshold: 10
   });
@@ -130,6 +131,7 @@ const Inventory = () => {
         quantity: 0,
         cost_price: 0,
         selling_price: 0,
+        wholesale_price: 0,
         supplier: '',
         low_stock_threshold: 10
       });
@@ -194,7 +196,8 @@ const Inventory = () => {
                   <th>Barcode</th>
                   <th>Quantity</th>
                   <th>Cost Price</th>
-                  <th>Selling Price</th>
+                  <th>Retail Price</th>
+                  <th>Wholesale Price</th>
                   <th>Supplier</th>
                   <th>Actions</th>
                 </tr>
@@ -251,6 +254,7 @@ const Inventory = () => {
                     <td data-testid={`item-quantity-${item.id}`}>{item.quantity}</td>
                     <td>${item.cost_price.toFixed(2)}</td>
                     <td>${item.selling_price.toFixed(2)}</td>
+                    <td>${(item.wholesale_price || item.selling_price).toFixed(2)}</td>
                     <td>{item.supplier || '-'}</td>
                     <td>
                       <div className="action-buttons">
@@ -548,7 +552,7 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Selling Price</label>
+                    <label>Retail Price</label>
                     <input
                       type="number"
                       step="0.01"
@@ -560,6 +564,17 @@ const Inventory = () => {
                   </div>
                 </div>
                 <div className="form-row">
+                  <div className="form-group">
+                    <label>Wholesale Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.wholesale_price || ''}
+                      onChange={(e) => setFormData({ ...formData, wholesale_price: parseFloat(e.target.value) || 0 })}
+                      data-testid="item-wholesale-input"
+                      placeholder="Leave empty to use retail price"
+                    />
+                  </div>
                   <div className="form-group">
                     <label>Supplier</label>
                     <input
