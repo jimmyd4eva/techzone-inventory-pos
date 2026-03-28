@@ -62,6 +62,18 @@ function App() {
   // Check device activation status
   useEffect(() => {
     const checkActivation = async () => {
+      // Skip activation for localhost (local development/Windows standalone)
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname.startsWith('192.168.');
+      
+      if (isLocalhost) {
+        console.log('Local environment detected - skipping activation');
+        setIsActivated(true);
+        setCheckingActivation(false);
+        return;
+      }
+      
       const deviceId = getDeviceId();
       
       // First check local storage for cached activation
