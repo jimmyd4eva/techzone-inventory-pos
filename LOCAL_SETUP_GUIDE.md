@@ -1,60 +1,64 @@
-# TechZone POS - Local Setup Guide
+# TechZone POS - Local Windows Setup Guide
 
-## Prerequisites (One-time Install)
+## One-Click Setup (Recommended)
 
-### 1. Install Python
-- Download from: https://www.python.org/downloads/
-- **Important:** Check "Add Python to PATH" during install
+### Prerequisites
+Install these first:
 
-### 2. Install Node.js
-- Download from: https://nodejs.org/
-- Use the LTS version
+1. **Python 3.10+** - https://www.python.org/downloads/
+   - ⚠️ **IMPORTANT:** Check ✅ "Add Python to PATH" during installation
 
-### 3. Install MongoDB
-- Download from: https://www.mongodb.com/try/download/community
-- Select: Windows, MSI package
-- During install: Check "Install MongoDB as a Service"
-- MongoDB will start automatically
+2. **Node.js LTS** - https://nodejs.org/
+   - Download and install the LTS version
 
-### 4. Install Python Packages (run once in Command Prompt)
-```bash
-cd "C:\path\to\techzone-inventory-pos\backend"
-py -m pip install fastapi uvicorn motor pymongo python-dotenv pydantic passlib bcrypt python-jose python-multipart aiosqlite reportlab PyJWT pillow
+3. **MongoDB Community** - https://www.mongodb.com/try/download/community
+   - Select: Windows, MSI package
+   - ✅ Check "Install MongoDB as a Service"
+
+### Setup & Run
+
+**Just double-click `SETUP.bat`** - it will:
+- Check all prerequisites
+- Install all packages
+- Create configuration files
+- Offer to start the app
+
+After first setup, use **`START.bat`** to run the app.
+
+---
+
+## Manual Setup (If Needed)
+
+### Install Backend Packages
+```cmd
+cd backend
+py -m pip install fastapi uvicorn[standard] motor pymongo python-dotenv pydantic passlib bcrypt python-jose python-multipart aiosqlite reportlab PyJWT pillow aiofiles
 ```
 
-### 5. Install Frontend Packages (run once in Command Prompt)
-```bash
-cd "C:\path\to\techzone-inventory-pos\frontend"
+### Install Frontend Packages
+```cmd
+cd frontend
 npm install --legacy-peer-deps --no-audit
 ```
 
-### 6. Create Frontend .env File
-Create file: `frontend\.env` with content:
+### Create frontend\.env
 ```
 REACT_APP_BACKEND_URL=http://127.0.0.1:8001
 ```
 
----
-
-## Running the App (Every Time)
-
-### Option 1: Double-click START.bat
-Just double-click `START.bat` in the project folder. Done!
-
-### Option 2: Manual Start
-
-**Terminal 1 - Backend:**
-```bash
-cd "C:\path\to\techzone-inventory-pos\backend"
+### Run Manually
+**Terminal 1 (Backend):**
+```cmd
+cd backend
 set MONGO_URL=mongodb://localhost:27017
 set DB_NAME=salestax
 set JWT_SECRET=techzone-local-secret-key-2024
 py -m uvicorn server:app --host 127.0.0.1 --port 8001
 ```
 
-**Terminal 2 - Frontend:**
-```bash
-cd "C:\path\to\techzone-inventory-pos\frontend"
+**Terminal 2 (Frontend):**
+```cmd
+cd frontend
 npm start
 ```
 
@@ -62,107 +66,106 @@ npm start
 
 ## Access the App
 
-- **URL:** http://localhost:3000
-- **Login:** admin / admin123
+| | |
+|---|---|
+| **URL** | http://localhost:3000 |
+| **Username** | admin |
+| **Password** | admin123 |
 
 ---
 
-## Features Available
+## Available Scripts
 
-### Core Features
-- Inventory Management
-- Customer Management  
-- Sales & Checkout
-- Coupons & Discounts
-- Loyalty Points System
+| Script | Purpose |
+|--------|---------|
+| `SETUP.bat` | First-time setup (installs everything) |
+| `START.bat` | Start the application |
+| `STOP.bat` | Stop all services |
 
-### Cash Register (NEW)
-- Open/Close shifts from Settings → Cash Register tab
-- Track cash sales automatically
-- Record payouts, drops, and refunds
-- View shift history with variance reports
-- Export PDF reports for any shift
-- **Quick Access:** Can also open register from Sales page
+---
 
-### Dual Pricing (NEW)
-- Set retail vs wholesale prices
-- Cash discount / Card surcharge
-- Auto-applies based on customer type
+## Features
 
-### Device Activation
-- First-time activation required (cloud version)
-- Local version works without activation
+- ✅ Inventory Management
+- ✅ Customer Management  
+- ✅ Sales & Checkout
+- ✅ **Cash Register** - Open/close shifts, track cash
+- ✅ **Dual Pricing** - Retail/Wholesale, Cash/Card
+- ✅ PDF Reports
+- ✅ Loyalty Points
+- ✅ Coupons & Discounts
+- ✅ Tax Configuration
+- ✅ Multi-user Support
+
+**Note:** Local version does NOT require device activation!
 
 ---
 
 ## Enable Email Reports (Optional)
 
-To receive shift reports via email when closing shifts:
+To receive shift reports via email:
 
-1. Create a Gmail App Password:
+1. Get a Gmail App Password:
    - Go to https://myaccount.google.com/apppasswords
-   - Generate a new app password for "Mail"
+   - Create app password for "Mail"
 
-2. Add to `START.bat`:
-```batch
-set EMAIL_ADDRESS=your-email@gmail.com
-set EMAIL_PASSWORD=your-app-password
-```
+2. Edit `backend\.env`:
+   ```
+   EMAIL_ADDRESS=your-email@gmail.com
+   EMAIL_PASSWORD=your-app-password
+   ```
 
-3. In the app: Settings → Cash Register → Enable "Auto-Email Reports"
-
----
-
-## Create Desktop Shortcut with Icon
-
-1. Right-click `START.bat` → **Create shortcut**
-2. Right-click shortcut → **Properties**
-3. Click **Change Icon** → Browse to `SalesTax.ico`
-4. Click **OK**
-5. Rename shortcut to "TechZone POS"
-6. Move to Desktop
+3. In app: Settings → Cash Register → Enable "Auto-Email Reports"
 
 ---
 
 ## Troubleshooting
 
-### "Port already in use" error
-- Close all Command Prompt windows and try again
-- Or run: `netstat -ano | findstr :8001` to find the process
-- Then: `taskkill /PID <process_id> /F`
+### "Python not found"
+- Reinstall Python and check ✅ "Add Python to PATH"
+- Or use full path: `C:\Users\YOU\AppData\Local\Programs\Python\Python311\python.exe`
 
-### "Module not found" error
-- Run the pip install command again (Step 4)
-- Make sure you're using `py` not `python`
+### "Port already in use"
+```cmd
+netstat -ano | findstr :8001
+taskkill /PID <number> /F
+```
+Or just close all command windows and retry.
+
+### "Module not found"
+```cmd
+cd backend
+py -m pip install <module-name>
+```
+
+### MongoDB won't start
+- Open Services (services.msc)
+- Find "MongoDB" 
+- Right-click → Start
 
 ### Can't login
-- Make sure MongoDB is running (check Windows Services)
-- Make sure backend shows "Uvicorn running on http://127.0.0.1:8001"
-- Default credentials: admin / admin123
+- Verify backend shows "Uvicorn running on http://127.0.0.1:8001"
+- Check MongoDB service is running
+- Default: admin / admin123
 
-### Frontend not connecting
-- Check `frontend\.env` has: `REACT_APP_BACKEND_URL=http://127.0.0.1:8001`
+### Blank page or errors
+- Check frontend\.env has: `REACT_APP_BACKEND_URL=http://127.0.0.1:8001`
 - Restart frontend after changing .env
-
-### Cash Register not working
-- Make sure to open a shift first (Settings → Cash Register)
-- Or use the "Open Register" button on the Sales page
 
 ---
 
-## File Locations
+## Create Desktop Shortcut
 
-- **Launcher:** `START.bat`
-- **Icon:** `SalesTax.ico`
-- **Backend:** `backend\`
-- **Frontend:** `frontend\`
+1. Right-click `START.bat` → Create shortcut
+2. Right-click shortcut → Properties → Change Icon
+3. Browse to `SalesTax.ico`
+4. Rename to "TechZone POS"
+5. Move to Desktop
 
 ---
 
 ## Cloud Version
 
-The cloud version is available at:
-- **URL:** https://device-lock-1.preview.emergentagent.com
-- **Login:** admin / admin123
-
-Note: Cloud version requires device activation on first use.
+The cloud version is also available:
+- **URL:** https://zero-tax-pos.emergent.host
+- Requires device activation on first use
