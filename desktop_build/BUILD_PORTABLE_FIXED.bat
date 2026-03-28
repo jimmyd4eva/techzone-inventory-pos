@@ -87,7 +87,7 @@ del %PKG%\python\get-pip.py
 :: Install Python packages
 echo.
 echo [3/6] Installing Python packages (this takes a few minutes)...
-%PKG%\python\python.exe -m pip install -q --no-warn-script-location fastapi uvicorn[standard] pydantic motor python-dotenv python-multipart aiofiles bcrypt PyJWT passlib reportlab
+%PKG%\python\python.exe -m pip install -q --no-warn-script-location fastapi uvicorn[standard] pydantic motor python-dotenv python-multipart aiofiles bcrypt PyJWT passlib reportlab pillow
 
 :: Download MongoDB
 echo.
@@ -116,8 +116,9 @@ echo - Backend files: OK
 (
 echo MONGO_URL=mongodb://localhost:27017
 echo DB_NAME=techzone_pos
-echo EMAIL_ADDRESS=zonetech4eva@gmail.com
-echo EMAIL_PASSWORD=dkfwxlznsumfmgpw
+echo JWT_SECRET=techzone-portable-secret-key-2024
+echo EMAIL_ADDRESS=
+echo EMAIL_PASSWORD=
 ) > %PKG%\backend\.env
 echo - Backend .env: OK
 
@@ -209,6 +210,16 @@ echo QUICK START:
 echo   1. Double-click START.bat
 echo   2. Browser opens automatically
 echo   3. Login: admin / admin123
+echo.
+echo FEATURES:
+echo   - Inventory Management
+echo   - Customer Management
+echo   - Sales and Checkout
+echo   - Cash Register with Shift Tracking
+echo   - Dual Pricing ^(Retail/Wholesale^)
+echo   - PDF Reports
+echo   - Loyalty Points
+echo   - Coupons
 echo.
 echo TO STOP:
 echo   Close the black window, or run STOP.bat
