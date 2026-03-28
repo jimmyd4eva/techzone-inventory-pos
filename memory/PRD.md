@@ -125,6 +125,7 @@ Full shift management and cash tracking for business accounting.
 
 1. **Open/Close Shifts**
    - Open a shift with an initial cash float (starting cash amount)
+   - **NEW:** Can open register directly from Sales page when checking out
    - Close shift by counting actual cash and comparing to expected
    - Automatic variance calculation (OVER/SHORT/BALANCED)
 
@@ -137,6 +138,8 @@ Full shift management and cash tracking for business accounting.
 3. **Shift History & Reporting**
    - View all past closed shifts with their variance status
    - Daily summary aggregation available via API
+   - PDF export for any shift
+   - **Auto-email reports to manager when shifts close**
 
 ### How to use:
 

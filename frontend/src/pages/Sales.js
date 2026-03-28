@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Minus, Trash2, Search, Star } from 'lucide-react';
+import { Plus, Minus, Trash2, Search, Star, Wallet, AlertCircle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,13 +41,51 @@ const Sales = () => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [availableCoupons, setAvailableCoupons] = useState([]);
   const [showCouponList, setShowCouponList] = useState(false);
+  // Cash Register State
+  const [currentShift, setCurrentShift] = useState(null);
+  const [showOpenRegisterModal, setShowOpenRegisterModal] = useState(false);
+  const [openingAmount, setOpeningAmount] = useState('');
+  const [registerMessage, setRegisterMessage] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchInventory();
     fetchTaxSettings();
     fetchAvailableCoupons();
+    fetchCurrentShift();
   }, []);
+
+  const fetchCurrentShift = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/cash-register/current`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCurrentShift(response.data.shift);
+    } catch (error) {
+      console.error('Error fetching current shift:', error);
+    }
+  };
+
+  const handleOpenRegister = async () => {
+    if (!openingAmount || parseFloat(openingAmount) < 0) {
+      setRegisterMessage('Please enter a valid opening amount');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/cash-register/open`, 
+        { opening_amount: parseFloat(openingAmount) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setShowOpenRegisterModal(false);
+      setOpeningAmount('');
+      setRegisterMessage('');
+      fetchCurrentShift();
+    } catch (error) {
+      setRegisterMessage(error.response?.data?.detail || 'Failed to open register');
+    }
+  };
 
   const fetchAvailableCoupons = async () => {
     try {
@@ -1243,6 +1281,70 @@ const Sales = () => {
               </button>
             </div>
 
+            {/* Cash Register Status */}
+            {paymentMethod === 'cash' && !currentShift && (
+              <div style={{
+                backgroundColor: '#fef3c7',
+                border: '1px solid #fcd34d',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <AlertCircle size={20} style={{ color: '#d97706', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#92400e', fontWeight: '500' }}>
+                    No register open
+                  </p>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#a16207' }}>
+                    Cash sales won't be tracked until you open a register
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowOpenRegisterModal(true)}
+                  data-testid="open-register-quick-btn"
+                  style={{
+                    padding: '8px 14px',
+                    backgroundColor: '#059669',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Wallet size={16} />
+                  Open Register
+                </button>
+              </div>
+            )}
+
+            {/* Register Open Indicator */}
+            {currentShift && (
+              <div style={{
+                backgroundColor: '#d1fae5',
+                border: '1px solid #86efac',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: '#065f46'
+              }}>
+                <Wallet size={16} style={{ color: '#059669' }} />
+                <span><strong>Register Open</strong> - Cash sales being tracked</span>
+              </div>
+            )}
+
             <button
               className="btn-checkout"
               onClick={handleCheckout}
@@ -1289,6 +1391,140 @@ const Sales = () => {
           </div>
         </div>
       </div>
+
+      {/* Open Register Modal */}
+      {showOpenRegisterModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#374151',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <Wallet size={24} style={{ color: '#059669' }} />
+              Open Cash Register
+            </h2>
+            
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
+              Count the cash in your drawer and enter the starting amount to begin your shift.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                Opening Cash Amount
+              </label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ 
+                  position: 'absolute', 
+                  left: '12px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  color: '#9ca3af',
+                  fontSize: '18px'
+                }}>$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={openingAmount}
+                  onChange={(e) => setOpeningAmount(e.target.value)}
+                  placeholder="0.00"
+                  data-testid="modal-opening-amount"
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px 14px 32px',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '18px',
+                    fontWeight: '500'
+                  }}
+                />
+              </div>
+            </div>
+
+            {registerMessage && (
+              <p style={{ 
+                color: '#dc2626', 
+                fontSize: '13px', 
+                marginBottom: '16px',
+                padding: '8px 12px',
+                backgroundColor: '#fee2e2',
+                borderRadius: '6px'
+              }}>
+                {registerMessage}
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowOpenRegisterModal(false);
+                  setOpeningAmount('');
+                  setRegisterMessage('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleOpenRegister}
+                data-testid="modal-open-register-btn"
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#059669',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Wallet size={18} />
+                Open Register
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
