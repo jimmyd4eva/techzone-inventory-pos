@@ -108,13 +108,76 @@ EMAIL_PASSWORD=<gmail_app_password>
 Note: Gmail requires an "App Password" for SMTP access.
 
 ## Next Tasks
-- Test dual pricing feature with real customers
+- Backend refactoring (`server.py` is now 2800+ lines)
 
 ## Future/Backlog Tasks
 - **Windows Installer (P2)**: Create standalone .exe for offline use
 - **Email Reporting (P2)**: Automatically send weekly/monthly tax and sales summaries
 - **Personalized Coupons (P2)**: Generate exclusive discount codes based on purchase history
 - **Backend Refactoring (P1)**: Split large `server.py` into modular structure (routes, models, services)
+
+---
+
+## Cash Register Feature (NEW - March 2026)
+
+### What it does:
+Full shift management and cash tracking for business accounting.
+
+1. **Open/Close Shifts**
+   - Open a shift with an initial cash float (starting cash amount)
+   - Close shift by counting actual cash and comparing to expected
+   - Automatic variance calculation (OVER/SHORT/BALANCED)
+
+2. **Transaction Tracking**
+   - **Cash Sales**: Automatically recorded when cash sales are made via Sales page
+   - **Payouts**: Cash taken out for expenses (petty cash, vendor payments)
+   - **Drops**: Cash moved to safe/vault during shift
+   - **Refunds**: Cash returned to customers
+
+3. **Shift History & Reporting**
+   - View all past closed shifts with their variance status
+   - Daily summary aggregation available via API
+
+### How to use:
+
+#### Step 1: Open a Shift
+- Go to **Settings → Cash Register** tab
+- Enter the starting cash amount (count the drawer)
+- Click "Open Shift"
+
+#### Step 2: Make Sales
+- Cash sales made on the Sales page are automatically recorded
+- They appear in the Shift Transactions list
+
+#### Step 3: Record Other Transactions
+- Use the "Record Transaction" form for:
+  - **Payout**: Cash going out (e.g., paying a supplier)
+  - **Drop**: Moving cash to safe
+  - **Refund**: Returning cash to customer
+
+#### Step 4: Close Shift
+- At end of day, count the actual cash in drawer
+- Enter the count in "Actual Cash Count"
+- System shows if you're OVER, SHORT, or BALANCED
+- Add notes if needed (explain discrepancies)
+- Click "Close Shift"
+
+### API Endpoints:
+- `GET /api/cash-register/current` - Get current open shift with transactions and totals
+- `POST /api/cash-register/open` - Open a new shift with opening_amount
+- `POST /api/cash-register/close` - Close shift with closing_amount
+- `POST /api/cash-register/transaction` - Record payout/drop/refund
+- `GET /api/cash-register/history` - Get list of closed shifts
+- `GET /api/cash-register/daily-summary` - Get daily summary report (admin only)
+
+### Database Collections:
+- `cash_register_shifts`: Stores shift records with opening/closing amounts and variance
+- `cash_register_transactions`: Individual transactions within a shift
+
+### Test Results (March 2026):
+- Backend: 100% (15/15 tests passed)
+- Frontend: 100%
+- All features verified working
 
 ---
 
