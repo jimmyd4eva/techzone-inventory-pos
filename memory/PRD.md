@@ -169,6 +169,7 @@ Full shift management and cash tracking for business accounting.
 - `POST /api/cash-register/transaction` - Record payout/drop/refund
 - `GET /api/cash-register/history` - Get list of closed shifts
 - `GET /api/cash-register/daily-summary` - Get daily summary report (admin only)
+- `GET /api/cash-register/report/{shift_id}` - **Download PDF report for a shift** (NEW)
 
 ### Database Collections:
 - `cash_register_shifts`: Stores shift records with opening/closing amounts and variance

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -171,6 +171,31 @@ const Settings = () => {
       fetchCurrentShift();
     } catch (error) {
       setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to record transaction' });
+    }
+  };
+
+  const exportShiftReport = async (shiftId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/cash-register/report/${shiftId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `cash_register_report_${shiftId.slice(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      setMessage({ type: 'success', text: 'Report downloaded successfully!' });
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      setMessage({ type: 'error', text: 'Failed to export report' });
     }
   };
 
@@ -730,20 +755,42 @@ const Settings = () => {
                       <Wallet size={20} />
                       Current Shift
                     </h2>
-                    <span style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#d1fae5',
-                      color: '#059669',
-                      borderRadius: '20px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-                      <CheckCircle size={14} />
-                      OPEN
-                    </span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        onClick={() => exportShiftReport(currentShift.id)}
+                        data-testid="export-current-shift-btn"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          backgroundColor: '#8b5cf6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <FileText size={14} />
+                        Export PDF
+                      </button>
+                      <span style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#d1fae5',
+                        color: '#059669',
+                        borderRadius: '20px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <CheckCircle size={14} />
+                        OPEN
+                      </span>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -1044,16 +1091,39 @@ const Settings = () => {
                               {shift.opened_by_name} → {shift.closed_by_name}
                             </div>
                           </div>
-                          <span style={{
-                            padding: '4px 10px',
-                            backgroundColor: shift.difference === 0 ? '#d1fae5' : shift.difference > 0 ? '#dbeafe' : '#fee2e2',
-                            color: shift.difference === 0 ? '#059669' : shift.difference > 0 ? '#3b82f6' : '#dc2626',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                          }}>
-                            {shift.difference === 0 ? 'BALANCED' : shift.difference > 0 ? `+$${shift.difference.toFixed(2)} OVER` : `-$${Math.abs(shift.difference).toFixed(2)} SHORT`}
-                          </span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => exportShiftReport(shift.id)}
+                              data-testid={`export-shift-${shift.id}`}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                backgroundColor: '#f3f4f6',
+                                color: '#6b7280',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: '500',
+                                cursor: 'pointer'
+                              }}
+                              title="Export PDF Report"
+                            >
+                              <FileText size={12} />
+                              PDF
+                            </button>
+                            <span style={{
+                              padding: '4px 10px',
+                              backgroundColor: shift.difference === 0 ? '#d1fae5' : shift.difference > 0 ? '#dbeafe' : '#fee2e2',
+                              color: shift.difference === 0 ? '#059669' : shift.difference > 0 ? '#3b82f6' : '#dc2626',
+                              borderRadius: '20px',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}>
+                              {shift.difference === 0 ? 'BALANCED' : shift.difference > 0 ? `+$${shift.difference.toFixed(2)} OVER` : `-$${Math.abs(shift.difference).toFixed(2)} SHORT`}
+                            </span>
+                          </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
                           <span>Open: ${shift.opening_amount.toFixed(2)}</span>

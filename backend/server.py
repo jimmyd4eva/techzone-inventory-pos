@@ -2743,6 +2743,173 @@ async def get_daily_summary(
         }
     }
 
+@api_router.get("/cash-register/report/{shift_id}")
+async def generate_shift_report(shift_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate PDF report for a specific shift"""
+    
+    # Get shift details
+    shift = await db.cash_register_shifts.find_one({"id": shift_id}, {"_id": 0})
+    if not shift:
+        raise HTTPException(status_code=404, detail="Shift not found")
+    
+    # Get transactions for this shift
+    transactions = await db.cash_register_transactions.find(
+        {"shift_id": shift_id},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(1000)
+    
+    # Get business settings
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    business_name = settings.get("business_name", "TECHZONE") if settings else "TECHZONE"
+    business_address = settings.get("business_address", "") if settings else ""
+    business_phone = settings.get("business_phone", "") if settings else ""
+    
+    # Calculate totals
+    cash_sales = sum(t["amount"] for t in transactions if t["transaction_type"] == "cash_sale")
+    payouts = sum(abs(t["amount"]) for t in transactions if t["transaction_type"] == "payout")
+    drops = sum(abs(t["amount"]) for t in transactions if t["transaction_type"] == "drop")
+    refunds = sum(abs(t["amount"]) for t in transactions if t["transaction_type"] == "refund")
+    expected = shift["opening_amount"] + cash_sales - payouts - drops - refunds
+    
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=20, textColor=colors.HexColor('#8b5cf6'), spaceAfter=6)
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, textColor=colors.gray, alignment=TA_CENTER)
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=14, textColor=colors.HexColor('#374151'), spaceBefore=20, spaceAfter=10)
+    
+    # Header
+    elements.append(Paragraph(business_name, title_style))
+    elements.append(Paragraph("Cash Register Shift Report", subtitle_style))
+    if business_address:
+        elements.append(Paragraph(business_address, subtitle_style))
+    if business_phone:
+        elements.append(Paragraph(business_phone, subtitle_style))
+    elements.append(Spacer(1, 20))
+    
+    # Shift Info
+    opened_at = datetime.fromisoformat(shift["opened_at"].replace("Z", "+00:00")) if isinstance(shift["opened_at"], str) else shift["opened_at"]
+    closed_at = None
+    if shift.get("closed_at"):
+        closed_at = datetime.fromisoformat(shift["closed_at"].replace("Z", "+00:00")) if isinstance(shift["closed_at"], str) else shift["closed_at"]
+    
+    status = "OPEN" if shift["status"] == "open" else "CLOSED"
+    
+    shift_info = [
+        ["Shift ID:", shift["id"][:8] + "..."],
+        ["Status:", status],
+        ["Opened By:", shift.get("opened_by_name", "Unknown")],
+        ["Opened At:", opened_at.strftime("%Y-%m-%d %H:%M:%S")],
+    ]
+    
+    if closed_at:
+        shift_info.append(["Closed By:", shift.get("closed_by_name", "Unknown")])
+        shift_info.append(["Closed At:", closed_at.strftime("%Y-%m-%d %H:%M:%S")])
+    
+    info_table = Table(shift_info, colWidths=[1.5*inch, 4*inch])
+    info_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#6b7280')),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 20))
+    
+    # Summary Box
+    elements.append(Paragraph("Cash Summary", heading_style))
+    
+    summary_data = [
+        ["Description", "Amount"],
+        ["Opening Float", f"${shift['opening_amount']:.2f}"],
+        ["+ Cash Sales", f"${cash_sales:.2f}"],
+        ["- Payouts", f"${payouts:.2f}"],
+        ["- Safe Drops", f"${drops:.2f}"],
+        ["- Refunds", f"${refunds:.2f}"],
+        ["= Expected Cash", f"${expected:.2f}"],
+    ]
+    
+    if shift["status"] == "closed":
+        summary_data.append(["Actual Cash Count", f"${shift.get('closing_amount', 0):.2f}"])
+        diff = shift.get("difference", 0)
+        diff_status = "OVER" if diff > 0 else "SHORT" if diff < 0 else "BALANCED"
+        summary_data.append(["Variance", f"${diff:.2f} ({diff_status})"])
+    
+    summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#8b5cf6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f3e8ff')),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('PADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # Transactions
+    if transactions:
+        elements.append(Paragraph(f"Transactions ({len(transactions)})", heading_style))
+        
+        txn_data = [["Time", "Type", "Description", "Amount"]]
+        for t in transactions:
+            txn_time = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00")) if isinstance(t["created_at"], str) else t["created_at"]
+            txn_type = t["transaction_type"].replace("_", " ").upper()
+            amount_str = f"${t['amount']:.2f}" if t["amount"] >= 0 else f"-${abs(t['amount']):.2f}"
+            txn_data.append([
+                txn_time.strftime("%H:%M:%S"),
+                txn_type,
+                t.get("description", "-")[:30],
+                amount_str
+            ])
+        
+        txn_table = Table(txn_data, colWidths=[1*inch, 1.2*inch, 2.5*inch, 1*inch])
+        txn_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#374151')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('ALIGN', (3, 0), (3, -1), 'RIGHT'),
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        ]))
+        elements.append(txn_table)
+    
+    # Notes
+    if shift.get("notes"):
+        elements.append(Spacer(1, 20))
+        elements.append(Paragraph("Notes", heading_style))
+        elements.append(Paragraph(shift["notes"], styles['Normal']))
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.gray, alignment=TA_CENTER)
+    elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}", footer_style))
+    elements.append(Paragraph("This report is for internal record-keeping purposes.", footer_style))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Create filename
+    date_str = opened_at.strftime('%Y%m%d')
+    filename = f"cash_register_report_{date_str}_{shift['id'][:8]}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # Include router
 app.include_router(api_router)
 
