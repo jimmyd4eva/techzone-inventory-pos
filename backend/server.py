@@ -283,6 +283,9 @@ class Settings(BaseModel):
     dual_pricing_enabled: bool = False
     cash_discount_percent: float = 0  # Discount percentage for cash payments
     card_surcharge_percent: float = 0  # Surcharge percentage for card payments
+    # Cash Register settings
+    shift_report_email_enabled: bool = False  # Auto-email shift reports when closed
+    shift_report_email: Optional[str] = None  # Manager email for shift reports
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -304,6 +307,8 @@ class SettingsUpdate(BaseModel):
     card_surcharge_percent: Optional[float] = None
     points_redemption_threshold: Optional[float] = None
     points_value: Optional[float] = None
+    shift_report_email_enabled: Optional[bool] = None
+    shift_report_email: Optional[str] = None
 
 # ============ COUPON MODELS ============
 
@@ -511,6 +516,111 @@ If you didn't request this code, please ignore this email.
         return True
     except Exception as e:
         logger.error(f"Failed to send activation email: {e}")
+        return False
+
+def send_shift_report_email(to_email: str, shift_data: dict, pdf_bytes: bytes, business_name: str) -> bool:
+    """Send shift report PDF via Gmail SMTP"""
+    from email.mime.base import MIMEBase
+    from email import encoders
+    
+    sender_email = os.environ.get('EMAIL_ADDRESS', 'zonetech4eva@gmail.com')
+    sender_password = os.environ.get('EMAIL_PASSWORD', '')
+    
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set, cannot send shift report email")
+        return False
+    
+    # Parse dates
+    opened_at = shift_data.get("opened_at", "")
+    if isinstance(opened_at, str):
+        try:
+            opened_at = datetime.fromisoformat(opened_at.replace("Z", "+00:00"))
+        except ValueError:
+            opened_at = datetime.now(timezone.utc)
+    
+    date_str = opened_at.strftime("%Y-%m-%d")
+    diff = shift_data.get("difference", 0)
+    status = "BALANCED" if diff == 0 else ("OVER" if diff > 0 else "SHORT")
+    
+    # Create message
+    msg = MIMEMultipart('mixed')
+    msg['Subject'] = f'{business_name} - Shift Report {date_str} ({status})'
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    
+    # Email body
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 20px; border-radius: 10px; text-align: center;">
+            <h1 style="color: white; margin: 0;">{business_name}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Shift Report - {date_str}</p>
+        </div>
+        
+        <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #374151; font-size: 18px;">Shift Summary</h2>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <tr style="background: #f3f4f6;">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Opened By</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">{shift_data.get('opened_by_name', 'Unknown')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Closed By</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">{shift_data.get('closed_by_name', 'Unknown')}</td>
+                </tr>
+                <tr style="background: #f3f4f6;">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Opening Float</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">${shift_data.get('opening_amount', 0):.2f}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Expected Cash</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">${shift_data.get('expected_amount', 0):.2f}</td>
+                </tr>
+                <tr style="background: #f3f4f6;">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Actual Cash</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">${shift_data.get('closing_amount', 0):.2f}</td>
+                </tr>
+                <tr style="background: {'#d1fae5' if diff == 0 else '#dbeafe' if diff > 0 else '#fee2e2'};">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>Variance</strong></td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; color: {'#059669' if diff >= 0 else '#dc2626'}; font-weight: bold;">
+                        ${diff:.2f} ({status})
+                    </td>
+                </tr>
+            </table>
+            
+            <p style="color: #6b7280; font-size: 14px;">
+                The full shift report is attached as a PDF.
+            </p>
+        </div>
+        
+        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 20px;">
+            This is an automated message from {business_name} POS System.
+        </p>
+    </body>
+    </html>
+    """
+    
+    html_part = MIMEText(html, 'html')
+    msg.attach(html_part)
+    
+    # Attach PDF
+    pdf_attachment = MIMEBase('application', 'pdf')
+    pdf_attachment.set_payload(pdf_bytes)
+    encoders.encode_base64(pdf_attachment)
+    pdf_attachment.add_header('Content-Disposition', f'attachment; filename="shift_report_{date_str}.pdf"')
+    msg.attach(pdf_attachment)
+    
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Shift report email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send shift report email: {e}")
         return False
 
 def generate_activation_code() -> str:
@@ -2594,8 +2704,84 @@ async def close_shift(request: CloseShiftRequest, current_user: dict = Depends(g
         }}
     )
     
+    # Check if auto-email is enabled and send report
+    email_sent = False
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    if settings and settings.get("shift_report_email_enabled") and settings.get("shift_report_email"):
+        try:
+            # Generate PDF
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.enums import TA_CENTER
+            
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+            elements = []
+            styles = getSampleStyleSheet()
+            
+            business_name = settings.get("business_name", "TECHZONE")
+            
+            # Build simple PDF for email
+            title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=20, textColor=colors.HexColor('#8b5cf6'), spaceAfter=6)
+            subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, textColor=colors.gray, alignment=TA_CENTER)
+            
+            elements.append(Paragraph(business_name, title_style))
+            elements.append(Paragraph("Cash Register Shift Report", subtitle_style))
+            elements.append(Spacer(1, 20))
+            
+            # Summary
+            summary_data = [
+                ["Description", "Amount"],
+                ["Opening Float", f"${shift['opening_amount']:.2f}"],
+                ["+ Cash Sales", f"${cash_sales:.2f}"],
+                ["- Payouts", f"${payouts:.2f}"],
+                ["- Safe Drops", f"${drops:.2f}"],
+                ["- Refunds", f"${refunds:.2f}"],
+                ["= Expected Cash", f"${expected:.2f}"],
+                ["Actual Cash Count", f"${request.closing_amount:.2f}"],
+                ["Variance", f"${difference:.2f}"],
+            ]
+            
+            summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+            summary_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#8b5cf6')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                ('PADDING', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ]))
+            elements.append(summary_table)
+            
+            doc.build(elements)
+            pdf_bytes = buffer.getvalue()
+            
+            # Send email
+            shift_data = {
+                "opened_at": shift["opened_at"],
+                "opened_by_name": shift.get("opened_by_name", "Unknown"),
+                "closed_by_name": username,
+                "opening_amount": shift["opening_amount"],
+                "expected_amount": expected,
+                "closing_amount": request.closing_amount,
+                "difference": difference
+            }
+            
+            email_sent = send_shift_report_email(
+                settings["shift_report_email"],
+                shift_data,
+                pdf_bytes,
+                business_name
+            )
+        except Exception as e:
+            logger.error(f"Failed to send shift report email: {e}")
+    
     return {
         "message": "Shift closed successfully",
+        "email_sent": email_sent,
         "summary": {
             "opening_amount": shift["opening_amount"],
             "cash_sales": cash_sales,

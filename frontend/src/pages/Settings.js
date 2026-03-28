@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle, FileText, Mail } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -30,7 +30,9 @@ const Settings = () => {
     points_value: 1,
     dual_pricing_enabled: false,
     cash_discount_percent: 0,
-    card_surcharge_percent: 0
+    card_surcharge_percent: 0,
+    shift_report_email_enabled: false,
+    shift_report_email: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -276,7 +278,9 @@ const Settings = () => {
         points_value: response.data.points_value || 1,
         dual_pricing_enabled: response.data.dual_pricing_enabled === true,
         cash_discount_percent: response.data.cash_discount_percent || 0,
-        card_surcharge_percent: response.data.card_surcharge_percent || 0
+        card_surcharge_percent: response.data.card_surcharge_percent || 0,
+        shift_report_email_enabled: response.data.shift_report_email_enabled === true,
+        shift_report_email: response.data.shift_report_email || ''
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -354,7 +358,9 @@ const Settings = () => {
         points_value: settings.points_value,
         dual_pricing_enabled: settings.dual_pricing_enabled,
         cash_discount_percent: settings.cash_discount_percent,
-        card_surcharge_percent: settings.card_surcharge_percent
+        card_surcharge_percent: settings.card_surcharge_percent,
+        shift_report_email_enabled: settings.shift_report_email_enabled,
+        shift_report_email: settings.shift_report_email || null
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1046,6 +1052,68 @@ const Settings = () => {
                 </div>
               </>
             )}
+
+            {/* Email Reports Configuration */}
+            <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={18} />
+                Auto-Email Shift Reports
+              </h3>
+              
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                Automatically send shift reports to a manager when shifts are closed.
+              </p>
+
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Enable Auto-Email Reports
+                  </span>
+                  <Switch
+                    data-testid="shift-report-email-toggle"
+                    checked={settings.shift_report_email_enabled}
+                    onCheckedChange={(checked) => setSettings({ ...settings, shift_report_email_enabled: checked })}
+                  />
+                </div>
+              </div>
+
+              {settings.shift_report_email_enabled && (
+                <div style={{ marginBottom: '8px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+                    Manager Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={settings.shift_report_email}
+                    onChange={(e) => setSettings({ ...settings, shift_report_email: e.target.value })}
+                    placeholder="manager@example.com"
+                    data-testid="shift-report-email-input"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    PDF report will be emailed when any shift is closed
+                  </p>
+                </div>
+              )}
+
+              <div style={{ 
+                backgroundColor: '#f0fdf4', 
+                padding: '12px', 
+                borderRadius: '8px', 
+                marginTop: '16px',
+                border: '1px solid #86efac'
+              }}>
+                <p style={{ fontSize: '12px', color: '#166534', margin: 0 }}>
+                  <strong>Note:</strong> Don't forget to click "Save Settings" at the bottom of the page to apply email settings.
+                </p>
+              </div>
+            </div>
 
             {/* Shift History */}
             <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
@@ -1758,7 +1826,7 @@ const Settings = () => {
         )}
 
         {/* Save Button - only show for settings that need saving */}
-        {activeSection !== 'devices' && activeSection !== 'register' && (
+        {activeSection !== 'devices' && (
         <button
           data-testid="save-settings-btn"
           onClick={handleSave}

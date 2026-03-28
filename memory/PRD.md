@@ -165,11 +165,21 @@ Full shift management and cash tracking for business accounting.
 ### API Endpoints:
 - `GET /api/cash-register/current` - Get current open shift with transactions and totals
 - `POST /api/cash-register/open` - Open a new shift with opening_amount
-- `POST /api/cash-register/close` - Close shift with closing_amount
+- `POST /api/cash-register/close` - Close shift with closing_amount (**auto-emails report if enabled**)
 - `POST /api/cash-register/transaction` - Record payout/drop/refund
 - `GET /api/cash-register/history` - Get list of closed shifts
 - `GET /api/cash-register/daily-summary` - Get daily summary report (admin only)
-- `GET /api/cash-register/report/{shift_id}` - **Download PDF report for a shift** (NEW)
+- `GET /api/cash-register/report/{shift_id}` - Download PDF report for a shift
+
+### Auto-Email Feature (NEW):
+When enabled in Settings → Cash Register tab:
+- PDF report automatically emailed to configured manager address when any shift is closed
+- Email includes shift summary table and PDF attachment
+- Configure manager email address in the "Auto-Email Shift Reports" section
+
+### Settings Fields:
+- `shift_report_email_enabled` - Toggle to enable/disable auto-email
+- `shift_report_email` - Manager's email address for receiving reports
 
 ### Database Collections:
 - `cash_register_shifts`: Stores shift records with opening/closing amounts and variance
