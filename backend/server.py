@@ -18,8 +18,20 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
-from passlib.hash import bcrypt
+import bcrypt as bcrypt_lib
 import jwt
+
+# Helper functions for password hashing (compatible with Python 3.14+)
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt"""
+    return bcrypt_lib.hashpw(password.encode('utf-8'), bcrypt_lib.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against a hash"""
+    try:
+        return bcrypt_lib.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
 
 # Optional imports for payment integrations (only available in cloud environment)
 try:
@@ -781,7 +793,7 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: dict = 
     
     # Hash password if provided
     if 'password' in update_fields:
-        update_fields['password_hash'] = bcrypt.hash(update_fields.pop('password'))
+        update_fields['password_hash'] = hash_password(update_fields.pop('password'))
     
     if not update_fields:
         raise HTTPException(status_code=400, detail="No data to update")
@@ -3126,7 +3138,7 @@ async def startup_event():
                 "id": str(uuid.uuid4()),
                 "username": "admin",
                 "email": "admin@techzone.com",
-                "password_hash": bcrypt.hash("admin123"),
+                "password_hash": hash_password("admin123"),
                 "role": "admin",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }

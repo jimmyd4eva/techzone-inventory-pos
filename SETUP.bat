@@ -55,7 +55,7 @@ echo ----------------------------------------
 echo Step 3: Installing Backend Packages...
 echo ----------------------------------------
 cd /d "%~dp0backend"
-py -m pip install fastapi uvicorn motor pymongo python-dotenv pydantic passlib bcrypt python-jose python-multipart aiosqlite reportlab PyJWT pillow aiofiles
+py -m pip install fastapi uvicorn motor pymongo python-dotenv pydantic bcrypt python-jose python-multipart aiosqlite reportlab PyJWT pillow aiofiles
 echo.
 echo Backend packages installed!
 echo.
