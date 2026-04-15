@@ -16,6 +16,13 @@ set MONGO_URL=mongodb://localhost:27017
 set DB_NAME=salestax
 set JWT_SECRET=techzone-local-secret-2024
 
+REM Load email config from backend\.env if exists
+if exist "%~dp0backend\.env" (
+    for /f "tokens=1,2 delims==" %%a in ('type "%~dp0backend\.env" ^| findstr EMAIL') do (
+        set %%a=%%b
+    )
+)
+
 echo Starting Backend Server...
 cd /d "%~dp0backend"
 start "Backend" cmd /k "color 0E && title TechZone Backend && py -m uvicorn server:app --host 127.0.0.1 --port 8001"
@@ -35,7 +42,9 @@ echo   TechZone POS is STARTING!
 echo ========================================
 echo.
 echo   URL: http://localhost:3000
-echo   Login: admin / admin123
+echo.
+echo   First time? You'll need to activate your device.
+echo   An activation code will be sent to your email.
 echo.
 echo   Keep BOTH windows open!
 echo ========================================
