@@ -48,6 +48,21 @@ export default function Activation({ onActivated }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Auto-bypass for localhost
+  useEffect(() => {
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.hostname.startsWith('192.168.');
+    
+    if (isLocalhost) {
+      console.log('Local environment - auto-activating');
+      localStorage.setItem('device_activated', 'true');
+      if (onActivated) {
+        onActivated();
+      }
+    }
+  }, [onActivated]);
   const [error, setError] = useState('');
   const [deviceId] = useState(generateDeviceId());
   const [businessInfo, setBusinessInfo] = useState({
