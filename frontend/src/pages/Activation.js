@@ -68,9 +68,12 @@ export default function Activation({ onActivated }) {
     fetchBusinessInfo();
   }, []);
 
+  const [manualCode, setManualCode] = useState('');
+
   const handleRequestCode = async (e) => {
     e.preventDefault();
     setError('');
+    setManualCode('');
     setLoading(true);
 
     try {
@@ -82,7 +85,7 @@ export default function Activation({ onActivated }) {
         setStep('code');
         // If code is returned (email service unavailable), show it
         if (response.data.code) {
-          setError(`Email unavailable. Use code: ${response.data.code}`);
+          setManualCode(response.data.code);
         }
       }
     } catch (err) {
@@ -213,6 +216,16 @@ export default function Activation({ onActivated }) {
 
             {step === 'code' && (
               <div className="space-y-6">
+                {/* Show manual code if email failed */}
+                {manualCode && (
+                  <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4 text-center">
+                    <p className="text-green-200 text-sm mb-2">Email unavailable. Use this code:</p>
+                    <div className="bg-black/30 rounded-lg p-3">
+                      <span className="text-3xl font-bold tracking-widest text-white">{manualCode}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-center">
                   <InputOTP 
                     maxLength={6} 
