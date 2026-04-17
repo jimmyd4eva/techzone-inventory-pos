@@ -3152,26 +3152,37 @@ async def shutdown_db_client():
     client.close()
 
 # Serve frontend build files (for standalone/portable deployment)
-import os.path
-frontend_build_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
-if os.path.exists(frontend_build_path):
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import FileResponse
+import os.path as osp
+_frontend_build = osp.abspath(osp.join(osp.dirname(__file__), "..", "frontend", "build"))
+
+# Check if frontend build exists and mount static files
+if osp.exists(_frontend_build) and osp.exists(osp.join(_frontend_build, "static")):
+    print(f"✅ Serving frontend from: {_frontend_build}")
+    app.mount("/static", StaticFiles(directory=osp.join(_frontend_build, "static")), name="frontend_static")
+
+# Root route - serve index.html
+@app.get("/")
+async def serve_root():
+    index_path = osp.join(_frontend_build, "index.html")
+    if osp.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "TechZone POS API", "docs": "/docs"}
+
+# Catch-all route for SPA (must be last)
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Skip API routes
+    if full_path.startswith("api"):
+        raise HTTPException(status_code=404, detail="Not found")
     
-    # Serve static files (js, css, images)
-    app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_path, "static")), name="static")
+    # Try exact file match
+    file_path = osp.join(_frontend_build, full_path)
+    if osp.isfile(file_path):
+        return FileResponse(file_path)
     
-    # Serve index.html for all non-API routes (SPA routing)
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        # Don't serve frontend for API routes
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="Not found")
-        
-        # Try to serve the requested file
-        file_path = os.path.join(frontend_build_path, full_path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
-        
-        # Fall back to index.html for SPA routing
-        return FileResponse(os.path.join(frontend_build_path, "index.html"))
+    # SPA fallback to index.html
+    index_path = osp.join(_frontend_build, "index.html")
+    if osp.exists(index_path):
+        return FileResponse(index_path)
+    
+    raise HTTPException(status_code=404, detail="Not found")
