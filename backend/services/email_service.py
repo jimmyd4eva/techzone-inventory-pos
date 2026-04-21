@@ -400,6 +400,7 @@ def send_loyalty_points_email(
     sale_total: float,
     business_name: str = "TECHZONE",
     milestone: int = None,
+    review_url: str = None,
 ) -> bool:
     """Email the customer after a sale: points earned + optional milestone celebration."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
@@ -432,6 +433,31 @@ def send_loyalty_points_email(
         else ""
     )
 
+    # Make review CTA extra prominent on milestone emails — that's the high-trust moment.
+    review_html = ""
+    if review_url:
+        cta_label = "★ Share the love — leave a review" if milestone else "★ Leave a review"
+        helper_text = (
+            "You're a top customer — a quick 5-star review would truly make our day."
+            if milestone
+            else "30 seconds — it means the world to a small business."
+        )
+        review_html = f"""
+        <div style="margin:22px 0 8px 0;text-align:center;">
+          <a href="{review_url}" target="_blank"
+             style="display:inline-block;padding:14px 26px;background:#16a34a;color:#fff;
+                    text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">
+            {cta_label}
+          </a>
+          <div style="font-size:12px;color:#6b7280;margin-top:8px;">
+            {helper_text}
+          </div>
+        </div>
+        """
+    review_text = (
+        f"\nLeave a review (means a lot): {review_url}\n" if review_url else ""
+    )
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = sender_email
@@ -454,6 +480,7 @@ def send_loyalty_points_email(
           <div style="font-size:13px;color:#6b7280;">Your current balance</div>
           <div style="font-size:28px;font-weight:700;color:#7c3aed;">{points_balance} points</div>
         </div>
+        {review_html}
         <p style="color:#6b7280;font-size:13px;margin-top:16px;">
           Points can be redeemed for discounts on your next visit.
         </p>
@@ -471,6 +498,7 @@ def send_loyalty_points_email(
     )
     if milestone:
         text += f"\n🎉 Milestone: you've reached {milestone} points!\n"
+    text += review_text
     text += "\nPoints can be redeemed for discounts on your next visit.\n"
 
     msg.attach(MIMEText(text, "plain"))

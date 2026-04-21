@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Google Review Link in Loyalty Emails (Feb 21, 2026)
+- `send_loyalty_points_email()` now accepts `review_url`; when set, a green CTA button is rendered after the points balance block.
+- Milestone emails (100 / 500 / 1000 pts) get **upgraded CTA copy** ("★ Share the love — leave a review" + "top customer" helper text) since milestone = highest-trust moment for 5-star reviews.
+- `routes/sales.py` passes `settings.google_review_url` to the function, so the same single Settings field controls both Follow-up and Loyalty emails.
+- Verified via backend: plain-text + HTML MIME bodies contain the link and button only when `review_url` is set; milestone variant swaps in the upgraded label.
+
 ### Google Review Link in Follow-up Emails (Feb 21, 2026)
 - New optional setting `google_review_url` (Settings → Points System → Follow-up Check-in Emails card).
 - Input appears only when Follow-up emails are enabled; accepts any URL (tip provided for Google Business Profile short link).

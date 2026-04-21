@@ -168,6 +168,7 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     from core.security import strip_html as _strip
                     from services.email_service import send_loyalty_points_email
                     business_name = _strip(settings.get("business_name", "TECHZONE"))
+                    review_url = (settings.get("google_review_url") or "").strip() or None
                     send_loyalty_points_email(
                         to_email=customer["email"],
                         customer_name=customer.get("name", "Valued Customer"),
@@ -176,6 +177,7 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                         sale_total=float(total),
                         business_name=business_name,
                         milestone=milestone,
+                        review_url=review_url,
                     )
                 except Exception as _e:
                     logger.warning(f"Loyalty email failed (non-fatal): {_e}")
