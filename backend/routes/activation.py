@@ -7,7 +7,7 @@ from core.security import get_current_user, generate_activation_code
 from services.email_service import send_activation_email
 from models import ActivationCode, ActivatedDevice, ActivationRequest, ActivationVerify, ActivationCheckRequest
 
-router = APIRouter()
+router = APIRouter(tags=["Device Activation"])
 
 @router.post("/activation/check")
 async def check_device_activation(request: ActivationCheckRequest):

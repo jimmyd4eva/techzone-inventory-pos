@@ -13,7 +13,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
-router = APIRouter()
+router = APIRouter(tags=["Reports"])
 
 @router.get("/reports/daily-sales")
 async def get_daily_sales(current_user: dict = Depends(get_current_user)):

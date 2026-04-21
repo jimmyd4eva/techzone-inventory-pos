@@ -15,7 +15,7 @@ from core.config import (
 from core.security import get_current_user
 from models import Sale, PaymentTransaction, CheckoutRequest
 
-router = APIRouter()
+router = APIRouter(tags=["Payments"])
 
 @router.post("/payments/checkout")
 async def create_checkout_session(checkout_data: CheckoutRequest, request: Request, current_user: dict = Depends(get_current_user)):

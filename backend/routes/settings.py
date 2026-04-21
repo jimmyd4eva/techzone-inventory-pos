@@ -12,7 +12,7 @@ from core.config import UPLOAD_DIR
 from core.security import get_current_user, check_not_readonly
 from models import Settings, SettingsUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["Settings"])
 
 @router.get("/settings/public")
 async def get_public_settings():

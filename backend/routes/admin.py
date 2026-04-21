@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from core.config import db, logger
 from core.security import get_current_user
 
-router = APIRouter()
+router = APIRouter(tags=["Admin"])
 
 @router.post("/admin/migrate-data")
 async def migrate_data(current_user: dict = Depends(get_current_user)):

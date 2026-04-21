@@ -7,7 +7,7 @@ import uuid
 from core.security import get_current_user, check_not_readonly
 from models import Sale, SaleCreate, SaleItem, PaymentTransaction, CheckoutRequest
 
-router = APIRouter()
+router = APIRouter(tags=["Sales"])
 
 @router.post("/sales", response_model=Sale)
 async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_current_user)):

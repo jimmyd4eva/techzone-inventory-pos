@@ -6,7 +6,7 @@ from core.config import db, logger
 from core.security import get_current_user, check_not_readonly
 from models import InventoryItem, InventoryItemCreate, InventoryItemUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["Inventory"])
 
 @router.post("/inventory", response_model=InventoryItem)
 async def create_inventory_item(item_data: InventoryItemCreate, current_user: dict = Depends(get_current_user)):

@@ -16,7 +16,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from models import CashRegisterShift, CashRegisterTransaction, OpenShiftRequest, CloseShiftRequest, CashTransactionRequest
 
-router = APIRouter()
+router = APIRouter(tags=["Cash Register"])
 
 @router.get("/cash-register/current")
 async def get_current_shift(current_user: dict = Depends(get_current_user)):

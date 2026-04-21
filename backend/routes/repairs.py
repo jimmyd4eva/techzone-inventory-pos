@@ -6,7 +6,7 @@ from core.config import db, logger
 from core.security import get_current_user, check_not_readonly
 from models import RepairJob, RepairJobCreate, RepairJobUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["Repairs"])
 
 @router.post("/repairs", response_model=RepairJob)
 async def create_repair_job(job_data: RepairJobCreate, current_user: dict = Depends(get_current_user)):

@@ -6,7 +6,7 @@ from core.config import db, logger
 from core.security import get_current_user, check_not_readonly
 from models import Customer, CustomerCreate
 
-router = APIRouter()
+router = APIRouter(tags=["Customers"])
 
 @router.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):

@@ -6,7 +6,7 @@ from core.config import db, logger
 from core.security import hash_password, verify_password, create_token, get_current_user, check_not_readonly
 from models import User, UserCreate, UserLogin, UserUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["Auth"])
 
 @router.post("/auth/register")
 async def register(user_data: UserCreate):

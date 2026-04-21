@@ -6,7 +6,7 @@ from core.config import db, logger
 from core.security import get_current_user, check_not_readonly
 from models import Coupon, CouponCreate, CouponUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["Coupons"])
 
 @router.get("/coupons")
 async def get_coupons(current_user: dict = Depends(get_current_user)):
