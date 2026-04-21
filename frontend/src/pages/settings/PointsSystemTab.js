@@ -109,6 +109,45 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
         </div>
       </div>
 
+      <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+          Follow-up Check-in Emails
+        </h3>
+        <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+          Auto-schedule a friendly check-in email a few days after each sale ("Is everything working?"). Great for catching warranty issues early and prompting reviews.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Enable Follow-up Emails
+          </span>
+          <Switch
+            data-testid="followup-emails-toggle"
+            checked={settings.followup_emails_enabled}
+            onCheckedChange={(checked) => setSettings({ ...settings, followup_emails_enabled: checked })}
+            className="data-[state=checked]:bg-violet-500"
+          />
+        </div>
+        {settings.followup_emails_enabled && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+              Days After Sale
+            </label>
+            <input
+              type="number"
+              data-testid="followup-days-input"
+              min="1"
+              max="90"
+              value={settings.followup_days}
+              onChange={(e) => setSettings({ ...settings, followup_days: parseInt(e.target.value) || 14 })}
+              style={{ width: '120px', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+            />
+            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+              Emails are dispatched hourly by the scheduler once the send time passes.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="card" style={{ padding: '24px', marginBottom: '24px', backgroundColor: '#faf5ff' }}>
         <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#7c3aed', marginBottom: '12px' }}>
           Points System Preview

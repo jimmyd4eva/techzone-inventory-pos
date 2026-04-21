@@ -35,7 +35,9 @@ const Settings = () => {
     shift_report_email: '',
     auto_summary_weekly_enabled: false,
     auto_summary_monthly_enabled: false,
-    loyalty_emails_enabled: false
+    loyalty_emails_enabled: false,
+    followup_emails_enabled: false,
+    followup_days: 14
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -267,7 +269,9 @@ const Settings = () => {
         shift_report_email: response.data.shift_report_email || '',
         auto_summary_weekly_enabled: response.data.auto_summary_weekly_enabled === true,
         auto_summary_monthly_enabled: response.data.auto_summary_monthly_enabled === true,
-        loyalty_emails_enabled: response.data.loyalty_emails_enabled === true
+        loyalty_emails_enabled: response.data.loyalty_emails_enabled === true,
+        followup_emails_enabled: response.data.followup_emails_enabled === true,
+        followup_days: response.data.followup_days || 14
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -340,7 +344,9 @@ const Settings = () => {
         shift_report_email: settings.shift_report_email || null,
         auto_summary_weekly_enabled: settings.auto_summary_weekly_enabled,
         auto_summary_monthly_enabled: settings.auto_summary_monthly_enabled,
-        loyalty_emails_enabled: settings.loyalty_emails_enabled
+        loyalty_emails_enabled: settings.loyalty_emails_enabled,
+        followup_emails_enabled: settings.followup_emails_enabled,
+        followup_days: settings.followup_days
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {

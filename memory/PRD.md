@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Follow-up Check-in Emails (Feb 21, 2026)
+- New Settings fields: `followup_emails_enabled` (toggle) + `followup_days` (default 14).
+- UI: Settings → Points System → "Follow-up Check-in Emails" card with toggle + days input that appears when enabled.
+- On sale creation with an email-on-file customer, backend inserts a `followups` doc with `send_at = now + followup_days` and `status=pending`.
+- Hourly scheduler (`_process_followups()`) picks up due follow-ups, calls `send_followup_email()`, and updates status to `sent` or `failed`.
+- Friendly branded email template: "Is everything working? Reply if not, review us if so." — surfaces warranty issues early and drives unsolicited reviews.
+- **Verified end-to-end**: scheduled a sale, forced `send_at` into the past, manually invoked processor — real email delivered, DB status transitioned `pending → sent`.
+
 ### Loyalty Email Notifications (Feb 21, 2026)
 - New Settings toggle `loyalty_emails_enabled` in Settings → Points System → Loyalty Email Notifications.
 - When enabled, after each completed sale where the customer has an email on file and earns >0 points, the backend automatically sends a branded HTML email showing:

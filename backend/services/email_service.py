@@ -487,3 +487,64 @@ def send_loyalty_points_email(
     except Exception as e:
         logger.error(f"Failed to send loyalty email: {e}")
         return False
+
+
+def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14) -> bool:
+    """Friendly check-in email to a customer N days after a sale."""
+    sender_email = os.environ.get("EMAIL_ADDRESS", "")
+    sender_password = os.environ.get("EMAIL_PASSWORD", "")
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set; cannot send followup email")
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"How's it going with your purchase from {business_name}?"
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    html = f"""
+    <html>
+    <body style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f9fafb;">
+      <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6366f1 100%);padding:22px;border-radius:12px 12px 0 0;">
+        <h1 style="color:#fff;margin:0;font-size:22px;">{business_name}</h1>
+      </div>
+      <div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;">
+        <p style="color:#111827;font-size:16px;margin:0 0 12px 0;">Hi {customer_name},</p>
+        <p style="color:#374151;font-size:14px;line-height:1.5;">
+          It's been about {days_ago} days since your purchase of <strong>{items_summary}</strong>. We just wanted to check in — is everything working perfectly?
+        </p>
+        <p style="color:#374151;font-size:14px;line-height:1.5;">
+          If anything isn't quite right, just reply to this email and we'll sort it out right away. If all is good and you have a moment, we'd love a quick review — it genuinely helps a small business like ours.
+        </p>
+        <p style="color:#374151;font-size:14px;line-height:1.5;">
+          Thanks again for trusting {business_name}.
+        </p>
+      </div>
+      <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:14px;">
+        You're receiving this because you made a recent purchase. Reply anytime to reach us.
+      </p>
+    </body>
+    </html>
+    """
+    text = (
+        f"Hi {customer_name},\n\n"
+        f"It's been about {days_ago} days since your purchase of {items_summary}. "
+        f"Just checking in — is everything working?\n\n"
+        f"If anything isn't right, reply to this email and we'll sort it out. "
+        f"If all is good and you have a moment, a quick review helps us a lot.\n\n"
+        f"Thanks again,\n{business_name}\n"
+    )
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Follow-up email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send follow-up email: {e}")
+        return False

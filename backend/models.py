@@ -209,6 +209,9 @@ class Settings(BaseModel):
     auto_summary_last_monthly_sent: Optional[str] = None  # ISO timestamp
     # Loyalty email notifications
     loyalty_emails_enabled: bool = False  # Auto-email customers after sale with points earned
+    # Follow-up emails
+    followup_emails_enabled: bool = False  # Auto-schedule follow-up check-in email N days after sale
+    followup_days: int = 14  # Days after sale to send follow-up
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -235,6 +238,8 @@ class SettingsUpdate(BaseModel):
     auto_summary_weekly_enabled: Optional[bool] = None
     auto_summary_monthly_enabled: Optional[bool] = None
     loyalty_emails_enabled: Optional[bool] = None
+    followup_emails_enabled: Optional[bool] = None
+    followup_days: Optional[int] = None
 
 # ============ COUPON MODELS ============
 

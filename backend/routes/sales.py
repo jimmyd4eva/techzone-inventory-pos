@@ -179,6 +179,35 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     )
                 except Exception as _e:
                     logger.warning(f"Loyalty email failed (non-fatal): {_e}")
+
+        # Schedule follow-up email if enabled + customer has email
+        if (
+            settings.get("followup_emails_enabled")
+            and customer
+            and customer.get("email")
+        ):
+            try:
+                days = int(settings.get("followup_days") or 14)
+                if days < 1:
+                    days = 14
+                send_at = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
+                items_summary = ", ".join(i.item_name for i in sale_data.items[:3])
+                if len(sale_data.items) > 3:
+                    items_summary += f" and {len(sale_data.items) - 3} more"
+                await db.followups.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "sale_id": sale.id,
+                    "customer_id": sale_data.customer_id,
+                    "customer_name": customer.get("name", "Valued Customer"),
+                    "customer_email": customer["email"],
+                    "items_summary": items_summary or "your order",
+                    "days": days,
+                    "send_at": send_at,
+                    "status": "pending",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+            except Exception as _e:
+                logger.warning(f"Failed to schedule follow-up (non-fatal): {_e}")
         
         # Record cash sale in cash register if shift is open
         if sale_data.payment_method == "cash":

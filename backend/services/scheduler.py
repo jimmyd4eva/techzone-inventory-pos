@@ -47,8 +47,41 @@ async def _maybe_send(period: str, enabled_key: str, last_key: str):
         logger.error(f"Auto-summary task failed ({period}): {e}")
 
 
+async def _process_followups():
+    """Send any pending follow-up emails whose send_at has passed."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        cursor = db.followups.find(
+            {"status": "pending", "send_at": {"$lte": now_iso}},
+            {"_id": 0},
+        ).limit(50)
+        followups = await cursor.to_list(50)
+        if not followups:
+            return
+
+        settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
+        business_name = strip_html(settings.get("business_name", "TECHZONE"))
+        from services.email_service import send_followup_email
+
+        for f in followups:
+            sent = send_followup_email(
+                to_email=f["customer_email"],
+                customer_name=f.get("customer_name", "Valued Customer"),
+                items_summary=f.get("items_summary", "your order"),
+                business_name=business_name,
+                days_ago=int(f.get("days", 14)),
+            )
+            status = "sent" if sent else "failed"
+            await db.followups.update_one(
+                {"id": f["id"]},
+                {"$set": {"status": status, "sent_at": datetime.now(timezone.utc).isoformat()}},
+            )
+    except Exception as e:
+        logger.error(f"Follow-up processor error: {e}")
+
+
 async def summary_scheduler_loop(interval_seconds: int = 3600):
-    """Wake every hour and send weekly/monthly summaries when due."""
+    """Wake every hour and send weekly/monthly summaries + process follow-ups."""
     while True:
         try:
             await _maybe_send(
@@ -61,6 +94,7 @@ async def summary_scheduler_loop(interval_seconds: int = 3600):
                 "auto_summary_monthly_enabled",
                 "auto_summary_last_monthly_sent",
             )
+            await _process_followups()
         except Exception as e:
             logger.error(f"Scheduler iteration error: {e}")
         await asyncio.sleep(interval_seconds)
