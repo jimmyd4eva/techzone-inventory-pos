@@ -7,6 +7,7 @@ const API = `${BACKEND_URL}/api`;
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
@@ -20,13 +21,15 @@ const Coupons = () => {
     usage_limit: '',
     is_active: true,
     valid_from: '',
-    valid_until: ''
+    valid_until: '',
+    customer_id: ''
   });
   const [error, setError] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchCoupons();
+    fetchCustomers();
   }, []);
 
   const fetchCoupons = async () => {
@@ -43,6 +46,18 @@ const Coupons = () => {
     }
   };
 
+  const fetchCustomers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/customers`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCustomers(response.data);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
   const openModal = (coupon = null) => {
     if (coupon) {
       setEditingCoupon(coupon);
@@ -56,7 +71,8 @@ const Coupons = () => {
         usage_limit: coupon.usage_limit || '',
         is_active: coupon.is_active,
         valid_from: coupon.valid_from ? coupon.valid_from.split('T')[0] : '',
-        valid_until: coupon.valid_until ? coupon.valid_until.split('T')[0] : ''
+        valid_until: coupon.valid_until ? coupon.valid_until.split('T')[0] : '',
+        customer_id: coupon.customer_id || ''
       });
     } else {
       setEditingCoupon(null);
@@ -70,7 +86,8 @@ const Coupons = () => {
         usage_limit: '',
         is_active: true,
         valid_from: '',
-        valid_until: ''
+        valid_until: '',
+        customer_id: ''
       });
     }
     setError('');
@@ -89,12 +106,17 @@ const Coupons = () => {
 
     try {
       const token = localStorage.getItem('token');
+      const selectedCust = formData.customer_id
+        ? customers.find(c => c.id === formData.customer_id)
+        : null;
       const data = {
         ...formData,
         max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
         usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
         valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : null,
-        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null
+        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null,
+        customer_id: formData.customer_id || null,
+        customer_name: selectedCust ? selectedCust.name : null
       };
 
       if (editingCoupon) {
@@ -205,7 +227,27 @@ const Coupons = () => {
                         {coupon.code}
                       </span>
                     </td>
-                    <td>{coupon.description || '-'}</td>
+                    <td>
+                      {coupon.description || '-'}
+                      {coupon.customer_id && (
+                        <div
+                          data-testid={`coupon-personalized-${coupon.id}`}
+                          style={{
+                            display: 'inline-block',
+                            marginTop: '4px',
+                            padding: '2px 8px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#7c3aed',
+                            backgroundColor: '#f5f3ff',
+                            border: '1px solid #ddd6fe',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          For: {coupon.customer_name || coupon.customer_id}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <span style={{
                         display: 'flex',
@@ -430,6 +472,33 @@ const Coupons = () => {
                       onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Personalize for Customer (Optional)</label>
+                  <select
+                    data-testid="coupon-customer-select"
+                    value={formData.customer_id}
+                    onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: '#fff'
+                    }}
+                  >
+                    <option value="">— Available to all customers —</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}{c.phone ? ` (${c.phone})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    When set, only this customer can redeem the coupon at checkout.
+                  </p>
                 </div>
 
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

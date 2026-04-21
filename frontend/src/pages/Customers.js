@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Ticket } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -22,6 +22,67 @@ const Customers = () => {
     address: '',
     customer_type: 'retail'
   });
+
+  // Personalized coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [couponForCustomer, setCouponForCustomer] = useState(null);
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    description: '',
+    discount_type: 'percentage',
+    discount_value: 10,
+    min_purchase: 0,
+    usage_limit: 1,
+  });
+  const [couponMsg, setCouponMsg] = useState({ type: '', text: '' });
+  const [couponSaving, setCouponSaving] = useState(false);
+
+  const openCouponModal = (customer) => {
+    setCouponForCustomer(customer);
+    const suggestedCode = `${(customer.name || 'VIP').split(' ')[0].toUpperCase().slice(0, 6)}${Math.floor(Math.random() * 900 + 100)}`;
+    setCouponForm({
+      code: suggestedCode,
+      description: `Personalized for ${customer.name}`,
+      discount_type: 'percentage',
+      discount_value: 10,
+      min_purchase: 0,
+      usage_limit: 1,
+    });
+    setCouponMsg({ type: '', text: '' });
+    setShowCouponModal(true);
+  };
+
+  const submitCustomerCoupon = async () => {
+    if (!couponForm.code.trim()) {
+      setCouponMsg({ type: 'error', text: 'Coupon code is required' });
+      return;
+    }
+    if (!couponForm.discount_value || couponForm.discount_value <= 0) {
+      setCouponMsg({ type: 'error', text: 'Discount value must be greater than 0' });
+      return;
+    }
+    setCouponSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/coupons`, {
+        code: couponForm.code.toUpperCase().trim(),
+        description: couponForm.description,
+        discount_type: couponForm.discount_type,
+        discount_value: parseFloat(couponForm.discount_value),
+        min_purchase: parseFloat(couponForm.min_purchase) || 0,
+        usage_limit: couponForm.usage_limit ? parseInt(couponForm.usage_limit) : null,
+        is_active: true,
+        customer_id: couponForCustomer.id,
+        customer_name: couponForCustomer.name,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setCouponMsg({ type: 'success', text: `Coupon ${couponForm.code.toUpperCase()} created for ${couponForCustomer.name}` });
+      setTimeout(() => setShowCouponModal(false), 1400);
+    } catch (error) {
+      setCouponMsg({ type: 'error', text: error.response?.data?.detail || 'Failed to create coupon' });
+    } finally {
+      setCouponSaving(false);
+    }
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -407,6 +468,29 @@ const Customers = () => {
                 <p><strong>Email:</strong> {selectedCustomer.email || 'N/A'}</p>
                 <p><strong>Address:</strong> {selectedCustomer.address || 'N/A'}</p>
                 <p><strong>Customer Since:</strong> {new Date(selectedCustomer.created_at).toLocaleDateString()}</p>
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    data-testid="generate-customer-coupon-btn"
+                    onClick={() => openCouponModal(selectedCustomer)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      backgroundColor: '#7c3aed',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Ticket size={14} />
+                    Generate Personalized Coupon
+                  </button>
+                </div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
@@ -508,6 +592,130 @@ const Customers = () => {
               <button className="btn btn-secondary" onClick={closeDetailModal}>
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Personalized Coupon Modal */}
+      {showCouponModal && couponForCustomer && (
+        <div className="modal-overlay" onClick={() => setShowCouponModal(false)}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            data-testid="customer-coupon-modal"
+            style={{ maxWidth: '480px' }}
+          >
+            <div className="modal-header">
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Ticket size={20} color="#7c3aed" />
+                Coupon for {couponForCustomer.name}
+              </h2>
+              <button
+                className="btn-close"
+                onClick={() => setShowCouponModal(false)}
+                data-testid="close-customer-coupon-btn"
+              >×</button>
+            </div>
+            <div className="modal-body">
+              {couponMsg.text && (
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  marginBottom: '12px',
+                  backgroundColor: couponMsg.type === 'success' ? '#d1fae5' : '#fee2e2',
+                  color: couponMsg.type === 'success' ? '#065f46' : '#991b1b'
+                }}>{couponMsg.text}</div>
+              )}
+              <div className="form-group">
+                <label>Coupon Code</label>
+                <input
+                  type="text"
+                  data-testid="customer-coupon-code-input"
+                  value={couponForm.code}
+                  onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
+                  placeholder="VIP123"
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  type="text"
+                  value={couponForm.description}
+                  onChange={(e) => setCouponForm({ ...couponForm, description: e.target.value })}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Discount Type</label>
+                  <select
+                    data-testid="customer-coupon-type-select"
+                    value={couponForm.discount_type}
+                    onChange={(e) => setCouponForm({ ...couponForm, discount_type: e.target.value })}
+                  >
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>{couponForm.discount_type === 'percentage' ? 'Discount (%)' : 'Discount ($)'}</label>
+                  <input
+                    type="number"
+                    data-testid="customer-coupon-value-input"
+                    value={couponForm.discount_value}
+                    onChange={(e) => setCouponForm({ ...couponForm, discount_value: e.target.value })}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Min Purchase ($)</label>
+                  <input
+                    type="number"
+                    value={couponForm.min_purchase}
+                    onChange={(e) => setCouponForm({ ...couponForm, min_purchase: e.target.value })}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Usage Limit</label>
+                  <input
+                    type="number"
+                    value={couponForm.usage_limit}
+                    onChange={(e) => setCouponForm({ ...couponForm, usage_limit: e.target.value })}
+                    min="1"
+                    placeholder="Unlimited"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowCouponModal(false)}
+                >Cancel</button>
+                <button
+                  type="button"
+                  data-testid="submit-customer-coupon-btn"
+                  onClick={submitCustomerCoupon}
+                  disabled={couponSaving}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: '#7c3aed',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: couponSaving ? 'not-allowed' : 'pointer',
+                    opacity: couponSaving ? 0.7 : 1,
+                  }}
+                >
+                  {couponSaving ? 'Creating...' : 'Create Coupon'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -43,8 +43,11 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
     if sale_data.coupon_code:
         coupon = await db.coupons.find_one({"code": sale_data.coupon_code.upper(), "is_active": True})
         if coupon:
+            # Personalized coupon: must match the customer on this sale
+            if coupon.get('customer_id') and coupon.get('customer_id') != sale_data.customer_id:
+                pass  # Skip - coupon locked to another customer
             # Validate coupon
-            if coupon.get('usage_limit') and coupon.get('usage_count', 0) >= coupon.get('usage_limit'):
+            elif coupon.get('usage_limit') and coupon.get('usage_count', 0) >= coupon.get('usage_limit'):
                 pass  # Skip - usage limit reached
             elif subtotal < coupon.get('min_purchase', 0):
                 pass  # Skip - minimum not met

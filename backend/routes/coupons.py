@@ -42,6 +42,8 @@ async def create_coupon(coupon_data: CouponCreate, current_user: dict = Depends(
         is_active=coupon_data.is_active,
         valid_from=coupon_data.valid_from,
         valid_until=coupon_data.valid_until,
+        customer_id=coupon_data.customer_id,
+        customer_name=coupon_data.customer_name,
         created_by=current_user.get('username')
     )
     
@@ -86,14 +88,28 @@ async def validate_coupon(data: dict, current_user: dict = Depends(get_current_u
     """Validate a coupon code and calculate discount"""
     code = data.get('code', '').upper()
     subtotal = data.get('subtotal', 0)
-    
+    customer_id = data.get('customer_id')
+
     coupon = await db.coupons.find_one({"code": code}, {"_id": 0})
     if not coupon:
         raise HTTPException(status_code=404, detail="Invalid coupon code")
     
     if not coupon.get('is_active', False):
         raise HTTPException(status_code=400, detail="This coupon is no longer active")
-    
+
+    # Personalized coupon: locked to a specific customer
+    if coupon.get('customer_id'):
+        if not customer_id:
+            raise HTTPException(
+                status_code=400,
+                detail="This coupon is personalized and requires a customer at checkout",
+            )
+        if customer_id != coupon.get('customer_id'):
+            raise HTTPException(
+                status_code=400,
+                detail="This coupon is not valid for this customer",
+            )
+
     # Check usage limit
     if coupon.get('usage_limit') and coupon.get('usage_count', 0) >= coupon.get('usage_limit'):
         raise HTTPException(status_code=400, detail="This coupon has reached its usage limit")

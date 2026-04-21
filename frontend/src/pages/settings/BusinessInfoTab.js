@@ -1,6 +1,7 @@
 import React from 'react';
-import { Building, Image, Upload } from 'lucide-react';
+import { Building, Image, Upload, Eye } from 'lucide-react';
 import SimpleRichTextEditor from '../../components/SimpleRichTextEditor';
+import ReceiptPreview from '../../components/ReceiptPreview';
 
 export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUpload, fileInputRef }) => {
   return (
@@ -157,6 +158,32 @@ export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUp
             </p>
           </div>
         )}
+      </div>
+
+      {/* Live Receipt Preview */}
+      <div style={{
+        marginTop: '24px',
+        padding: '20px',
+        background: '#f9fafb',
+        borderRadius: '10px',
+        border: '1px solid #e5e7eb'
+      }}>
+        <h3 style={{
+          fontSize: '15px',
+          fontWeight: '600',
+          color: '#374151',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '6px'
+        }}>
+          <Eye size={16} />
+          Live Receipt Preview
+        </h3>
+        <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 8px 0' }}>
+          Updates as you type. Reflects the blue/red split and any bold/italic/underline/font-size formatting you apply above.
+        </p>
+        <ReceiptPreview settings={settings} />
       </div>
     </div>
   );

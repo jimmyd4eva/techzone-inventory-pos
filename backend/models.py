@@ -202,6 +202,11 @@ class Settings(BaseModel):
     # Cash Register settings
     shift_report_email_enabled: bool = False  # Auto-email shift reports when closed
     shift_report_email: Optional[str] = None  # Manager email for shift reports
+    # Auto-email tax & sales summaries
+    auto_summary_weekly_enabled: bool = False
+    auto_summary_monthly_enabled: bool = False
+    auto_summary_last_weekly_sent: Optional[str] = None  # ISO timestamp
+    auto_summary_last_monthly_sent: Optional[str] = None  # ISO timestamp
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -225,6 +230,8 @@ class SettingsUpdate(BaseModel):
     points_value: Optional[float] = None
     shift_report_email_enabled: Optional[bool] = None
     shift_report_email: Optional[str] = None
+    auto_summary_weekly_enabled: Optional[bool] = None
+    auto_summary_monthly_enabled: Optional[bool] = None
 
 # ============ COUPON MODELS ============
 
@@ -242,6 +249,9 @@ class Coupon(BaseModel):
     is_active: bool = True
     valid_from: Optional[str] = None
     valid_until: Optional[str] = None
+    # Personalized coupon: if set, only this customer can use it
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
 
@@ -256,6 +266,8 @@ class CouponCreate(BaseModel):
     is_active: bool = True
     valid_from: Optional[str] = None
     valid_until: Optional[str] = None
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
 
 class CouponUpdate(BaseModel):
     code: Optional[str] = None
@@ -268,6 +280,8 @@ class CouponUpdate(BaseModel):
     is_active: Optional[bool] = None
     valid_from: Optional[str] = None
     valid_until: Optional[str] = None
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
 
 # ============ ACTIVATION MODELS ============
 

@@ -1,9 +1,129 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Wallet, DollarSign, Plus, Minus, Clock, ChevronDown, ChevronUp,
-  AlertCircle, CheckCircle, FileText
+  AlertCircle, CheckCircle, FileText, Send, CalendarRange
 } from 'lucide-react';
 import { Switch } from '../../components/ui/switch';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const AutoSummaryCard = ({ settings, setSettings }) => {
+  const [sending, setSending] = useState(null); // 'weekly' | 'monthly' | null
+  const [msg, setMsg] = useState({ type: '', text: '' });
+
+  const sendNow = async (period) => {
+    setSending(period);
+    setMsg({ type: '', text: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.post(
+        `${API}/reports/send-summary-now`,
+        { period },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (r.data.sent) {
+        setMsg({ type: 'success', text: `${period === 'weekly' ? 'Weekly' : 'Monthly'} summary sent to ${r.data.recipient}` });
+      } else {
+        setMsg({ type: 'error', text: 'Email service unavailable (check EMAIL_PASSWORD).' });
+      }
+    } catch (error) {
+      setMsg({ type: 'error', text: error.response?.data?.detail || 'Failed to send summary' });
+    } finally {
+      setSending(null);
+    }
+  };
+
+  return (
+    <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+      <h3 style={{
+        marginBottom: '16px', fontSize: '16px', fontWeight: '600',
+        color: '#374151', display: 'flex', alignItems: 'center', gap: '8px'
+      }}>
+        <CalendarRange size={18} />
+        Auto-Email Sales &amp; Tax Summaries
+      </h3>
+      <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+        A PDF summary (revenue, tax collected, daily breakdown) is emailed to your Manager Email above.
+        Weekly runs Monday covering the prior Mon–Sun. Monthly runs on the 1st covering the prior calendar month.
+      </p>
+
+      {msg.text && (
+        <div
+          data-testid="auto-summary-message"
+          style={{
+            padding: '10px 12px',
+            borderRadius: '8px',
+            marginBottom: '12px',
+            backgroundColor: msg.type === 'success' ? '#d1fae5' : '#fee2e2',
+            color: msg.type === 'success' ? '#065f46' : '#991b1b'
+          }}
+        >
+          {msg.text}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+          Weekly Summary (every Monday)
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            type="button"
+            onClick={() => sendNow('weekly')}
+            disabled={sending === 'weekly'}
+            data-testid="send-weekly-summary-btn"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '6px 10px', fontSize: '12px', fontWeight: '600',
+              color: '#fff', backgroundColor: '#8b5cf6',
+              border: 'none', borderRadius: '6px',
+              cursor: sending === 'weekly' ? 'not-allowed' : 'pointer',
+              opacity: sending === 'weekly' ? 0.7 : 1
+            }}
+          >
+            <Send size={12} /> {sending === 'weekly' ? 'Sending...' : 'Send Now'}
+          </button>
+          <Switch
+            data-testid="auto-summary-weekly-toggle"
+            checked={settings.auto_summary_weekly_enabled}
+            onCheckedChange={(checked) => setSettings({ ...settings, auto_summary_weekly_enabled: checked })}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+          Monthly Summary (1st of every month)
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            type="button"
+            onClick={() => sendNow('monthly')}
+            disabled={sending === 'monthly'}
+            data-testid="send-monthly-summary-btn"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '6px 10px', fontSize: '12px', fontWeight: '600',
+              color: '#fff', backgroundColor: '#8b5cf6',
+              border: 'none', borderRadius: '6px',
+              cursor: sending === 'monthly' ? 'not-allowed' : 'pointer',
+              opacity: sending === 'monthly' ? 0.7 : 1
+            }}
+          >
+            <Send size={12} /> {sending === 'monthly' ? 'Sending...' : 'Send Now'}
+          </button>
+          <Switch
+            data-testid="auto-summary-monthly-toggle"
+            checked={settings.auto_summary_monthly_enabled}
+            onCheckedChange={(checked) => setSettings({ ...settings, auto_summary_monthly_enabled: checked })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const CashRegisterTab = ({
   settings,
@@ -475,6 +595,8 @@ export const CashRegisterTab = ({
           </p>
         </div>
       </div>
+
+      <AutoSummaryCard settings={settings} setSettings={setSettings} />
 
       <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
         <button

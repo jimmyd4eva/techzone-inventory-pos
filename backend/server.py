@@ -17,6 +17,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from core.config import db, client, logger  # noqa: F401  (imports initialize)
 from core.security import hash_password
+from services.scheduler import start_scheduler
 
 # Route modules
 from routes import (
@@ -42,6 +43,9 @@ api_router.include_router(reports.router)
 api_router.include_router(cash_register.router)
 
 app.include_router(api_router)
+
+# Attach hourly auto-summary email scheduler
+start_scheduler(app)
 
 app.add_middleware(
     CORSMiddleware,

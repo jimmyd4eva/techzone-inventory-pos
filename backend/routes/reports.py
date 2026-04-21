@@ -6,6 +6,7 @@ from core.config import db, logger
 import io
 from fastapi.responses import StreamingResponse
 from core.security import get_current_user, strip_html
+from services.summary_service import build_summary_pdf, send_summary_email
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -651,3 +652,69 @@ async def export_tax_report_pdf(current_user: dict = Depends(get_current_user)):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+# ============ AUTO-EMAIL SUMMARY REPORTS ============
+
+def _period_range(period: str, now: Optional[datetime] = None):
+    """Return (start, end, label) for the 'previous' weekly or monthly period."""
+    now = now or datetime.now(timezone.utc)
+    if period == "weekly":
+        # Previous Monday 00:00 UTC → last Sunday 23:59:59 UTC
+        today = now.date()
+        days_since_mon = today.weekday()
+        this_mon = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc) - timedelta(days=days_since_mon)
+        last_mon = this_mon - timedelta(days=7)
+        start = last_mon
+        end = this_mon
+        label = "Weekly"
+    elif period == "monthly":
+        # Previous full calendar month
+        first_of_this_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = first_of_this_month
+        prev_month_end = first_of_this_month - timedelta(days=1)
+        start = prev_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        label = "Monthly"
+    else:
+        raise ValueError(f"Unknown period: {period}")
+    return start, end, label
+
+
+@router.post("/reports/send-summary-now")
+async def send_summary_now(data: dict, current_user: dict = Depends(get_current_user)):
+    """Generate and email a weekly or monthly sales+tax summary PDF immediately."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can send summary reports")
+
+    period = (data.get("period") or "weekly").lower()
+    if period not in ("weekly", "monthly"):
+        raise HTTPException(status_code=400, detail="period must be 'weekly' or 'monthly'")
+
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
+    to_email = settings.get("shift_report_email")
+    if not to_email:
+        raise HTTPException(
+            status_code=400,
+            detail="No recipient configured. Set a Manager Email under Settings → Cash Register.",
+        )
+
+    start, end, label = _period_range(period)
+    pdf_bytes = await build_summary_pdf(label, start, end)
+    business_name = strip_html(settings.get("business_name", "TECHZONE"))
+
+    sent = send_summary_email(to_email, pdf_bytes, label, start, end, business_name)
+
+    # Record last-sent timestamp so scheduler doesn't double-send
+    now_iso = datetime.now(timezone.utc).isoformat()
+    field = "auto_summary_last_weekly_sent" if period == "weekly" else "auto_summary_last_monthly_sent"
+    await db.settings.update_one(
+        {"id": "app_settings"},
+        {"$set": {field: now_iso}},
+        upsert=True,
+    )
+
+    return {
+        "sent": sent,
+        "period": period,
+        "range": {"start": start.isoformat(), "end": end.isoformat()},
+        "recipient": to_email,
+    }

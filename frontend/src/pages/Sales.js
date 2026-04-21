@@ -142,7 +142,8 @@ const Sales = () => {
       const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
       const response = await axios.post(`${API}/coupons/validate`, {
         code: codeToApply,
-        subtotal: subtotal
+        subtotal: subtotal,
+        customer_id: selectedCustomer ? selectedCustomer.id : undefined
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
