@@ -489,13 +489,30 @@ def send_loyalty_points_email(
         return False
 
 
-def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14) -> bool:
+def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14, review_url: str = None) -> bool:
     """Friendly check-in email to a customer N days after a sale."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
     sender_password = os.environ.get("EMAIL_PASSWORD", "")
     if not sender_password:
         logger.warning("EMAIL_PASSWORD not set; cannot send followup email")
         return False
+
+    review_html = (
+        f"""
+        <div style="margin:20px 0;text-align:center;">
+          <a href="{review_url}" target="_blank"
+             style="display:inline-block;padding:14px 26px;background:#16a34a;color:#fff;
+                    text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">
+            ★ Leave a review
+          </a>
+          <div style="font-size:12px;color:#6b7280;margin-top:8px;">
+            30 seconds — it means the world to a small business.
+          </div>
+        </div>
+        """
+        if review_url else ""
+    )
+    review_text = f"\nLeave a review (means a lot): {review_url}\n" if review_url else ""
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"How's it going with your purchase from {business_name}?"
@@ -514,8 +531,9 @@ def send_followup_email(to_email: str, customer_name: str, items_summary: str, b
           It's been about {days_ago} days since your purchase of <strong>{items_summary}</strong>. We just wanted to check in — is everything working perfectly?
         </p>
         <p style="color:#374151;font-size:14px;line-height:1.5;">
-          If anything isn't quite right, just reply to this email and we'll sort it out right away. If all is good and you have a moment, we'd love a quick review — it genuinely helps a small business like ours.
+          If anything isn't quite right, just reply to this email and we'll sort it out right away.
         </p>
+        {review_html}
         <p style="color:#374151;font-size:14px;line-height:1.5;">
           Thanks again for trusting {business_name}.
         </p>
@@ -530,8 +548,8 @@ def send_followup_email(to_email: str, customer_name: str, items_summary: str, b
         f"Hi {customer_name},\n\n"
         f"It's been about {days_ago} days since your purchase of {items_summary}. "
         f"Just checking in — is everything working?\n\n"
-        f"If anything isn't right, reply to this email and we'll sort it out. "
-        f"If all is good and you have a moment, a quick review helps us a lot.\n\n"
+        f"If anything isn't right, reply to this email and we'll sort it out.\n"
+        f"{review_text}\n"
         f"Thanks again,\n{business_name}\n"
     )
     msg.attach(MIMEText(text, "plain"))

@@ -212,6 +212,7 @@ class Settings(BaseModel):
     # Follow-up emails
     followup_emails_enabled: bool = False  # Auto-schedule follow-up check-in email N days after sale
     followup_days: int = 14  # Days after sale to send follow-up
+    google_review_url: Optional[str] = None  # Adds "Leave a review" button to follow-up email when set
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -240,6 +241,7 @@ class SettingsUpdate(BaseModel):
     loyalty_emails_enabled: Optional[bool] = None
     followup_emails_enabled: Optional[bool] = None
     followup_days: Optional[int] = None
+    google_review_url: Optional[str] = None
 
 # ============ COUPON MODELS ============
 
