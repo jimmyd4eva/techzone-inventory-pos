@@ -979,3 +979,87 @@ async def coupon_performance(
     # Sort: redemptions desc, then revenue desc (most-impactful first); un-redeemed at the bottom
     results.sort(key=lambda r: (r["redemptions"], r["total_revenue"]), reverse=True)
     return results[:limit]
+
+
+@router.get("/reports/staff-performance")
+async def staff_performance(
+    days: int = 30,
+    current_user: dict = Depends(get_current_user),
+):
+    """Leaderboard of staff by sales volume + shift-close accuracy over the last `days` days."""
+    if current_user.get("role") not in ("admin", "manager"):
+        raise HTTPException(status_code=403, detail="Admin/manager only")
+    if days < 1:
+        days = 30
+    if days > 365:
+        days = 365
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff_iso = cutoff.isoformat()
+
+    # Sales aggregation per cashier (created_by)
+    sales_pipeline = [
+        {"$match": {"payment_status": "completed", "created_at": {"$gte": cutoff_iso}}},
+        {"$group": {
+            "_id": "$created_by",
+            "sales_count": {"$sum": 1},
+            "total_revenue": {"$sum": "$total"},
+            "total_subtotal": {"$sum": "$subtotal"},
+            "last_sale_at": {"$max": "$created_at"},
+        }},
+    ]
+    sales_rows = await db.sales.aggregate(sales_pipeline).to_list(10000)
+    sales_map = {row["_id"]: row for row in sales_rows if row.get("_id")}
+
+    # Shift aggregation per user (closed_by_name) — shift accuracy
+    shift_pipeline = [
+        {"$match": {"status": "closed", "closed_at": {"$gte": cutoff_iso}}},
+        {"$group": {
+            "_id": "$closed_by_name",
+            "shifts_closed": {"$sum": 1},
+            "sum_abs_variance": {"$sum": {"$abs": "$difference"}},
+            "sum_variance": {"$sum": "$difference"},
+        }},
+    ]
+    shift_rows = await db.cash_register_shifts.aggregate(shift_pipeline).to_list(1000)
+    shift_map = {row["_id"]: row for row in shift_rows if row.get("_id")}
+
+    # Union of all staff usernames appearing in either aggregation
+    usernames = set(sales_map.keys()) | set(shift_map.keys())
+    if not usernames:
+        return []
+
+    # Fetch user directory for role/display name
+    users_cursor = db.users.find({"username": {"$in": list(usernames)}}, {"_id": 0})
+    user_map = {u["username"]: u async for u in users_cursor}
+
+    results = []
+    for username in usernames:
+        sr = sales_map.get(username) or {}
+        sh = shift_map.get(username) or {}
+        u = user_map.get(username) or {}
+
+        sales_count = int(sr.get("sales_count", 0))
+        revenue = float(sr.get("total_revenue", 0))
+        avg_order = round(revenue / sales_count, 2) if sales_count > 0 else 0
+        shifts_closed = int(sh.get("shifts_closed", 0))
+        sum_abs_variance = float(sh.get("sum_abs_variance", 0))
+        avg_variance = round(sum_abs_variance / shifts_closed, 2) if shifts_closed > 0 else 0
+
+        results.append({
+            "username": username,
+            "role": u.get("role") or "cashier",
+            "email": u.get("email"),
+            "sales_count": sales_count,
+            "total_revenue": round(revenue, 2),
+            "avg_order_value": avg_order,
+            "last_sale_at": sr.get("last_sale_at"),
+            "shifts_closed": shifts_closed,
+            "sum_abs_variance": round(sum_abs_variance, 2),
+            "avg_shift_variance": avg_variance,
+            "net_variance": round(float(sh.get("sum_variance", 0)), 2),
+        })
+
+    # Primary sort: revenue desc
+    results.sort(key=lambda r: r["total_revenue"], reverse=True)
+    return results

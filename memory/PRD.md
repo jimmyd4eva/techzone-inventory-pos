@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Dashboard: Staff Performance Leaderboard (Feb 21, 2026)
+- New `GET /api/reports/staff-performance?days=30` (admin/manager only) — aggregates completed sales per `created_by` and cash-register shifts per `closed_by_name` for the window; joins with users for role/email.
+- Returns per-user: `sales_count, total_revenue, avg_order_value, shifts_closed, sum_abs_variance, avg_shift_variance, net_variance, last_sale_at, role`.
+- Dashboard green-themed card with gold/silver/bronze rank badges, role chips (admin/manager/cashier), and variance color tier (green ≤$5, orange $5-20, red >$20, gray if no shifts).
+- Sorted by revenue desc so the top cashier floats to the top.
+
 ### Dashboard: Coupon Performance Card (Feb 21, 2026)
 - New `GET /api/reports/coupon-performance` — aggregates completed sales per `coupon_code` (redemptions, total discount given, total revenue, avg order value) and merges with every coupon in the directory. ROI = revenue / discount_given.
 - Dashboard purple-themed card shows all coupons with Code/Description, Type (%/flat), Redemptions, Discount Given, Revenue, Avg Order, ROI, Status.
