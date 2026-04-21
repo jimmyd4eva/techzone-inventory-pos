@@ -17,6 +17,7 @@
 14. **Zero-install portable Windows build** (Feb 2026)
 15. **Rich text formatting for Business Info (Name / Address / Phone) + Receipt** (Feb 21, 2026)
 16. **P1 refactor: backend/server.py split into core/routes/services/models.py; Settings.js split into per-tab components** (Feb 21, 2026)
+17. **P2 features: auto-email weekly/monthly sales & tax summary PDFs; per-customer personalized coupons; live receipt preview in Settings** (Feb 21, 2026)
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -25,7 +26,24 @@
 
 ## What's Been Implemented
 
-### P1 Codebase Refactor (NEW - Feb 21, 2026)
+### P2 Features (NEW - Feb 21, 2026)
+- **Auto-email weekly & monthly sales + tax summary PDFs**
+  - New service `/app/backend/services/summary_service.py` builds a combined revenue/tax/daily-breakdown PDF.
+  - New service `/app/backend/services/scheduler.py` runs an hourly background asyncio loop and emails the report when due (previous Mon–Sun for weekly; previous calendar month for monthly).
+  - New endpoint `POST /api/reports/send-summary-now` (admin only) for immediate delivery. Records `auto_summary_last_{weekly,monthly}_sent` in Settings so the scheduler doesn't double-send.
+  - Recipient reuses existing `shift_report_email`.
+  - UI: "Auto-Email Sales & Tax Summaries" card in Settings → Cash Register tab with two toggles and two Send Now buttons.
+- **Personalized coupons per customer**
+  - `Coupon`/`CouponCreate`/`CouponUpdate` models extended with `customer_id` + `customer_name`.
+  - `POST /api/coupons/validate` now returns 400 when the coupon is personalized and customer_id is missing or mismatched.
+  - Sales checkout silently skips applying a personalized coupon if it doesn't match `sale.customer_id` (prevents accidental double-spend of someone else's coupon).
+  - UI: Customer picker dropdown in Coupons → Create modal; "Generate Personalized Coupon" button on Customer Detail page with its own modal; purple "For: <Name>" badge in the Coupons list.
+- **Live receipt preview in Settings**
+  - New component `/app/frontend/src/components/ReceiptPreview.js` mirrors the Receipt header rendering (blue/red split + formatted HTML + sanitization).
+  - Appears under the Business Info tab; updates as you type (no save required).
+- **Tests**: 12 new pytest cases in `/app/backend/tests/test_p2_features.py`. Total regression: 66/67 pass (testing agent iteration_15). 1 pre-existing flaky activation test (unrelated).
+
+### P1 Codebase Refactor (Feb 21, 2026)
 - **Backend** `server.py` went from **3209 → 110 lines** (97% reduction):
   - `/app/backend/core/` → `config.py` (env + DB client + integration init), `security.py` (bcrypt, JWT, `get_current_user`, `check_not_readonly`, `generate_activation_code`, `strip_html`).
   - `/app/backend/models.py` → all Pydantic models (User, Customer, Inventory, Repair, Sale, Settings, Coupon, Activation, CashRegister).
