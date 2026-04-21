@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle, FileText, Mail } from 'lucide-react';
-import { Switch } from '../components/ui/switch';
-import SimpleRichTextEditor from '../components/SimpleRichTextEditor';
+import {
+  Settings as SettingsIcon, Save, Percent, DollarSign, Building,
+  Star, Shield, Wallet
+} from 'lucide-react';
+
+import BusinessInfoTab from './settings/BusinessInfoTab';
+import CashRegisterTab from './settings/CashRegisterTab';
+import PricingTab from './settings/PricingTab';
+import TaxTab from './settings/TaxTab';
+import PointsSystemTab from './settings/PointsSystemTab';
+import DevicesTab from './settings/DevicesTab';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
-
-// Available product categories
-const PRODUCT_CATEGORIES = [
-  { id: 'phone', label: 'Phones', description: 'Mobile phones and smartphones' },
-  { id: 'part', label: 'Parts', description: 'Replacement parts and components' },
-  { id: 'accessory', label: 'Accessories', description: 'Phone cases, chargers, etc.' },
-  { id: 'screen', label: 'Screens', description: 'Screen replacements' },
-  { id: 'other', label: 'Other', description: 'Miscellaneous items' }
-];
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -59,7 +58,6 @@ const Settings = () => {
   const [transactionType, setTransactionType] = useState('payout');
   const [transactionDesc, setTransactionDesc] = useState('');
   const [showHistory, setShowHistory] = useState(false);
-  const [selectedHistoryShift, setSelectedHistoryShift] = useState(null);
 
   useEffect(() => {
     fetchSettings();
@@ -75,14 +73,15 @@ const Settings = () => {
     }
   }, [activeSection]);
 
-  // Cash Register Functions
+  const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  });
+
+  // Cash Register
   const fetchCurrentShift = async () => {
     setLoadingRegister(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/cash-register/current`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/cash-register/current`, { headers: authHeaders() });
       setCurrentShift(response.data.shift);
       setShiftTransactions(response.data.transactions || []);
       setShiftTotals(response.data.totals || {});
@@ -95,10 +94,7 @@ const Settings = () => {
 
   const fetchShiftHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/cash-register/history?limit=10`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/cash-register/history?limit=10`, { headers: authHeaders() });
       setShiftHistory(response.data);
     } catch (error) {
       console.error('Error fetching shift history:', error);
@@ -111,10 +107,9 @@ const Settings = () => {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/cash-register/open`, 
+      await axios.post(`${API}/cash-register/open`,
         { opening_amount: parseFloat(openingAmount) },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setMessage({ type: 'success', text: 'Shift opened successfully!' });
       setOpeningAmount('');
@@ -133,16 +128,15 @@ const Settings = () => {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/cash-register/close`, 
+      const response = await axios.post(`${API}/cash-register/close`,
         { closing_amount: parseFloat(closingAmount), notes: closingNotes },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       const summary = response.data.summary;
       const status = summary.difference > 0 ? 'OVER' : summary.difference < 0 ? 'SHORT' : 'BALANCED';
-      setMessage({ 
-        type: summary.difference === 0 ? 'success' : 'error', 
-        text: `Shift closed. Register is ${status} by $${Math.abs(summary.difference).toFixed(2)}` 
+      setMessage({
+        type: summary.difference === 0 ? 'success' : 'error',
+        text: `Shift closed. Register is ${status} by $${Math.abs(summary.difference).toFixed(2)}`
       });
       setClosingAmount('');
       setClosingNotes('');
@@ -159,14 +153,13 @@ const Settings = () => {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/cash-register/transaction`, 
-        { 
-          transaction_type: transactionType, 
+      await axios.post(`${API}/cash-register/transaction`,
+        {
+          transaction_type: transactionType,
           amount: parseFloat(transactionAmount),
-          description: transactionDesc 
+          description: transactionDesc
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setMessage({ type: 'success', text: `${transactionType.charAt(0).toUpperCase() + transactionType.slice(1)} recorded!` });
       setTransactionAmount('');
@@ -179,13 +172,10 @@ const Settings = () => {
 
   const exportShiftReport = async (shiftId) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await axios.get(`${API}/cash-register/report/${shiftId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeaders(),
         responseType: 'blob'
       });
-      
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -194,7 +184,6 @@ const Settings = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
       setMessage({ type: 'success', text: 'Report downloaded successfully!' });
     } catch (error) {
       console.error('Error exporting report:', error);
@@ -202,13 +191,11 @@ const Settings = () => {
     }
   };
 
+  // Devices
   const fetchDevices = async () => {
     setLoadingDevices(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/activation/list`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/activation/list`, { headers: authHeaders() });
       setDevices(response.data);
     } catch (error) {
       console.error('Error fetching devices:', error);
@@ -222,13 +209,9 @@ const Settings = () => {
     if (!window.confirm('Are you sure you want to revoke this device activation? The user will need to re-activate.')) {
       return;
     }
-
     setRevokingDevice(deviceId);
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/activation/revoke/${encodeURIComponent(deviceId)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/activation/revoke/${encodeURIComponent(deviceId)}`, { headers: authHeaders() });
       setDevices(devices.filter(d => d.device_id !== deviceId));
       setMessage({ type: 'success', text: 'Device activation revoked successfully' });
     } catch (error) {
@@ -249,7 +232,6 @@ const Settings = () => {
         new Date(d.activated_at).toLocaleString()
       ].join(','))
     ].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -259,12 +241,10 @@ const Settings = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  // Settings
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/settings`, { headers: authHeaders() });
       setSettings({
         tax_rate: (response.data.tax_rate || 0) * 100,
         tax_enabled: response.data.tax_enabled === true,
@@ -295,14 +275,11 @@ const Settings = () => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     if (!allowedTypes.includes(file.type)) {
       setMessage({ type: 'error', text: 'Invalid file type. Please upload a JPG, PNG, GIF, WebP, or SVG image.' });
       return;
     }
-
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       setMessage({ type: 'error', text: 'File too large. Maximum size is 5MB.' });
       return;
@@ -312,18 +289,14 @@ const Settings = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('file', file);
-
       const response = await axios.post(`${API}/upload/logo`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
           'Content-Type': 'multipart/form-data'
         }
       });
-
-      // Update settings with new logo URL
       const logoUrl = `${BACKEND_URL}${response.data.logo_url}`;
       setSettings({ ...settings, business_logo: logoUrl });
       setMessage({ type: 'success', text: 'Logo uploaded successfully!' });
@@ -332,7 +305,6 @@ const Settings = () => {
       setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to upload logo' });
     } finally {
       setUploading(false);
-      // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -342,9 +314,7 @@ const Settings = () => {
   const handleSave = async () => {
     setSaving(true);
     setMessage({ type: '', text: '' });
-
     try {
-      const token = localStorage.getItem('token');
       await axios.put(`${API}/settings`, {
         tax_rate: settings.tax_rate / 100,
         tax_enabled: settings.tax_enabled,
@@ -362,9 +332,7 @@ const Settings = () => {
         card_surcharge_percent: settings.card_surcharge_percent,
         shift_report_email_enabled: settings.shift_report_email_enabled,
         shift_report_email: settings.shift_report_email || null
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -377,18 +345,12 @@ const Settings = () => {
   const toggleCategoryExemption = (categoryId) => {
     const currentExemptions = settings.tax_exempt_categories;
     const isExempt = currentExemptions.includes(categoryId);
-    
-    if (isExempt) {
-      setSettings({
-        ...settings,
-        tax_exempt_categories: currentExemptions.filter(c => c !== categoryId)
-      });
-    } else {
-      setSettings({
-        ...settings,
-        tax_exempt_categories: [...currentExemptions, categoryId]
-      });
-    }
+    setSettings({
+      ...settings,
+      tax_exempt_categories: isExempt
+        ? currentExemptions.filter(c => c !== categoryId)
+        : [...currentExemptions, categoryId]
+    });
   };
 
   if (user?.role !== 'admin') {
@@ -418,10 +380,6 @@ const Settings = () => {
     );
   }
 
-  const taxableCategories = PRODUCT_CATEGORIES.filter(
-    c => !settings.tax_exempt_categories.includes(c.id)
-  );
-
   const sectionButtons = [
     { id: 'business', label: 'Business Info', icon: Building },
     { id: 'register', label: 'Cash Register', icon: Wallet },
@@ -441,7 +399,6 @@ const Settings = () => {
       </div>
 
       <div style={{ maxWidth: '700px' }}>
-        {/* Section Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
           {sectionButtons.map(section => (
             <button
@@ -484,1359 +441,99 @@ const Settings = () => {
           </div>
         )}
 
-        {/* Business Info Section */}
         {activeSection === 'business' && (
-          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building size={20} />
-              Business Information
-            </h2>
-
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Business Name
-              </label>
-              <div data-testid="business-name-editor">
-                <SimpleRichTextEditor
-                  value={settings.business_name}
-                  onChange={(html) => setSettings({ ...settings, business_name: html })}
-                  placeholder="Enter business name"
-                  rows={1}
-                />
-              </div>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                Tip: On the receipt, the blue/red split is applied on top of your formatting (bold/italic/underline/size preserved; custom text color is overridden by the split).
-              </p>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Address
-              </label>
-              <div data-testid="business-address-editor">
-                <SimpleRichTextEditor
-                  value={settings.business_address}
-                  onChange={(html) => setSettings({ ...settings, business_address: html })}
-                  placeholder="Enter business address"
-                  rows={2}
-                />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Phone Number
-              </label>
-              <div data-testid="business-phone-editor">
-                <SimpleRichTextEditor
-                  value={settings.business_phone}
-                  onChange={(html) => setSettings({ ...settings, business_phone: html })}
-                  placeholder="Enter phone number"
-                  rows={1}
-                />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Logo
-              </label>
-              
-              {/* File Upload Option */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                marginBottom: '12px',
-                flexWrap: 'wrap'
-              }}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-                  onChange={handleFileUpload}
-                  style={{ display: 'none' }}
-                  data-testid="logo-file-input"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 16px',
-                    backgroundColor: '#8b5cf6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    opacity: uploading ? 0.7 : 1
-                  }}
-                  data-testid="upload-logo-btn"
-                >
-                  <Upload size={16} />
-                  {uploading ? 'Uploading...' : 'Upload from Computer'}
-                </button>
-                <span style={{ 
-                  fontSize: '13px', 
-                  color: '#6b7280', 
-                  alignSelf: 'center' 
-                }}>
-                  or enter URL below
-                </span>
-              </div>
-
-              {/* URL Input Option */}
-              <div style={{ position: 'relative' }}>
-                <Image size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="text"
-                  data-testid="business-logo-input"
-                  value={settings.business_logo}
-                  onChange={(e) => setSettings({ ...settings, business_logo: e.target.value })}
-                  placeholder="https://example.com/logo.png or upload a file above"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px 12px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
-                />
-              </div>
-              
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
-                Supported formats: JPG, PNG, GIF, WebP, SVG (max 5MB)
-              </p>
-
-              {settings.business_logo && (
-                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <p style={{ fontSize: '13px', color: '#6b7280' }}>Logo Preview:</p>
-                    <button
-                      type="button"
-                      onClick={() => setSettings({ ...settings, business_logo: '' })}
-                      style={{
-                        fontSize: '12px',
-                        color: '#ef4444',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '4px 8px'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <img 
-                    src={settings.business_logo} 
-                    alt="Logo preview" 
-                    style={{ maxHeight: '80px', maxWidth: '250px', objectFit: 'contain' }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  />
-                  <p style={{ display: 'none', fontSize: '13px', color: '#ef4444' }}>
-                    Failed to load image. Please check the URL.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <BusinessInfoTab
+            settings={settings}
+            setSettings={setSettings}
+            uploading={uploading}
+            handleFileUpload={handleFileUpload}
+            fileInputRef={fileInputRef}
+          />
         )}
 
-        {/* Cash Register Section */}
         {activeSection === 'register' && (
-          <div>
-            {loadingRegister ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div className="loading-spinner" style={{ margin: '0 auto 12px' }}></div>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>Loading cash register...</p>
-              </div>
-            ) : !currentShift ? (
-              /* No Open Shift - Show Open Shift Form */
-              <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-                <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Wallet size={20} />
-                  Open Cash Register
-                </h2>
-                
-                <div style={{ 
-                  backgroundColor: '#fef3c7', 
-                  padding: '16px', 
-                  borderRadius: '8px', 
-                  marginBottom: '20px',
-                  border: '1px solid #fcd34d',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px'
-                }}>
-                  <AlertCircle size={20} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#92400e', margin: '0 0 4px 0' }}>
-                      No Shift Currently Open
-                    </p>
-                    <p style={{ fontSize: '13px', color: '#a16207', margin: 0 }}>
-                      Open a shift to start tracking cash transactions. Cash sales will only be recorded when a shift is open.
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                    Opening Cash Amount (Float)
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={openingAmount}
-                      onChange={(e) => setOpeningAmount(e.target.value)}
-                      placeholder="Enter starting cash amount"
-                      data-testid="opening-amount-input"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px 12px 40px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                    />
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    Count the cash in the drawer before starting your shift
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleOpenShift}
-                  data-testid="open-shift-btn"
-                  style={{
-                    width: '100%',
-                    padding: '14px 24px',
-                    backgroundColor: '#059669',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Plus size={20} />
-                  Open Shift
-                </button>
-              </div>
-            ) : (
-              /* Shift is Open - Show Current Shift Info */
-              <>
-                <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                      <Wallet size={20} />
-                      Current Shift
-                    </h2>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button
-                        onClick={() => exportShiftReport(currentShift.id)}
-                        data-testid="export-current-shift-btn"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '6px 12px',
-                          backgroundColor: '#8b5cf6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <FileText size={14} />
-                        Export PDF
-                      </button>
-                      <span style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#d1fae5',
-                        color: '#059669',
-                        borderRadius: '20px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <CheckCircle size={14} />
-                        OPEN
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1', minWidth: '140px', padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#059669', marginBottom: '4px', fontWeight: '500' }}>Opening Float</div>
-                      <div style={{ fontSize: '24px', fontWeight: '700', color: '#047857' }}>${(shiftTotals.opening_amount || 0).toFixed(2)}</div>
-                    </div>
-                    <div style={{ flex: '1', minWidth: '140px', padding: '16px', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '4px', fontWeight: '500' }}>Cash Sales</div>
-                      <div style={{ fontSize: '24px', fontWeight: '700', color: '#2563eb' }}>+${(shiftTotals.cash_sales || 0).toFixed(2)}</div>
-                    </div>
-                    <div style={{ flex: '1', minWidth: '140px', padding: '16px', backgroundColor: '#fef3c7', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#d97706', marginBottom: '4px', fontWeight: '500' }}>Payouts</div>
-                      <div style={{ fontSize: '24px', fontWeight: '700', color: '#b45309' }}>-${(shiftTotals.payouts || 0).toFixed(2)}</div>
-                    </div>
-                    <div style={{ flex: '1', minWidth: '140px', padding: '16px', backgroundColor: '#fae8ff', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#a855f7', marginBottom: '4px', fontWeight: '500' }}>Expected Cash</div>
-                      <div style={{ fontSize: '24px', fontWeight: '700', color: '#9333ea' }}>${(shiftTotals.expected_amount || 0).toFixed(2)}</div>
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
-                    <Clock size={14} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
-                    Opened by <strong>{currentShift.opened_by_name}</strong> at {new Date(currentShift.opened_at).toLocaleString()}
-                  </div>
-                </div>
-
-                {/* Add Transaction */}
-                <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-                  <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-                    Record Transaction
-                  </h3>
-                  
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1', minWidth: '120px' }}>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>Type</label>
-                      <select
-                        value={transactionType}
-                        onChange={(e) => setTransactionType(e.target.value)}
-                        data-testid="transaction-type-select"
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          backgroundColor: '#fff'
-                        }}
-                      >
-                        <option value="payout">Payout (Cash Out)</option>
-                        <option value="drop">Safe Drop</option>
-                        <option value="refund">Refund</option>
-                      </select>
-                    </div>
-                    <div style={{ flex: '1', minWidth: '120px' }}>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>Amount</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={transactionAmount}
-                        onChange={(e) => setTransactionAmount(e.target.value)}
-                        placeholder="0.00"
-                        data-testid="transaction-amount-input"
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '8px',
-                          fontSize: '14px'
-                        }}
-                      />
-                    </div>
-                    <div style={{ flex: '2', minWidth: '180px' }}>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>Description</label>
-                      <input
-                        type="text"
-                        value={transactionDesc}
-                        onChange={(e) => setTransactionDesc(e.target.value)}
-                        placeholder="e.g., Petty cash for supplies"
-                        data-testid="transaction-desc-input"
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '8px',
-                          fontSize: '14px'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleAddTransaction}
-                    data-testid="add-transaction-btn"
-                    style={{
-                      padding: '10px 20px',
-                      backgroundColor: '#8b5cf6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Plus size={16} />
-                    Record Transaction
-                  </button>
-                </div>
-
-                {/* Recent Transactions */}
-                {shiftTransactions.length > 0 && (
-                  <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-                    <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
-                      Shift Transactions ({shiftTransactions.length})
-                    </h3>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                      {shiftTransactions.map((t, i) => (
-                        <div key={t.id || i} style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '12px',
-                          backgroundColor: i % 2 === 0 ? '#f9fafb' : '#fff',
-                          borderRadius: '6px',
-                          marginBottom: '4px'
-                        }}>
-                          <div>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '2px 8px',
-                              backgroundColor: t.transaction_type === 'cash_sale' ? '#d1fae5' : t.transaction_type === 'payout' ? '#fef3c7' : t.transaction_type === 'drop' ? '#dbeafe' : '#fee2e2',
-                              color: t.transaction_type === 'cash_sale' ? '#059669' : t.transaction_type === 'payout' ? '#d97706' : t.transaction_type === 'drop' ? '#3b82f6' : '#dc2626',
-                              borderRadius: '4px',
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              marginRight: '8px',
-                              textTransform: 'uppercase'
-                            }}>
-                              {t.transaction_type.replace('_', ' ')}
-                            </span>
-                            <span style={{ fontSize: '13px', color: '#6b7280' }}>{t.description || '-'}</span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ 
-                              fontSize: '15px', 
-                              fontWeight: '600', 
-                              color: t.amount > 0 ? '#059669' : '#dc2626' 
-                            }}>
-                              {t.amount > 0 ? '+' : ''}{t.amount.toFixed(2)}
-                            </div>
-                            <div style={{ fontSize: '11px', color: '#9ca3af' }}>
-                              {new Date(t.created_at).toLocaleTimeString()}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Close Shift */}
-                <div className="card" style={{ padding: '24px', marginBottom: '24px', border: '2px solid #dc2626' }}>
-                  <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Minus size={18} />
-                    Close Shift
-                  </h3>
-                  
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
-                      Actual Cash Count
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={closingAmount}
-                        onChange={(e) => setClosingAmount(e.target.value)}
-                        placeholder="Count the cash in drawer"
-                        data-testid="closing-amount-input"
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px 12px 40px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '8px',
-                          fontSize: '16px'
-                        }}
-                      />
-                    </div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                      Expected: <strong>${(shiftTotals.expected_amount || 0).toFixed(2)}</strong>
-                      {closingAmount && (
-                        <span style={{ 
-                          marginLeft: '12px',
-                          color: parseFloat(closingAmount) === shiftTotals.expected_amount ? '#059669' : '#dc2626',
-                          fontWeight: '600'
-                        }}>
-                          {parseFloat(closingAmount) > shiftTotals.expected_amount ? 'OVER' : parseFloat(closingAmount) < shiftTotals.expected_amount ? 'SHORT' : 'BALANCED'} 
-                          {' '}by ${Math.abs(parseFloat(closingAmount || 0) - shiftTotals.expected_amount).toFixed(2)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
-                      Notes (Optional)
-                    </label>
-                    <textarea
-                      value={closingNotes}
-                      onChange={(e) => setClosingNotes(e.target.value)}
-                      placeholder="Any notes about discrepancies or issues..."
-                      data-testid="closing-notes-input"
-                      rows={2}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        resize: 'vertical'
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleCloseShift}
-                    data-testid="close-shift-btn"
-                    style={{
-                      width: '100%',
-                      padding: '14px 24px',
-                      backgroundColor: '#dc2626',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <Minus size={20} />
-                    Close Shift
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Email Reports Configuration */}
-            <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} />
-                Auto-Email Shift Reports
-              </h3>
-              
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
-                Automatically send shift reports to a manager when shifts are closed.
-              </p>
-
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                    Enable Auto-Email Reports
-                  </span>
-                  <Switch
-                    data-testid="shift-report-email-toggle"
-                    checked={settings.shift_report_email_enabled}
-                    onCheckedChange={(checked) => setSettings({ ...settings, shift_report_email_enabled: checked })}
-                  />
-                </div>
-              </div>
-
-              {settings.shift_report_email_enabled && (
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
-                    Manager Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={settings.shift_report_email}
-                    onChange={(e) => setSettings({ ...settings, shift_report_email: e.target.value })}
-                    placeholder="manager@example.com"
-                    data-testid="shift-report-email-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    PDF report will be emailed when any shift is closed
-                  </p>
-                </div>
-              )}
-
-              <div style={{ 
-                backgroundColor: '#f0fdf4', 
-                padding: '12px', 
-                borderRadius: '8px', 
-                marginTop: '16px',
-                border: '1px solid #86efac'
-              }}>
-                <p style={{ fontSize: '12px', color: '#166534', margin: 0 }}>
-                  <strong>Note:</strong> Don't forget to click "Save Settings" at the bottom of the page to apply email settings.
-                </p>
-              </div>
-            </div>
-
-            {/* Shift History */}
-            <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                  <Clock size={18} />
-                  Shift History
-                </h3>
-                {showHistory ? <ChevronUp size={20} color="#6b7280" /> : <ChevronDown size={20} color="#6b7280" />}
-              </button>
-              
-              {showHistory && (
-                <div style={{ marginTop: '16px' }}>
-                  {shiftHistory.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#6b7280', padding: '20px' }}>No closed shifts yet</p>
-                  ) : (
-                    shiftHistory.map((shift, i) => (
-                      <div key={shift.id || i} style={{
-                        padding: '16px',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px',
-                        marginBottom: '8px',
-                        border: '1px solid #e5e7eb'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <div>
-                            <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                              {new Date(shift.opened_at).toLocaleDateString()} 
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                              {shift.opened_by_name} → {shift.closed_by_name}
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <button
-                              onClick={() => exportShiftReport(shift.id)}
-                              data-testid={`export-shift-${shift.id}`}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 8px',
-                                backgroundColor: '#f3f4f6',
-                                color: '#6b7280',
-                                border: 'none',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: '500',
-                                cursor: 'pointer'
-                              }}
-                              title="Export PDF Report"
-                            >
-                              <FileText size={12} />
-                              PDF
-                            </button>
-                            <span style={{
-                              padding: '4px 10px',
-                              backgroundColor: shift.difference === 0 ? '#d1fae5' : shift.difference > 0 ? '#dbeafe' : '#fee2e2',
-                              color: shift.difference === 0 ? '#059669' : shift.difference > 0 ? '#3b82f6' : '#dc2626',
-                              borderRadius: '20px',
-                              fontSize: '12px',
-                              fontWeight: '600'
-                            }}>
-                              {shift.difference === 0 ? 'BALANCED' : shift.difference > 0 ? `+$${shift.difference.toFixed(2)} OVER` : `-$${Math.abs(shift.difference).toFixed(2)} SHORT`}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
-                          <span>Open: ${shift.opening_amount.toFixed(2)}</span>
-                          <span>Expected: ${shift.expected_amount?.toFixed(2) || '0.00'}</span>
-                          <span>Actual: ${shift.closing_amount?.toFixed(2) || '0.00'}</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <CashRegisterTab
+            settings={settings}
+            setSettings={setSettings}
+            currentShift={currentShift}
+            shiftTransactions={shiftTransactions}
+            shiftTotals={shiftTotals}
+            shiftHistory={shiftHistory}
+            loadingRegister={loadingRegister}
+            openingAmount={openingAmount}
+            setOpeningAmount={setOpeningAmount}
+            closingAmount={closingAmount}
+            setClosingAmount={setClosingAmount}
+            closingNotes={closingNotes}
+            setClosingNotes={setClosingNotes}
+            transactionAmount={transactionAmount}
+            setTransactionAmount={setTransactionAmount}
+            transactionType={transactionType}
+            setTransactionType={setTransactionType}
+            transactionDesc={transactionDesc}
+            setTransactionDesc={setTransactionDesc}
+            showHistory={showHistory}
+            setShowHistory={setShowHistory}
+            handleOpenShift={handleOpenShift}
+            handleCloseShift={handleCloseShift}
+            handleAddTransaction={handleAddTransaction}
+            exportShiftReport={exportShiftReport}
+          />
         )}
 
-        {/* Pricing Section */}
         {activeSection === 'pricing' && (
-          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <DollarSign size={20} />
-              Dual Pricing Configuration
-            </h2>
-
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>
-              Configure different pricing for wholesale customers and payment method adjustments (cash discount or card surcharge).
-            </p>
-
-            {/* Dual Pricing Toggle */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                  Enable Dual Pricing
-                </span>
-                <Switch
-                  data-testid="dual-pricing-toggle"
-                  checked={settings.dual_pricing_enabled}
-                  onCheckedChange={(checked) => setSettings({ ...settings, dual_pricing_enabled: checked })}
-                />
-              </div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-                When enabled, wholesale customers get wholesale prices and payment method adjustments apply.
-              </p>
-            </div>
-
-            {settings.dual_pricing_enabled && (
-              <>
-                {/* Wholesale Pricing Info */}
-                <div style={{ 
-                  backgroundColor: '#dbeafe', 
-                  padding: '16px', 
-                  borderRadius: '8px', 
-                  marginBottom: '20px',
-                  border: '1px solid #93c5fd'
-                }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1d4ed8', marginBottom: '8px' }}>
-                    Retail vs Wholesale Pricing
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#1e40af', margin: 0 }}>
-                    • Set wholesale prices in <strong>Inventory</strong> for each item<br/>
-                    • Mark customers as "Wholesale" in <strong>Customers</strong> page<br/>
-                    • Wholesale customers automatically see wholesale prices at checkout
-                  </p>
-                </div>
-
-                {/* Cash Discount */}
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                    Cash Discount (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={settings.cash_discount_percent}
-                    onChange={(e) => setSettings({ ...settings, cash_discount_percent: parseFloat(e.target.value) || 0 })}
-                    data-testid="cash-discount-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      fontSize: '14px'
-                    }}
-                    placeholder="e.g., 2 for 2% discount"
-                  />
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    Discount applied when customer pays with cash
-                  </p>
-                </div>
-
-                {/* Card Surcharge */}
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                    Card Surcharge (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={settings.card_surcharge_percent}
-                    onChange={(e) => setSettings({ ...settings, card_surcharge_percent: parseFloat(e.target.value) || 0 })}
-                    data-testid="card-surcharge-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      fontSize: '14px'
-                    }}
-                    placeholder="e.g., 3 for 3% surcharge"
-                  />
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    Surcharge applied when customer pays with card (Stripe/PayPal)
-                  </p>
-                </div>
-
-                {/* Example */}
-                <div style={{ 
-                  backgroundColor: '#f0fdf4', 
-                  padding: '16px', 
-                  borderRadius: '8px',
-                  border: '1px solid #86efac'
-                }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '8px' }}>
-                    Example
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#15803d', margin: 0 }}>
-                    For a $100 order:<br/>
-                    • Cash payment: ${(100 - (100 * settings.cash_discount_percent / 100)).toFixed(2)} 
-                    {settings.cash_discount_percent > 0 && ` (saves $${(100 * settings.cash_discount_percent / 100).toFixed(2)})`}<br/>
-                    • Card payment: ${(100 + (100 * settings.card_surcharge_percent / 100)).toFixed(2)}
-                    {settings.card_surcharge_percent > 0 && ` (+$${(100 * settings.card_surcharge_percent / 100).toFixed(2)} fee)`}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+          <PricingTab settings={settings} setSettings={setSettings} />
         )}
 
-        {/* Tax Section */}
         {activeSection === 'tax' && (
-        <>
-        <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-          <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151' }}>
-            Tax Configuration
-          </h2>
-
-          {/* Tax Enabled Toggle */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Enable Tax
-              </span>
-              <Switch
-                data-testid="tax-toggle"
-                checked={settings.tax_enabled}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, tax_enabled: checked }))}
-                className="data-[state=checked]:bg-violet-500"
-              />
-            </div>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-              When enabled, tax will be applied to sales based on product category
-            </p>
-          </div>
-
-          {/* Tax Rate Input */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-              Tax Rate
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="number"
-                data-testid="tax-rate-input"
-                value={settings.tax_rate}
-                onChange={(e) => setSettings({ ...settings, tax_rate: parseFloat(e.target.value) || 0 })}
-                disabled={!settings.tax_enabled}
-                min="0"
-                max="100"
-                step="0.1"
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 16px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  backgroundColor: settings.tax_enabled ? '#fff' : '#f3f4f6',
-                  color: settings.tax_enabled ? '#111827' : '#9ca3af'
-                }}
-              />
-              <Percent
-                size={18}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Currency Selection */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-              Currency
-            </label>
-            <div style={{ position: 'relative' }}>
-              <select
-                data-testid="currency-select"
-                value={settings.currency}
-                onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 16px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  backgroundColor: '#fff',
-                  appearance: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="USD">USD - US Dollar</option>
-                <option value="JMD">JMD - Jamaican Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
-              </select>
-              <DollarSign
-                size={18}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Category Tax Exemptions */}
-        <div className="card" style={{ padding: '24px', marginBottom: '24px', opacity: settings.tax_enabled ? 1 : 0.6 }}>
-          <h2 style={{ marginBottom: '8px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Tag size={20} />
-            Category Tax Exemptions
-          </h2>
-          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>
-            Select categories that should be <strong>exempt from tax</strong>. Unchecked categories will have tax applied.
-          </p>
-
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {PRODUCT_CATEGORIES.map((category) => {
-              const isExempt = settings.tax_exempt_categories.includes(category.id);
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  data-testid={`category-${category.id}`}
-                  onClick={() => settings.tax_enabled && toggleCategoryExemption(category.id)}
-                  disabled={!settings.tax_enabled}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 16px',
-                    border: `2px solid ${isExempt ? '#8b5cf6' : '#e5e7eb'}`,
-                    borderRadius: '10px',
-                    backgroundColor: isExempt ? '#f5f3ff' : '#fff',
-                    cursor: settings.tax_enabled ? 'pointer' : 'not-allowed',
-                    transition: 'all 0.2s',
-                    textAlign: 'left'
-                  }}
-                >
-                  <div>
-                    <div style={{ 
-                      fontSize: '15px', 
-                      fontWeight: '600', 
-                      color: isExempt ? '#7c3aed' : '#374151',
-                      marginBottom: '2px'
-                    }}>
-                      {category.label}
-                      {isExempt && (
-                        <span style={{
-                          marginLeft: '8px',
-                          fontSize: '11px',
-                          padding: '2px 8px',
-                          backgroundColor: '#8b5cf6',
-                          color: '#fff',
-                          borderRadius: '4px',
-                          fontWeight: '500'
-                        }}>
-                          TAX EXEMPT
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                      {category.description}
-                    </div>
-                  </div>
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    border: `2px solid ${isExempt ? '#8b5cf6' : '#d1d5db'}`,
-                    backgroundColor: isExempt ? '#8b5cf6' : '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {isExempt && <Check size={14} color="#fff" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Preview */}
-        <div className="card" style={{ padding: '24px', marginBottom: '24px', backgroundColor: '#f9fafb' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '12px' }}>
-            Tax Configuration Preview
-          </h3>
-          {!settings.tax_enabled ? (
-            <p style={{ fontSize: '15px', color: '#374151' }} data-testid="tax-preview">
-              Tax is <strong>disabled</strong> - no tax will be applied to any sales
-            </p>
-          ) : (
-            <div data-testid="tax-preview">
-              <p style={{ fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
-                Tax Rate: <strong>{settings.tax_rate}%</strong>
-              </p>
-              <p style={{ fontSize: '14px', color: '#374151', marginBottom: '4px' }}>
-                <span style={{ color: '#059669' }}>✓ Taxable:</span>{' '}
-                {taxableCategories.length > 0 
-                  ? taxableCategories.map(c => c.label).join(', ')
-                  : 'None'}
-              </p>
-              <p style={{ fontSize: '14px', color: '#374151' }}>
-                <span style={{ color: '#dc2626' }}>✗ Tax Exempt:</span>{' '}
-                {settings.tax_exempt_categories.length > 0
-                  ? PRODUCT_CATEGORIES
-                      .filter(c => settings.tax_exempt_categories.includes(c.id))
-                      .map(c => c.label)
-                      .join(', ')
-                  : 'None'}
-              </p>
-            </div>
-          )}
-        </div>
-        </>
+          <TaxTab
+            settings={settings}
+            setSettings={setSettings}
+            toggleCategoryExemption={toggleCategoryExemption}
+          />
         )}
 
-        {/* Points System Section */}
         {activeSection === 'points' && (
-          <>
-          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <h2 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Star size={20} />
-              Customer Loyalty Points
-            </h2>
-
-            {/* Points Enabled Toggle */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                  Enable Points System
-                </span>
-                <Switch
-                  data-testid="points-toggle"
-                  checked={settings.points_enabled}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, points_enabled: checked }))}
-                  className="data-[state=checked]:bg-violet-500"
-                />
-              </div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-                When enabled, customers earn points on purchases
-              </p>
-            </div>
-
-            {/* Spending Threshold */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Minimum Spend to Redeem Points
-              </label>
-              <div style={{ position: 'relative' }}>
-                <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="number"
-                  data-testid="points-threshold-input"
-                  value={settings.points_redemption_threshold}
-                  onChange={(e) => setSettings({ ...settings, points_redemption_threshold: parseFloat(e.target.value) || 0 })}
-                  disabled={!settings.points_enabled}
-                  min="0"
-                  step="100"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px 12px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    backgroundColor: settings.points_enabled ? '#fff' : '#f3f4f6',
-                    color: settings.points_enabled ? '#111827' : '#9ca3af'
-                  }}
-                />
-              </div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-                Customers must spend this amount total before they can use points (default: $3,500)
-              </p>
-            </div>
-
-            {/* Points Value */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-                Point Value ($ per point)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="number"
-                  data-testid="points-value-input"
-                  value={settings.points_value}
-                  onChange={(e) => setSettings({ ...settings, points_value: parseFloat(e.target.value) || 1 })}
-                  disabled={!settings.points_enabled}
-                  min="0.01"
-                  step="0.5"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px 12px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    backgroundColor: settings.points_enabled ? '#fff' : '#f3f4f6',
-                    color: settings.points_enabled ? '#111827' : '#9ca3af'
-                  }}
-                />
-              </div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-                Each point = this amount in discount (default: $1)
-              </p>
-            </div>
-          </div>
-
-          {/* Points Preview */}
-          <div className="card" style={{ padding: '24px', marginBottom: '24px', backgroundColor: '#faf5ff' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#7c3aed', marginBottom: '12px' }}>
-              Points System Preview
-            </h3>
-            {!settings.points_enabled ? (
-              <p style={{ fontSize: '15px', color: '#374151' }}>
-                Points system is <strong>disabled</strong>
-              </p>
-            ) : (
-              <div>
-                <p style={{ fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
-                  • Customers earn <strong>1 point per $500 spent</strong>
-                </p>
-                <p style={{ fontSize: '15px', color: '#374151', marginBottom: '8px' }}>
-                  • Points can be redeemed after spending <strong>${settings.points_redemption_threshold.toLocaleString()}</strong> total
-                </p>
-                <p style={{ fontSize: '15px', color: '#374151' }}>
-                  • Each point is worth <strong>${settings.points_value}</strong> in discount
-                </p>
-              </div>
-            )}
-          </div>
-          </>
+          <PointsSystemTab settings={settings} setSettings={setSettings} />
         )}
 
-        {/* Devices Section */}
         {activeSection === 'devices' && (
-          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                <Shield size={20} />
-                Activated Devices
-              </h2>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={fetchDevices}
-                  disabled={loadingDevices}
-                  data-testid="refresh-devices-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
-                    backgroundColor: '#f3f4f6',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    color: '#374151'
-                  }}
-                >
-                  <RefreshCw size={14} className={loadingDevices ? 'animate-spin' : ''} />
-                  Refresh
-                </button>
-                {devices.length > 0 && (
-                  <button
-                    onClick={exportDevices}
-                    data-testid="export-devices-btn"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 12px',
-                      backgroundColor: '#8b5cf6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Download size={14} />
-                    Export CSV
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>
-              Manage devices that have been activated with this software. Revoking a device will require the user to re-activate.
-            </p>
-
-            {loadingDevices ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div className="loading-spinner" style={{ margin: '0 auto 12px' }}></div>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>Loading devices...</p>
-              </div>
-            ) : devices.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                <Monitor size={40} style={{ color: '#9ca3af', marginBottom: '12px' }} />
-                <p style={{ color: '#6b7280', fontSize: '15px', fontWeight: '500' }}>No Activated Devices</p>
-                <p style={{ color: '#9ca3af', fontSize: '13px' }}>Devices will appear here once activated</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {devices.map((device) => (
-                  <div
-                    key={device.id || device.device_id}
-                    data-testid={`device-row-${device.device_id}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '16px',
-                      backgroundColor: '#f9fafb',
-                      borderRadius: '10px',
-                      border: '1px solid #e5e7eb'
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <Monitor size={16} style={{ color: '#8b5cf6' }} />
-                        <span style={{ 
-                          fontSize: '13px', 
-                          fontFamily: 'monospace', 
-                          backgroundColor: '#e5e7eb', 
-                          padding: '2px 8px', 
-                          borderRadius: '4px',
-                          color: '#374151'
-                        }}>
-                          {device.device_id}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '14px', color: '#374151', marginBottom: '2px' }}>
-                        <strong>Email:</strong> {device.activated_email}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        Activated: {new Date(device.activated_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRevokeDevice(device.device_id)}
-                      disabled={revokingDevice === device.device_id}
-                      data-testid={`revoke-device-${device.device_id}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '8px 12px',
-                        backgroundColor: revokingDevice === device.device_id ? '#fecaca' : '#fee2e2',
-                        color: '#dc2626',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        cursor: revokingDevice === device.device_id ? 'not-allowed' : 'pointer',
-                        opacity: revokingDevice === device.device_id ? 0.7 : 1
-                      }}
-                    >
-                      <Trash2 size={14} />
-                      {revokingDevice === device.device_id ? 'Revoking...' : 'Revoke'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Stats */}
-            {devices.length > 0 && (
-              <div style={{ 
-                marginTop: '20px', 
-                padding: '16px', 
-                backgroundColor: '#faf5ff', 
-                borderRadius: '8px',
-                display: 'flex',
-                gap: '24px'
-              }}>
-                <div>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>{devices.length}</div>
-                  <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Devices</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>
-                    {new Set(devices.map(d => d.activated_email)).size}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#6b7280' }}>Unique Emails</div>
-                </div>
-              </div>
-            )}
-          </div>
+          <DevicesTab
+            devices={devices}
+            loadingDevices={loadingDevices}
+            revokingDevice={revokingDevice}
+            fetchDevices={fetchDevices}
+            handleRevokeDevice={handleRevokeDevice}
+            exportDevices={exportDevices}
+          />
         )}
 
-        {/* Save Button - only show for settings that need saving */}
         {activeSection !== 'devices' && (
-        <button
-          data-testid="save-settings-btn"
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            width: '100%',
-            padding: '14px 24px',
-            backgroundColor: '#8b5cf6',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: saving ? 'not-allowed' : 'pointer',
-            opacity: saving ? 0.7 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
-          }}
-        >
-          <Save size={20} />
-          {saving ? 'Saving...' : 'Save Settings'}
-        </button>
+          <button
+            data-testid="save-settings-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              backgroundColor: '#8b5cf6',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Save size={20} />
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
         )}
       </div>
     </div>

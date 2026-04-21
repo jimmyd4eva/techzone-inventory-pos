@@ -1,0 +1,91 @@
+"""Security, auth dependencies, and text-sanitization helpers."""
+import re
+import random
+import string
+from datetime import datetime, timezone, timedelta
+
+import bcrypt as bcrypt_lib
+import jwt
+from fastapi import HTTPException, Request
+
+from .config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRATION_HOURS
+
+
+# ---------- Passwords ----------
+def hash_password(password: str) -> str:
+    return bcrypt_lib.hashpw(password.encode('utf-8'), bcrypt_lib.gensalt()).decode('utf-8')
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    try:
+        return bcrypt_lib.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
+
+
+# ---------- JWT ----------
+def create_token(user_id: str, role: str, username: str = None) -> str:
+    payload = {
+        "user_id": user_id,
+        "role": role,
+        "username": username,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def verify_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+async def get_current_user(request: Request) -> dict:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authentication token")
+    token = auth_header.split(" ")[1]
+    return verify_token(token)
+
+
+def check_not_readonly(current_user: dict):
+    """Block write operations for the demo account."""
+    if current_user.get("username") == "demo":
+        raise HTTPException(
+            status_code=403,
+            detail="Demo account is read-only. Write operations are not permitted.",
+        )
+    return current_user
+
+
+# ---------- Activation ----------
+def generate_activation_code() -> str:
+    """Generate a 6-digit activation code."""
+    return ''.join(random.choices(string.digits, k=6))
+
+
+# ---------- HTML sanitization for PDF/plain output ----------
+_TAG_RE = re.compile(r'<[^>]+>')
+_WS_RE = re.compile(r'\s+')
+
+
+def strip_html(text) -> str:
+    """Strip HTML tags and decode common entities for PDF/email plain-text use."""
+    if not text:
+        return ""
+    s = str(text)
+    s = re.sub(r'<\s*br\s*/?\s*>', ' ', s, flags=re.IGNORECASE)
+    s = re.sub(r'</\s*(p|div|h[1-6])\s*>', ' ', s, flags=re.IGNORECASE)
+    s = _TAG_RE.sub('', s)
+    s = (
+        s.replace('&nbsp;', ' ')
+         .replace('&amp;', '&')
+         .replace('&lt;', '<')
+         .replace('&gt;', '>')
+         .replace('&quot;', '"')
+         .replace('&#39;', "'")
+    )
+    return _WS_RE.sub(' ', s).strip()
