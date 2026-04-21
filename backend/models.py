@@ -221,6 +221,10 @@ class Settings(BaseModel):
     birthday_discount_percent: float = 15  # Default % off
     birthday_valid_days: int = 14  # Days the coupon remains valid after birthday
     birthday_coupons_last_run: Optional[str] = None  # ISO date (YYYY-MM-DD) of last daily sweep
+    # Editable on-screen receipt footer (rich-text HTML; sanitized at render time)
+    receipt_thankyou_html: str = "Thank you for your business!"
+    receipt_tagline_html: str = "Quality repairs, trusted service"
+    receipt_footer_note_html: str = "Please keep this receipt for your records"
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -254,6 +258,9 @@ class SettingsUpdate(BaseModel):
     birthday_coupons_enabled: Optional[bool] = None
     birthday_discount_percent: Optional[float] = None
     birthday_valid_days: Optional[int] = None
+    receipt_thankyou_html: Optional[str] = None
+    receipt_tagline_html: Optional[str] = None
+    receipt_footer_note_html: Optional[str] = None
 
 # ============ COUPON MODELS ============
 

@@ -153,6 +153,27 @@ export const ReceiptPreview = ({ settings }) => {
         <span>TOTAL</span><span>$29.98</span>
       </div>
       <div style={{ borderTop: '1px dashed #9ca3af', margin: '10px 0' }} />
+      {settings?.receipt_thankyou_html ? (
+        <div
+          data-testid="preview-receipt-thankyou"
+          style={{ fontSize: '13px', color: '#374151', textAlign: 'center', fontWeight: 600, margin: '2px 0' }}
+          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_thankyou_html) }}
+        />
+      ) : null}
+      {settings?.receipt_tagline_html ? (
+        <div
+          data-testid="preview-receipt-tagline"
+          style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: '2px 0' }}
+          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_tagline_html) }}
+        />
+      ) : null}
+      {settings?.receipt_footer_note_html ? (
+        <div
+          data-testid="preview-receipt-footer-note"
+          style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center', margin: '2px 0 8px 0' }}
+          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_footer_note_html) }}
+        />
+      ) : null}
       <div style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
         This is a live preview — not saved until you click "Save Settings".
       </div>

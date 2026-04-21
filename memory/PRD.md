@@ -26,6 +26,13 @@
 
 ## What's Been Implemented
 
+### Editable & Formattable Receipt Footer (Feb 21, 2026)
+- Three new rich-text settings control the bottom of every on-screen post-sale receipt: `receipt_thankyou_html`, `receipt_tagline_html`, `receipt_footer_note_html`. Defaults preserve the previous hard-coded text ("Thank you for your business!" / "Quality repairs, trusted service" / "Please keep this receipt for your records").
+- Each field uses the existing `SimpleRichTextEditor` (bold/italic/underline, alignment, font size, color) and is surfaced as a purple **Receipt Footer Messages** card in Settings → Business Information, directly above the Live Receipt Preview.
+- `Receipt.js` (post-sale modal) uses the same `renderFormatted()` path as business-info fields — DOMPurify-sanitized HTML with the same allow-list, gracefully falls back to defaults if settings are missing.
+- `ReceiptPreview.js` (Settings live preview) renders the 3 fields in place, so operators see exactly what customers will see.
+- Zero behavior change for existing receipts (defaults match prior text); backend round-trip verified (`<b>`, `<i>`, `<u>`, `<span style="color:...">` all preserved). All 66 backend tests pass.
+
 ### Birthday WhatsApp/SMS Reach-Out Buttons (Feb 21, 2026)
 - `UpcomingBirthdaysWidget` now renders two per-row action buttons: green WhatsApp (`wa.me/`) and blue SMS (`sms:`), each opening the native device/browser handler with a pre-filled personal birthday message (`Happy Birthday today!` / `...tomorrow!` / `...in X days!` variants) using the live business name pulled from `/api/settings/public` (HTML-stripped).
 - Phone normalization reuses the existing E.164 helper pattern; buttons are disabled (40% opacity, `not-allowed` cursor) when the customer has no phone on file.

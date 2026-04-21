@@ -42,7 +42,10 @@ const Settings = () => {
     vip_spend_threshold: 20000,
     birthday_coupons_enabled: false,
     birthday_discount_percent: 15,
-    birthday_valid_days: 14
+    birthday_valid_days: 14,
+    receipt_thankyou_html: 'Thank you for your business!',
+    receipt_tagline_html: 'Quality repairs, trusted service',
+    receipt_footer_note_html: 'Please keep this receipt for your records'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -281,7 +284,10 @@ const Settings = () => {
         vip_spend_threshold: response.data.vip_spend_threshold ?? 20000,
         birthday_coupons_enabled: response.data.birthday_coupons_enabled === true,
         birthday_discount_percent: response.data.birthday_discount_percent ?? 15,
-        birthday_valid_days: response.data.birthday_valid_days ?? 14
+        birthday_valid_days: response.data.birthday_valid_days ?? 14,
+        receipt_thankyou_html: response.data.receipt_thankyou_html ?? 'Thank you for your business!',
+        receipt_tagline_html: response.data.receipt_tagline_html ?? 'Quality repairs, trusted service',
+        receipt_footer_note_html: response.data.receipt_footer_note_html ?? 'Please keep this receipt for your records'
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -361,7 +367,10 @@ const Settings = () => {
         vip_spend_threshold: settings.vip_spend_threshold,
         birthday_coupons_enabled: settings.birthday_coupons_enabled,
         birthday_discount_percent: settings.birthday_discount_percent,
-        birthday_valid_days: settings.birthday_valid_days
+        birthday_valid_days: settings.birthday_valid_days,
+        receipt_thankyou_html: settings.receipt_thankyou_html,
+        receipt_tagline_html: settings.receipt_tagline_html,
+        receipt_footer_note_html: settings.receipt_footer_note_html
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {

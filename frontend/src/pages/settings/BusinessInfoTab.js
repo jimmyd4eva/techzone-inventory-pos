@@ -160,6 +160,69 @@ export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUp
         )}
       </div>
 
+      {/* Editable on-screen Receipt Footer */}
+      <div style={{
+        marginTop: '24px',
+        padding: '20px',
+        background: '#faf5ff',
+        borderRadius: '10px',
+        border: '1px solid #e9d5ff'
+      }}>
+        <h3 style={{
+          fontSize: '15px',
+          fontWeight: '600',
+          color: '#6b21a8',
+          marginBottom: '4px'
+        }}>
+          Receipt Footer Messages
+        </h3>
+        <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 14px 0' }}>
+          These three lines appear at the bottom of every on-screen receipt after a sale. Each supports bold, italic, underline, font size, alignment, and color.
+        </p>
+
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Thank-You Message
+          </label>
+          <div data-testid="receipt-thankyou-editor">
+            <SimpleRichTextEditor
+              value={settings.receipt_thankyou_html}
+              onChange={(html) => setSettings({ ...settings, receipt_thankyou_html: html })}
+              placeholder="Thank you for your business!"
+              rows={1}
+            />
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Tagline
+          </label>
+          <div data-testid="receipt-tagline-editor">
+            <SimpleRichTextEditor
+              value={settings.receipt_tagline_html}
+              onChange={(html) => setSettings({ ...settings, receipt_tagline_html: html })}
+              placeholder="Quality repairs, trusted service"
+              rows={1}
+            />
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: '4px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Footer Note
+          </label>
+          <div data-testid="receipt-footer-note-editor">
+            <SimpleRichTextEditor
+              value={settings.receipt_footer_note_html}
+              onChange={(html) => setSettings({ ...settings, receipt_footer_note_html: html })}
+              placeholder="Please keep this receipt for your records"
+              rows={2}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Live Receipt Preview */}
       <div style={{
         marginTop: '24px',

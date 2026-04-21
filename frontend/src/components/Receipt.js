@@ -238,9 +238,21 @@ const Receipt = ({ sale, onClose, businessSettings }) => {
 
           <div className="receipt-footer">
             <div className="receipt-divider"></div>
-            <p className="receipt-thank-you">Thank you for your business!</p>
-            <p className="receipt-tagline">Quality repairs, trusted service</p>
-            <p className="receipt-small">Please keep this receipt for your records</p>
+            {renderFormatted(
+              businessSettings?.receipt_thankyou_html || 'Thank you for your business!',
+              'receipt-thank-you',
+              'receipt-thank-you'
+            )}
+            {renderFormatted(
+              businessSettings?.receipt_tagline_html || 'Quality repairs, trusted service',
+              'receipt-tagline',
+              'receipt-tagline'
+            )}
+            {renderFormatted(
+              businessSettings?.receipt_footer_note_html || 'Please keep this receipt for your records',
+              'receipt-small',
+              'receipt-footer-note'
+            )}
           </div>
         </div>
       </div>
