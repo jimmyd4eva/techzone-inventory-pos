@@ -26,6 +26,10 @@
 
 ## What's Been Implemented
 
+### Footer Note Quick Templates (Feb 21, 2026)
+- Added three one-click preset chips above the Footer Note editor in Settings → Business Information: **Warranty (30 days)**, **Returns Policy**, **Follow Us**. Each button instantly fills the editor with polished, already-formatted copy (bold keywords, underlined warranty-receipt reminder, italicized word-of-mouth note).
+- Clicking simply calls `setSettings()` — operator can then tweak further in the rich-text editor before saving. No backend changes. Testids: `footer-template-warranty`, `footer-template-returns`, `footer-template-social`.
+
 ### Editable & Formattable Receipt Footer (Feb 21, 2026)
 - Three new rich-text settings control the bottom of every on-screen post-sale receipt: `receipt_thankyou_html`, `receipt_tagline_html`, `receipt_footer_note_html`. Defaults preserve the previous hard-coded text ("Thank you for your business!" / "Quality repairs, trusted service" / "Please keep this receipt for your records").
 - Each field uses the existing `SimpleRichTextEditor` (bold/italic/underline, alignment, font size, color) and is surfaced as a purple **Receipt Footer Messages** card in Settings → Business Information, directly above the Live Receipt Preview.

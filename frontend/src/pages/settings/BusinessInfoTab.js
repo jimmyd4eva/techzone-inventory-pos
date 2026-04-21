@@ -212,6 +212,49 @@ export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUp
           <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
             Footer Note
           </label>
+
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#6b7280', alignSelf: 'center', marginRight: '4px' }}>
+              Quick templates:
+            </span>
+            {[
+              {
+                id: 'warranty',
+                label: 'Warranty (30 days)',
+                html: '<b>30-day warranty</b> on manufacturing defects only. Accidental, water, or physical damage not covered. <u>Keep this receipt</u> — required for any warranty claim.'
+              },
+              {
+                id: 'returns',
+                label: 'Returns Policy',
+                html: '<b>Exchanges within 7 days</b> with receipt and original packaging. No cash refunds. Sale items are final.'
+              },
+              {
+                id: 'social',
+                label: 'Follow Us',
+                html: 'Love our service? <b>Follow us on social media</b> and tell a friend — <i>word of mouth means everything to a small business</i>.'
+              },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                data-testid={`footer-template-${t.id}`}
+                onClick={() => setSettings({ ...settings, receipt_footer_note_html: t.html })}
+                style={{
+                  padding: '4px 10px',
+                  background: '#ede9fe',
+                  color: '#5b21b6',
+                  border: '1px solid #c4b5fd',
+                  borderRadius: '999px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           <div data-testid="receipt-footer-note-editor">
             <SimpleRichTextEditor
               value={settings.receipt_footer_note_html}
