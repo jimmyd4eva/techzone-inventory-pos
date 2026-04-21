@@ -722,7 +722,7 @@ async def send_summary_now(data: dict, current_user: dict = Depends(get_current_
 
 @router.get("/reports/top-customers")
 async def top_customers(limit: int = 10, current_user: dict = Depends(get_current_user)):
-    """Return top N customers by completed-sale spend."""
+    """Return top N customers by completed-sale spend, each with an RFM-based retention score (0-100)."""
     if limit < 1 or limit > 100:
         limit = 10
 
@@ -747,21 +747,66 @@ async def top_customers(limit: int = 10, current_user: dict = Depends(get_curren
     customers_cursor = db.customers.find({"id": {"$in": customer_ids}}, {"_id": 0})
     customer_map = {c["id"]: c async for c in customers_cursor}
 
+    # Normalization references for the RFM score
+    max_spent = max((float(r["total_spent"]) for r in agg), default=0) or 1
+    max_count = max((int(r["sales_count"]) for r in agg), default=0) or 1
+    now = datetime.now(timezone.utc)
+
+    def _parse(dt):
+        if isinstance(dt, datetime):
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        if isinstance(dt, str):
+            try:
+                return datetime.fromisoformat(dt.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        return None
+
     results = []
     for idx, row in enumerate(agg, start=1):
         cust = customer_map.get(row["_id"])
         if not cust:
             continue
+
+        total_spent = float(row["total_spent"])
+        sales_count = int(row["sales_count"])
+        last_sale = _parse(row["last_sale_at"])
+
+        # Recency: 0-40 pts. 0 days = 40 pts. Linearly decays to 0 at 120 days away.
+        if last_sale:
+            days_since = max((now - last_sale).days, 0)
+            recency_score = max(0.0, 40.0 * (1 - min(days_since, 120) / 120))
+        else:
+            recency_score = 0.0
+
+        # Frequency: 0-30 pts relative to the top-frequency customer in this slice
+        frequency_score = 30.0 * (sales_count / max_count)
+
+        # Monetary: 0-30 pts relative to the top-spend customer in this slice
+        monetary_score = 30.0 * (total_spent / max_spent)
+
+        retention_score = round(recency_score + frequency_score + monetary_score)
+        retention_score = max(0, min(100, retention_score))
+
+        if retention_score >= 70:
+            retention_tier = "high"
+        elif retention_score >= 40:
+            retention_tier = "medium"
+        else:
+            retention_tier = "low"
+
         results.append({
             "rank": idx,
             "customer_id": row["_id"],
             "name": cust.get("name", "Unknown"),
             "phone": cust.get("phone"),
             "email": cust.get("email"),
-            "total_spent": float(row["total_spent"]),
-            "sales_count": int(row["sales_count"]),
+            "total_spent": total_spent,
+            "sales_count": sales_count,
             "last_sale_at": row["last_sale_at"],
             "points_balance": cust.get("points_balance", 0),
+            "retention_score": retention_score,
+            "retention_tier": retention_tier,
         })
     return results
 

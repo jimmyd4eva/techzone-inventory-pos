@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Retention Score on Top Customers (Feb 21, 2026)
+- `GET /api/reports/top-customers` now returns `retention_score` (0–100) and `retention_tier` ("high"/"medium"/"low") per customer — a simple RFM-weighted blend:
+  - **Recency (40 pts)**: 0 days ago = 40 pts, linearly decaying to 0 at 120 days.
+  - **Frequency (30 pts)**: relative to the most-frequent customer in the slice.
+  - **Monetary (30 pts)**: relative to the top spender in the slice.
+- `TopCustomersWidget` shows a pill-shaped badge per row with a filled heart icon — green (≥70), amber (40–69), red (<40). Tooltip explains the score composition. New testid: `top-customer-retention-<id>`.
+- Zero new endpoints, no DB changes — computed on-the-fly from existing sales+customers data. Lint clean, 66 backend tests pass (no regressions).
+
 ### Footer Note Quick Templates (Feb 21, 2026)
 - Added three one-click preset chips above the Footer Note editor in Settings → Business Information: **Warranty (30 days)**, **Returns Policy**, **Follow Us**. Each button instantly fills the editor with polished, already-formatted copy (bold keywords, underlined warranty-receipt reminder, italicized word-of-mouth note).
 - Clicking simply calls `setSettings()` — operator can then tweak further in the rich-text editor before saving. No backend changes. Testids: `footer-template-warranty`, `footer-template-returns`, `footer-template-social`.
