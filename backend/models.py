@@ -283,6 +283,37 @@ class CouponUpdate(BaseModel):
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
 
+
+# ============ SUPPLIER MODELS ============
+
+class Supplier(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: Optional[str] = None
+
+class SupplierCreate(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+
+class SupplierUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    address: Optional[str] = None
+    notes: Optional[str] = None
+
 # ============ ACTIVATION MODELS ============
 
 class ActivationCode(BaseModel):

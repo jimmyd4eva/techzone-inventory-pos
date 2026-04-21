@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, Package, Wrench, Users, Crown, Ticket, AlertTriangle, PackageX, Mail, Download } from 'lucide-react';
+import { DollarSign, Package, Wrench, Users, Crown, Ticket, AlertTriangle, PackageX, Mail, Download, MessageCircle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -119,11 +119,68 @@ const Dashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  const openPoModal = (supplier, items) => {
+  const openPoModal = async (supplier, items) => {
     setPoModal({ supplier, items });
     setPoEmail('');
     setPoNote('');
     setPoMsg({ type: '', text: '' });
+    // Try to auto-fill from supplier directory
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.get(
+        `${API}/suppliers/lookup?name=${encodeURIComponent(supplier)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (r.data) {
+        if (r.data.email) setPoEmail(r.data.email);
+        setPoModal({ supplier, items, directory: r.data });
+      }
+    } catch (e) {
+      // silent; modal still works with manual entry
+    }
+  };
+
+  const normalizeToE164 = (raw) => {
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    if (raw.trim().startsWith('+')) return '+' + digits;
+    if (digits.length === 10 && digits.startsWith('876')) return '+1' + digits;
+    if (digits.length === 7) return '+1876' + digits;
+    if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+    if (digits.length === 10) return '+1' + digits;
+    return '+' + digits;
+  };
+
+  const buildPoWhatsappMessage = (supplier, items, note) => {
+    const lines = [
+      `Hi ${supplier}, we'd like to reorder the following items:`,
+      '',
+      ...items.map((it) => `- ${it.name} (SKU ${it.sku || '-'}): suggested qty ${suggestedQty(it)} (on hand ${it.quantity}, threshold ${it.low_stock_threshold})`),
+    ];
+    if (note) {
+      lines.push('');
+      lines.push(`Note: ${note}`);
+    }
+    lines.push('');
+    lines.push('Please confirm availability and pricing. Thank you!');
+    return lines.join('\n');
+  };
+
+  const sharePoWhatsApp = () => {
+    if (!poModal) return;
+    const target = poModal.directory?.whatsapp_number || poModal.directory?.phone;
+    if (!target) {
+      setPoMsg({ type: 'error', text: 'No WhatsApp/phone number saved for this supplier. Add one in the Suppliers page.' });
+      return;
+    }
+    const phone = normalizeToE164(target).replace(/\D/g, '');
+    if (!phone) {
+      setPoMsg({ type: 'error', text: 'Invalid WhatsApp number for this supplier.' });
+      return;
+    }
+    const text = encodeURIComponent(buildPoWhatsappMessage(poModal.supplier, poModal.items, poNote));
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   };
 
   const sendPO = async () => {
@@ -567,6 +624,11 @@ const Dashboard = () => {
                   onChange={(e) => setPoEmail(e.target.value)}
                   placeholder="supplier@example.com"
                 />
+                {poModal.directory && (
+                  <p style={{ fontSize: '11px', color: '#059669', marginTop: '4px' }}>
+                    ✓ Auto-filled from supplier directory
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label>Note (optional)</label>
@@ -581,8 +643,28 @@ const Dashboard = () => {
               <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 12px 0' }}>
                 The email will include the {poModal.items.length} low-stock item{poModal.items.length === 1 ? '' : 's'} for <strong>{poModal.supplier}</strong> with suggested order quantities.
               </p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button type="button" className="btn-secondary" onClick={() => setPoModal(null)}>Cancel</button>
+                <button
+                  type="button"
+                  data-testid="po-whatsapp-btn"
+                  onClick={sharePoWhatsApp}
+                  disabled={!poModal.directory?.whatsapp_number && !poModal.directory?.phone}
+                  title={
+                    (poModal.directory?.whatsapp_number || poModal.directory?.phone)
+                      ? 'Open WhatsApp with PO pre-filled'
+                      : 'No WhatsApp/phone saved for this supplier'
+                  }
+                  style={{
+                    padding: '10px 14px', background: '#22c55e', color: '#fff',
+                    border: 'none', borderRadius: '8px', fontWeight: 600,
+                    cursor: (poModal.directory?.whatsapp_number || poModal.directory?.phone) ? 'pointer' : 'not-allowed',
+                    opacity: (poModal.directory?.whatsapp_number || poModal.directory?.phone) ? 1 : 0.45,
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  <MessageCircle size={14} /> WhatsApp
+                </button>
                 <button
                   type="button"
                   data-testid="po-send-btn"

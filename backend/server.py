@@ -23,6 +23,7 @@ from services.scheduler import start_scheduler
 from routes import (
     auth, customers, inventory, repairs, settings as settings_routes,
     activation, coupons, sales, admin, payments, reports, cash_register,
+    suppliers,
 )
 
 app = FastAPI()
@@ -41,6 +42,7 @@ api_router.include_router(admin.router)
 api_router.include_router(payments.router)
 api_router.include_router(reports.router)
 api_router.include_router(cash_register.router)
+api_router.include_router(suppliers.router)
 
 app.include_router(api_router)
 

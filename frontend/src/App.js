@@ -9,6 +9,7 @@ import Sales from './pages/Sales';
 import SalesHistory from './pages/SalesHistory';
 import Repairs from './pages/Repairs';
 import Customers from './pages/Customers';
+import Suppliers from './pages/Suppliers';
 import Coupons from './pages/Coupons';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
@@ -161,6 +162,7 @@ function App() {
           <Route path="sales-history" element={<SalesHistory />} />
           <Route path="repairs" element={<Repairs />} />
           <Route path="customers" element={<Customers />} />
+          <Route path="suppliers" element={<Suppliers />} />
           <Route path="coupons" element={<Coupons />} />
           <Route path="reports" element={<Reports />} />
           <Route path="users" element={<Users />} />

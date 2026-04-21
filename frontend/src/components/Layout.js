@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Wrench, Users as UsersIcon, FileText, LogOut, UserCog, Receipt, Settings, Ticket } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wrench, Users as UsersIcon, FileText, LogOut, UserCog, Receipt, Settings, Ticket, Truck } from 'lucide-react';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -118,6 +118,12 @@ const Layout = ({ user, onLogout }) => {
               <NavLink to="/customers" data-testid="nav-customers">
                 <UsersIcon size={20} />
                 Customers
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/suppliers" data-testid="nav-suppliers">
+                <Truck size={20} />
+                Suppliers
               </NavLink>
             </li>
             <li>

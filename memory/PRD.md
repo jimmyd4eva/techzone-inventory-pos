@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Supplier Directory + PO WhatsApp (Feb 21, 2026)
+- New `Supplier` model (`name`, `email`, `phone`, `whatsapp_number`, `address`, `notes`) with full CRUD at `/api/suppliers`.
+- New case-insensitive `GET /api/suppliers/lookup?name=` endpoint used by the Dashboard PO modal.
+- New `/suppliers` page (with `nav-suppliers` sidebar link) — searchable table, create/edit/delete modal, color-coded email/phone/WhatsApp icons.
+- Dashboard Low Stock "Email PO" modal now:
+  - **Auto-fills supplier email** from the directory when the inventory's `supplier` string matches a directory entry (`✓ Auto-filled from supplier directory` hint shown).
+  - New **WhatsApp** button composes a formatted PO message (item list + suggested qtys) and opens `wa.me/<e164>?text=...` using the supplier's saved `whatsapp_number` (falls back to `phone`). Disabled with a tooltip if no contact saved.
+
 ### Dashboard: Low Stock Auto-Reorder Card (Feb 21, 2026)
 - New `POST /api/inventory/email-purchase-order` — admin-only endpoint that composes a branded PO email with item list, on-hand qty, threshold, and suggested order quantity (formula: `max(threshold × 3 − on_hand, 5)`).
 - Reuses existing `GET /api/inventory/low-stock` for the data.
