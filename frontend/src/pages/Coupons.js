@@ -32,6 +32,34 @@ const Coupons = () => {
     fetchCustomers();
   }, []);
 
+  // Auto-open a Flash Sale preset when navigated from Dashboard
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preset') === 'flash' && !loading) {
+      setEditingCoupon(null);
+      const code = `FLASH${Math.floor(100 + Math.random() * 900)}`;
+      const until = new Date();
+      until.setDate(until.getDate() + 14);
+      setFormData({
+        code,
+        description: 'Flash sale — clearing slow-moving stock',
+        discount_type: 'percentage',
+        discount_value: 20,
+        min_purchase: 0,
+        max_discount: '',
+        usage_limit: '',
+        is_active: true,
+        valid_from: '',
+        valid_until: until.toISOString().split('T')[0],
+        customer_id: ''
+      });
+      setError('');
+      setShowModal(true);
+      window.history.replaceState({}, '', '/coupons');
+    }
+     
+  }, [loading]);
+
   const fetchCoupons = async () => {
     try {
       const token = localStorage.getItem('token');

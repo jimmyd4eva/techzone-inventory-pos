@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Dashboard: Slow-Moving Inventory Card (Feb 21, 2026)
+- New `GET /api/reports/slow-moving-inventory?days=90&limit=15` — MongoDB aggregation on completed sales for last-sale-per-item, joined with `quantity > 0` inventory; includes items never sold whose `created_at` is older than the window.
+- Returns: `id, name, sku, category, supplier, quantity, price, stock_value, last_sale_at, days_stale, total_sold, ever_sold`. Sorted by `stock_value` desc so high-capital dead stock floats to the top.
+- Dashboard "Slow-Moving Inventory" blue-themed card (sibling to Low Stock / At-Risk) with days-stale color tiers (120d→180d+), "Stalled" vs "Never sold" status badge, and one-click **Create Flash Sale Coupon** button.
+- Flash Sale button deep-links to `/coupons?preset=flash` → Coupons.js auto-opens the create modal pre-filled with `FLASH<NNN>` code, 20% discount, 14-day expiry, "Flash sale — clearing slow-moving stock" description.
+
 ### Supplier Directory + PO WhatsApp (Feb 21, 2026)
 - New `Supplier` model (`name`, `email`, `phone`, `whatsapp_number`, `address`, `notes`) with full CRUD at `/api/suppliers`.
 - New case-insensitive `GET /api/suppliers/lookup?name=` endpoint used by the Dashboard PO modal.

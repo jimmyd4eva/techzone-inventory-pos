@@ -823,3 +823,93 @@ async def lost_customers(
             "days_since_last_sale": days_away,
         })
     return results
+
+
+@router.get("/reports/slow-moving-inventory")
+async def slow_moving(
+    days: int = 90,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return in-stock inventory items whose most recent sale (if any) is older than `days` days."""
+    if days < 1:
+        days = 90
+    if limit < 1 or limit > 200:
+        limit = 20
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff_iso = cutoff.isoformat()
+
+    # Aggregate last-sale-at per item_id from completed sales
+    pipeline = [
+        {"$match": {"payment_status": "completed"}},
+        {"$unwind": "$items"},
+        {"$group": {
+            "_id": "$items.item_id",
+            "last_sale_at": {"$max": "$created_at"},
+            "total_sold": {"$sum": "$items.quantity"},
+        }},
+    ]
+    sold_rows = await db.sales.aggregate(pipeline).to_list(10000)
+    sold_map = {row["_id"]: row for row in sold_rows}
+
+    # Pull in-stock inventory (quantity > 0)
+    inv_cursor = db.inventory.find({"quantity": {"$gt": 0}}, {"_id": 0})
+    candidates = []
+    now = datetime.now(timezone.utc)
+
+    async for item in inv_cursor:
+        item_id = item.get("id")
+        sold = sold_map.get(item_id)
+        if sold:
+            last_sale = sold.get("last_sale_at")
+            if not last_sale:
+                continue
+            # Skip items sold recently
+            if last_sale >= cutoff_iso:
+                continue
+            try:
+                last_dt = datetime.fromisoformat(str(last_sale).replace("Z", "+00:00"))
+                days_stale = max(0, (now - last_dt).days)
+            except Exception:
+                days_stale = None
+            total_sold = int(sold.get("total_sold") or 0)
+            ever_sold = True
+        else:
+            # Never sold — use created_at if present
+            created = item.get("created_at")
+            if created:
+                try:
+                    c_dt = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+                    if c_dt >= cutoff:
+                        # Item is newer than the stale window; not "slow"
+                        continue
+                    days_stale = (now - c_dt).days
+                except Exception:
+                    days_stale = None
+            else:
+                days_stale = None
+            last_sale = None
+            total_sold = 0
+            ever_sold = False
+
+        price = float(item.get("price") or 0)
+        qty = int(item.get("quantity") or 0)
+        candidates.append({
+            "id": item_id,
+            "name": item.get("name"),
+            "sku": item.get("sku"),
+            "category": item.get("category"),
+            "supplier": item.get("supplier"),
+            "quantity": qty,
+            "price": price,
+            "stock_value": round(price * qty, 2),
+            "last_sale_at": last_sale,
+            "days_stale": days_stale,
+            "total_sold": total_sold,
+            "ever_sold": ever_sold,
+        })
+
+    # Sort: stock_value desc (higher-value dead stock first)
+    candidates.sort(key=lambda c: (c["stock_value"], c["days_stale"] or 0), reverse=True)
+    return candidates[:limit]
