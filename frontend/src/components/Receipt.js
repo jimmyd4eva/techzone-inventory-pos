@@ -197,7 +197,7 @@ const Receipt = ({ sale, onClose, businessSettings }) => {
               </thead>
               <tbody>
                 {sale.items.map((item, index) => (
-                  <tr key={index}>
+                  <tr key={item.item_id ? `${item.item_id}-${index}` : `${item.item_name}-${index}`}>
                     <td>{item.item_name}</td>
                     <td>{item.quantity}</td>
                     <td>${item.price.toFixed(2)}</td>

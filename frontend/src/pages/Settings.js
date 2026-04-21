@@ -74,6 +74,7 @@ const Settings = () => {
 
   useEffect(() => {
     fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -84,6 +85,7 @@ const Settings = () => {
       fetchCurrentShift();
       fetchShiftHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
   const authHeaders = () => ({

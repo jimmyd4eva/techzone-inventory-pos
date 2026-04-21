@@ -190,7 +190,7 @@ const Sales = () => {
     } else if (cart.length === 0) {
       removeCoupon();
     }
-  }, [cart, appliedCoupon]);
+  }, [cart, appliedCoupon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const filtered = inventory.filter(item =>
@@ -317,7 +317,7 @@ const Sales = () => {
         return cartItem;
       }));
     }
-  }, [selectedCustomer?.customer_type]);
+  }, [selectedCustomer?.customer_type]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateQuantity = (itemId, change) => {
     const item = cart.find(i => i.item_id === itemId);

@@ -1,6 +1,6 @@
 """Security, auth dependencies, and text-sanitization helpers."""
 import re
-import random
+import secrets
 import string
 from datetime import datetime, timezone, timedelta
 
@@ -63,8 +63,9 @@ def check_not_readonly(current_user: dict):
 
 # ---------- Activation ----------
 def generate_activation_code() -> str:
-    """Generate a 6-digit activation code."""
-    return ''.join(random.choices(string.digits, k=6))
+    """Generate a cryptographically secure 6-digit activation code."""
+    # Use `secrets` (not `random`) because this code gates device access.
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 
 # ---------- HTML sanitization for PDF/plain output ----------

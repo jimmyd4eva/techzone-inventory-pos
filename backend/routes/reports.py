@@ -658,6 +658,9 @@ async def export_tax_report_pdf(current_user: dict = Depends(get_current_user)):
 def _period_range(period: str, now: Optional[datetime] = None):
     """Return (start, end, label) for the 'previous' weekly or monthly period."""
     now = now or datetime.now(timezone.utc)
+    start: datetime
+    end: datetime
+    label: str
     if period == "weekly":
         # Previous Monday 00:00 UTC → last Sunday 23:59:59 UTC
         today = now.date()

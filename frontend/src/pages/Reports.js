@@ -473,8 +473,8 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {taxReport.category_breakdown.map((cat, idx) => (
-                      <tr key={idx} data-testid={`category-row-${cat.category}`}>
+                    {taxReport.category_breakdown.map((cat) => (
+                      <tr key={cat.category} data-testid={`category-row-${cat.category}`}>
                         <td style={{ fontWeight: '600', textTransform: 'capitalize' }}>{cat.category}</td>
                         <td>
                           <span style={{
@@ -659,8 +659,8 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {couponAnalytics.coupon_breakdown.map((coupon, idx) => (
-                      <tr key={idx} data-testid={`coupon-row-${coupon.code}`}>
+                    {couponAnalytics.coupon_breakdown.map((coupon) => (
+                      <tr key={coupon.code} data-testid={`coupon-row-${coupon.code}`}>
                         <td>
                           <span style={{
                             fontFamily: 'monospace',
@@ -726,8 +726,8 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {couponAnalytics.all_coupons_status.map((coupon, idx) => (
-                      <tr key={idx}>
+                    {couponAnalytics.all_coupons_status.map((coupon) => (
+                      <tr key={coupon.code}>
                         <td>
                           <span style={{
                             fontFamily: 'monospace',

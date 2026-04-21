@@ -173,7 +173,12 @@ class SQLiteDatabase(DatabaseInterface):
             # Apply sorting
             if sort:
                 for sort_key, sort_dir in reversed(sort):
-                    results.sort(key=lambda x: x.get(sort_key, ""), reverse=(sort_dir == -1))
+                    # Bind sort_key via default arg to avoid late-binding closure
+                    # when the loop iterates over multiple sort keys.
+                    results.sort(
+                        key=lambda x, k=sort_key: x.get(k, ""),
+                        reverse=(sort_dir == -1),
+                    )
             
             return results
     

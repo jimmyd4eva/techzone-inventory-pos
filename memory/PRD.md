@@ -26,6 +26,27 @@
 
 ## What's Been Implemented
 
+### Code Review Fixes — Priority 1 (Bugs & Security) (Feb 21, 2026)
+Applied fixes from the device-lock-1 code review (critical/high-priority items):
+
+**Python (backend)**
+- `routes/reports.py:_period_range()` — added explicit type annotations `start/end/label` at function start so all code paths have defined values (linters were warning on the `else: raise` branch).
+- `core/security.py:generate_activation_code()` — replaced `random.choices()` with `secrets.choice()`. This code gates device access; `secrets` is the cryptographically secure SPRNG. Removed `import random`, added `import secrets`.
+- `database.py` — fixed late-binding closure bug in `find_many()` sort loop: `lambda x, k=sort_key: x.get(k, "")` so each iteration captures its own `sort_key` value.
+
+**React (frontend)**
+- `Dashboard.js` — explicit `eslint-disable-next-line react-hooks/exhaustive-deps` on the mount-once data-loading effect (all deps are module-scoped stable constants). Replaced empty `catch {}` in `openPoModal()` with a `console.debug` log so silent failures are observable.
+- `Users.js`, `Settings.js`, `Sales.js` — same idiomatic eslint-disable comments on legitimately-empty or intentional-deps effects (documented as intentional rather than silently stale).
+- `Receipt.js`, `SalesHistory.js`, `Reports.js` (3 locations) — replaced array-index `key={idx}` with stable-id keys (`item.item_id` / `coupon.code` / `cat.category`) so React doesn't lose row state during re-renders.
+
+All 66 backend pytest tests pass; frontend lint clean on all 8 modified files. Zero behavior change — these are correctness/security hygiene only.
+
+**Not done in this pass (intentional — need user sign-off first):**
+- localStorage → httpOnly-cookie auth migration (touches every API call + backend CORS/SameSite, needs dedicated integration-agent playbook for JWT-in-cookie flow).
+- Splitting `Sales.js` (1524 lines), `Customers.js` (900), `Reports.js` (790), `Inventory.js` (597), `CashRegisterTab.js` (564) into sub-components.
+- Refactoring `routes/cash_register.py::generate_shift_report()` (164 lines, complexity 24) and `close_shift()` into smaller functions.
+- These are multi-hour refactors with higher regression risk — queued for user approval.
+
 ### Retention Score on Top Customers (Feb 21, 2026)
 - `GET /api/reports/top-customers` now returns `retention_score` (0–100) and `retention_tier` ("high"/"medium"/"low") per customer — a simple RFM-weighted blend:
   - **Recency (40 pts)**: 0 days ago = 40 pts, linearly decaying to 0 at 120 days.

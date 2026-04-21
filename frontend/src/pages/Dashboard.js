@@ -61,6 +61,8 @@ const Dashboard = () => {
         if (plain) setBusinessName(plain);
       }).catch(() => {}),
     ]).finally(() => setLoading(false));
+    // Intentional mount-once effect: API, axios, authHeader and setters are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const goCreateCoupon = (customerId, preset) => {
@@ -79,8 +81,9 @@ const Dashboard = () => {
       if (r.data) {
         setPoModal({ supplier, items, directory: r.data });
       }
-    } catch (e) {
-      // silent; modal still works with manual entry
+    } catch (err) {
+      // Non-fatal: supplier lookup failed; modal still works with manual entry.
+      console.debug('Supplier directory lookup failed, falling back to manual entry:', err?.message);
     }
   };
 

@@ -166,7 +166,7 @@ const SalesHistory = () => {
                       <td>
                         <div style={{ maxWidth: '250px' }}>
                           {sale.items.map((item, idx) => (
-                            <div key={idx} style={{ 
+                            <div key={item.item_id ? `${item.item_id}-${idx}` : `${item.item_name}-${idx}`} style={{ 
                               fontSize: '0.85rem', 
                               marginBottom: '4px',
                               padding: '4px 8px',
