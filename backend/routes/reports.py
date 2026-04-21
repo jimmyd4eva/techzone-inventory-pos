@@ -913,3 +913,69 @@ async def slow_moving(
     # Sort: stock_value desc (higher-value dead stock first)
     candidates.sort(key=lambda c: (c["stock_value"], c["days_stale"] or 0), reverse=True)
     return candidates[:limit]
+
+
+@router.get("/reports/coupon-performance")
+async def coupon_performance(
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return per-coupon performance: redemptions, total discount given, revenue, ROI."""
+    if limit < 1 or limit > 200:
+        limit = 20
+
+    # Aggregate completed sales per coupon_code
+    pipeline = [
+        {"$match": {"payment_status": "completed", "coupon_code": {"$ne": None, "$exists": True}}},
+        {"$group": {
+            "_id": "$coupon_code",
+            "redemptions": {"$sum": 1},
+            "total_discount": {"$sum": "$discount"},
+            "total_revenue": {"$sum": "$total"},
+            "total_subtotal": {"$sum": "$subtotal"},
+            "last_used_at": {"$max": "$created_at"},
+        }},
+    ]
+    sale_rows = await db.sales.aggregate(pipeline).to_list(10000)
+    sale_map = {row["_id"]: row for row in sale_rows if row.get("_id")}
+
+    # Fetch all coupons and merge
+    coupons = await db.coupons.find({}, {"_id": 0}).to_list(1000)
+    results = []
+    for cp in coupons:
+        code = cp.get("code")
+        if not code:
+            continue
+        sale_row = sale_map.get(code, {})
+        redemptions = int(sale_row.get("redemptions", 0))
+        total_discount = float(sale_row.get("total_discount", 0))
+        total_revenue = float(sale_row.get("total_revenue", 0))
+        total_subtotal = float(sale_row.get("total_subtotal", 0))
+        # ROI: revenue per $1 of discount given (useful only when discount > 0)
+        roi = round(total_revenue / total_discount, 2) if total_discount > 0 else None
+        avg_order = round(total_revenue / redemptions, 2) if redemptions > 0 else 0
+
+        results.append({
+            "id": cp.get("id"),
+            "code": code,
+            "description": cp.get("description"),
+            "discount_type": cp.get("discount_type"),
+            "discount_value": cp.get("discount_value"),
+            "is_active": cp.get("is_active", True),
+            "customer_id": cp.get("customer_id"),
+            "customer_name": cp.get("customer_name"),
+            "usage_limit": cp.get("usage_limit"),
+            "usage_count": cp.get("usage_count", 0),
+            # Performance metrics
+            "redemptions": redemptions,
+            "total_discount_given": round(total_discount, 2),
+            "total_revenue": round(total_revenue, 2),
+            "total_subtotal": round(total_subtotal, 2),
+            "avg_order_value": avg_order,
+            "roi": roi,
+            "last_used_at": sale_row.get("last_used_at"),
+        })
+
+    # Sort: redemptions desc, then revenue desc (most-impactful first); un-redeemed at the bottom
+    results.sort(key=lambda r: (r["redemptions"], r["total_revenue"]), reverse=True)
+    return results[:limit]

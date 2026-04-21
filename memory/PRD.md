@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Dashboard: Coupon Performance Card (Feb 21, 2026)
+- New `GET /api/reports/coupon-performance` — aggregates completed sales per `coupon_code` (redemptions, total discount given, total revenue, avg order value) and merges with every coupon in the directory. ROI = revenue / discount_given.
+- Dashboard purple-themed card shows all coupons with Code/Description, Type (%/flat), Redemptions, Discount Given, Revenue, Avg Order, ROI, Status.
+- ROI tiered by color (green ≥10×, orange 3-10×, red <3×). Status badges: **Active** (green, redeemed), **Unused** (yellow, 0 redemptions), **Inactive** (gray, disabled).
+- Sorted by redemptions → revenue so high-impact coupons float to the top; unused coupons stay visible at the bottom (discoverability).
+
 ### Dashboard: Slow-Moving Inventory Card (Feb 21, 2026)
 - New `GET /api/reports/slow-moving-inventory?days=90&limit=15` — MongoDB aggregation on completed sales for last-sale-per-item, joined with `quantity > 0` inventory; includes items never sold whose `created_at` is older than the window.
 - Returns: `id, name, sku, category, supplier, quantity, price, stock_value, last_sale_at, days_stale, total_sold, ever_sold`. Sorted by `stock_value` desc so high-capital dead stock floats to the top.
