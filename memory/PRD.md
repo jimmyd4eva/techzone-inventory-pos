@@ -13,6 +13,9 @@
 10. Show coupon used in sales history
 11. Add customer points system
 12. **Add per-device activation code system** (NEW - Feb 2026)
+13. **Cash Register with shift tracking + PDF + email reports** (Feb 2026)
+14. **Zero-install portable Windows build** (Feb 2026)
+15. **Rich text formatting for Business Info (Name / Address / Phone) + Receipt** (Feb 21, 2026)
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -21,7 +24,14 @@
 
 ## What's Been Implemented
 
-### Device Activation System (NEW - February 2026)
+### Rich Text Business Info & Receipt (NEW - Feb 21, 2026)
+- `SimpleRichTextEditor` component (`/app/frontend/src/components/SimpleRichTextEditor.js`) with Bold, Italic, Underline, alignment, font-size, and color toolbar.
+- Settings page business_name / business_address / business_phone fields now use the editor and persist HTML strings via `PUT /api/settings`.
+- `Receipt.js` renders address/phone as sanitized HTML (DOMPurify) and layers the TECHZONE blue/red split on top of the formatted business_name (preserves bold/italic/underline/font-size).
+- Backend `strip_html()` helper flattens HTML to plain text for reportlab PDF generation (shift close + shift export), preventing Paragraph parse errors.
+- Tests: 4/4 backend pytest in `/app/backend/tests/test_rich_business_info.py`; UI flows verified by testing agent (iteration_13).
+
+### Device Activation System (February 2026)
 - **Per-device activation** - Each device requires a unique activation code
 - **12-hour code expiry** - Activation codes are valid for 12 hours only
 - **One-time use codes** - Each code can only activate one device
