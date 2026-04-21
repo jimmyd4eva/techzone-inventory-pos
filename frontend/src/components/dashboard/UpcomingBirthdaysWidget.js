@@ -1,8 +1,45 @@
 import React from 'react';
-import { Cake, Check } from 'lucide-react';
+import { Cake, Check, MessageCircle, Phone } from 'lucide-react';
 
-export const UpcomingBirthdaysWidget = ({ upcomingBirthdays }) => {
+const normalizeToE164 = (raw) => {
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  if (raw.trim().startsWith('+')) return '+' + digits;
+  if (digits.length === 10 && digits.startsWith('876')) return '+1' + digits;
+  if (digits.length === 7) return '+1876' + digits;
+  if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+  if (digits.length === 10) return '+1' + digits;
+  return '+' + digits;
+};
+
+const buildBirthdayMessage = (firstName, daysUntil, businessName = 'TECHZONE') => {
+  const name = (firstName || 'there').trim();
+  if (daysUntil === 0) {
+    return `Happy Birthday, ${name}! 🎉 Everyone at ${businessName} is wishing you a fantastic day. Drop by anytime — we've got a little something for you.`;
+  }
+  if (daysUntil === 1) {
+    return `Hi ${name}, just a little note from ${businessName} — hope you have a wonderful birthday tomorrow! 🎂`;
+  }
+  return `Hi ${name}, the ${businessName} team spotted your birthday coming up in ${daysUntil} days and we wanted to wish you an early happy birthday! 🎉`;
+};
+
+export const UpcomingBirthdaysWidget = ({ upcomingBirthdays, businessName }) => {
   if (!upcomingBirthdays || upcomingBirthdays.length === 0) return null;
+
+  const openWhatsApp = (c) => {
+    const phone = normalizeToE164(c.phone).replace(/\D/g, '');
+    if (!phone) return;
+    const text = encodeURIComponent(buildBirthdayMessage(c.name, c.days_until, businessName));
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  };
+
+  const openSMS = (c) => {
+    const phone = normalizeToE164(c.phone);
+    if (!phone) return;
+    const body = encodeURIComponent(buildBirthdayMessage(c.name, c.days_until, businessName));
+    window.open(`sms:${phone}?&body=${body}`, '_blank');
+  };
 
   return (
     <div
@@ -38,7 +75,7 @@ export const UpcomingBirthdaysWidget = ({ upcomingBirthdays }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#fff', borderBottom: '1px solid #fbcfe8' }}>
-              {['Customer', 'Contact', 'Birthday', 'When', 'Total Spent', 'Coupon'].map((h) => (
+              {['Customer', 'Contact', 'Birthday', 'When', 'Total Spent', 'Coupon', 'Reach Out'].map((h) => (
                 <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#9d174d', textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
@@ -90,6 +127,40 @@ export const UpcomingBirthdaysWidget = ({ upcomingBirthdays }) => {
                         Pending
                       </span>
                     )}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        data-testid={`upcoming-birthday-whatsapp-${c.customer_id}`}
+                        onClick={() => openWhatsApp(c)}
+                        disabled={!c.phone}
+                        title={c.phone ? 'Open WhatsApp with a pre-filled birthday note' : 'No phone number on file'}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          padding: '4px 8px', background: '#22c55e', color: '#fff',
+                          border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                          cursor: c.phone ? 'pointer' : 'not-allowed', opacity: c.phone ? 1 : 0.4,
+                        }}
+                      >
+                        <MessageCircle size={11} /> WhatsApp
+                      </button>
+                      <button
+                        type="button"
+                        data-testid={`upcoming-birthday-sms-${c.customer_id}`}
+                        onClick={() => openSMS(c)}
+                        disabled={!c.phone}
+                        title={c.phone ? 'Open SMS with a pre-filled birthday note' : 'No phone number on file'}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          padding: '4px 8px', background: '#3b82f6', color: '#fff',
+                          border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                          cursor: c.phone ? 'pointer' : 'not-allowed', opacity: c.phone ? 1 : 0.4,
+                        }}
+                      >
+                        <Phone size={11} /> SMS
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

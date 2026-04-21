@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [couponPerf, setCouponPerf] = useState([]);
   const [staffPerf, setStaffPerf] = useState([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
+  const [businessName, setBusinessName] = useState('TECHZONE');
   const [loading, setLoading] = useState(true);
   const [poModal, setPoModal] = useState(null);
 
@@ -52,6 +53,12 @@ const Dashboard = () => {
       safe('/reports/coupon-performance?limit=20', setCouponPerf),
       safe('/reports/staff-performance?days=30', setStaffPerf, { silent: true }),
       safe('/reports/upcoming-birthdays?days=7', setUpcomingBirthdays),
+      axios.get(`${API}/settings/public`).then((r) => {
+        const raw = r.data?.business_name || '';
+        // business_name may contain rich-text HTML — strip to plain text for message bodies
+        const plain = raw.replace(/<[^>]+>/g, '').trim();
+        if (plain) setBusinessName(plain);
+      }).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -93,7 +100,7 @@ const Dashboard = () => {
 
       <StatsGrid stats={stats} />
       <StaffPerformanceWidget staffPerf={staffPerf} />
-      <UpcomingBirthdaysWidget upcomingBirthdays={upcomingBirthdays} />
+      <UpcomingBirthdaysWidget upcomingBirthdays={upcomingBirthdays} businessName={businessName} />
       <TopCustomersWidget topCustomers={topCustomers} onCreateCoupon={goCreateCoupon} />
       <AtRiskCustomersWidget lostCustomers={lostCustomers} onCreateCoupon={goCreateCoupon} />
       <CouponPerformanceWidget couponPerf={couponPerf} />

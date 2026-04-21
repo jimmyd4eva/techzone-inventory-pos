@@ -26,6 +26,11 @@
 
 ## What's Been Implemented
 
+### Birthday WhatsApp/SMS Reach-Out Buttons (Feb 21, 2026)
+- `UpcomingBirthdaysWidget` now renders two per-row action buttons: green WhatsApp (`wa.me/`) and blue SMS (`sms:`), each opening the native device/browser handler with a pre-filled personal birthday message (`Happy Birthday today!` / `...tomorrow!` / `...in X days!` variants) using the live business name pulled from `/api/settings/public` (HTML-stripped).
+- Phone normalization reuses the existing E.164 helper pattern; buttons are disabled (40% opacity, `not-allowed` cursor) when the customer has no phone on file.
+- Zero backend changes — pure frontend enhancement on top of the existing `upcoming-birthdays` endpoint. Lint clean.
+
 ### Upcoming Birthdays Dashboard Widget (Feb 21, 2026)
 - New `GET /api/reports/upcoming-birthdays?days=7` endpoint: returns customers whose birthday falls in the next N days (inclusive of today), with `days_until`, `birthday_date`, and a `coupon_already_sent` flag looked up against the `birthday_coupons` dedupe collection. `days` is clamped to [1, 60]; year-wrap handled by computing the next N calendar days and matching MM-DD.
 - New `UpcomingBirthdaysWidget` component wired into the refactored Dashboard container (pink Cake card, directly under Staff Performance). Displays `Today 🎉 / Tomorrow / In X days` relative labels, contact info, lifetime spend, and a green **Sent** badge when the auto-coupon has already been issued for that customer this year.
