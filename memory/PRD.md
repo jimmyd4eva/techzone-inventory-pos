@@ -16,6 +16,7 @@
 13. **Cash Register with shift tracking + PDF + email reports** (Feb 2026)
 14. **Zero-install portable Windows build** (Feb 2026)
 15. **Rich text formatting for Business Info (Name / Address / Phone) + Receipt** (Feb 21, 2026)
+16. **P1 refactor: backend/server.py split into core/routes/services/models.py; Settings.js split into per-tab components** (Feb 21, 2026)
 
 ## Architecture
 - **Backend**: FastAPI (Python)
@@ -24,7 +25,19 @@
 
 ## What's Been Implemented
 
-### Rich Text Business Info & Receipt (NEW - Feb 21, 2026)
+### P1 Codebase Refactor (NEW - Feb 21, 2026)
+- **Backend** `server.py` went from **3209 → 110 lines** (97% reduction):
+  - `/app/backend/core/` → `config.py` (env + DB client + integration init), `security.py` (bcrypt, JWT, `get_current_user`, `check_not_readonly`, `generate_activation_code`, `strip_html`).
+  - `/app/backend/models.py` → all Pydantic models (User, Customer, Inventory, Repair, Sale, Settings, Coupon, Activation, CashRegister).
+  - `/app/backend/services/email_service.py` → `send_activation_email`, `send_shift_report_email`.
+  - `/app/backend/routes/` → one `APIRouter` per domain: `auth`, `customers`, `inventory`, `repairs`, `settings`, `activation`, `coupons`, `sales`, `admin`, `payments`, `reports`, `cash_register`.
+  - `server.py` is now a thin entry point that mounts all routers and hosts the SPA fallback for the Windows portable build.
+- **Frontend** `Settings.js` went from **1846 → 543 lines** (70% reduction):
+  - `/app/frontend/src/pages/settings/` → `BusinessInfoTab`, `CashRegisterTab`, `PricingTab`, `TaxTab`, `PointsSystemTab`, `DevicesTab`.
+  - `Settings.js` retains shared state, API calls, tab switcher, message banner, and Save button.
+- **Zero behavior change.** All `/api/...` paths unchanged, all `data-testid` preserved. Regression: **44/44 pytest pass** (25 new + 19 pre-existing), **100% frontend** via testing agent iteration_14.
+
+### Rich Text Business Info & Receipt (Feb 21, 2026)
 - `SimpleRichTextEditor` component (`/app/frontend/src/components/SimpleRichTextEditor.js`) with Bold, Italic, Underline, alignment, font-size, and color toolbar.
 - Settings page business_name / business_address / business_phone fields now use the editor and persist HTML strings via `PUT /api/settings`.
 - `Receipt.js` renders address/phone as sanitized HTML (DOMPurify) and layers the TECHZONE blue/red split on top of the formatted business_name (preserves bold/italic/underline/font-size).
