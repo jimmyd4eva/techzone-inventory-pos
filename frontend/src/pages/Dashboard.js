@@ -9,6 +9,7 @@ import { CouponPerformanceWidget } from '../components/dashboard/CouponPerforman
 import { SlowMovingWidget } from '../components/dashboard/SlowMovingWidget';
 import { LowStockWidget } from '../components/dashboard/LowStockWidget';
 import { PurchaseOrderModal } from '../components/dashboard/PurchaseOrderModal';
+import { UpcomingBirthdaysWidget } from '../components/dashboard/UpcomingBirthdaysWidget';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
