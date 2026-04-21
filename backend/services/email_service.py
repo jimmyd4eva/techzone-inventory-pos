@@ -196,3 +196,94 @@ def send_shift_report_email(to_email: str, shift_data: dict, pdf_bytes: bytes, b
     except Exception as e:
         logger.error(f"Failed to send shift report email: {e}")
         return False
+
+
+def send_coupon_email(to_email: str, customer_name: str, coupon: dict, business_name: str = "TECHZONE") -> bool:
+    """Email a personalized coupon code to a customer."""
+    sender_email = os.environ.get("EMAIL_ADDRESS", "")
+    sender_password = os.environ.get("EMAIL_PASSWORD", "")
+
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set; cannot send coupon email")
+        return False
+
+    code = coupon.get("code", "")
+    description = coupon.get("description", "Your exclusive discount")
+    discount_type = coupon.get("discount_type", "percentage")
+    discount_value = coupon.get("discount_value", 0)
+    min_purchase = coupon.get("min_purchase", 0)
+    valid_until = coupon.get("valid_until")
+
+    discount_display = (
+        f"{discount_value:.0f}% OFF"
+        if discount_type == "percentage"
+        else f"${discount_value:.2f} OFF"
+    )
+    min_purchase_html = (
+        f"<p style='margin:4px 0;color:#6b7280;font-size:13px;'>Minimum purchase: ${min_purchase:.2f}</p>"
+        if min_purchase and min_purchase > 0
+        else ""
+    )
+    expiry_html = ""
+    if valid_until:
+        try:
+            dt = datetime.fromisoformat(str(valid_until).replace("Z", "+00:00"))
+            expiry_html = (
+                f"<p style='margin:4px 0;color:#6b7280;font-size:13px;'>"
+                f"Valid until {dt.strftime('%B %d, %Y')}</p>"
+            )
+        except Exception:
+            pass
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"A personalized coupon just for you — {code}"
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    html = f"""
+    <html>
+    <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9fafb;">
+      <div style="background:linear-gradient(135deg,#8b5cf6 0%,#ec4899 100%);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:26px;">{business_name}</h1>
+        <p style="color:rgba(255,255,255,0.9);margin:8px 0 0 0;font-size:14px;">A gift for you, {customer_name}!</p>
+      </div>
+      <div style="background:#fff;padding:32px;border-radius:0 0 12px 12px;text-align:center;">
+        <p style="color:#374151;font-size:15px;margin:0 0 8px 0;">{description}</p>
+        <div style="margin:24px 0;padding:20px;background:#faf5ff;border:2px dashed #8b5cf6;border-radius:10px;">
+          <div style="color:#7c3aed;font-size:32px;font-weight:700;letter-spacing:2px;font-family:monospace;">{code}</div>
+          <div style="color:#111827;font-size:20px;font-weight:700;margin-top:6px;">{discount_display}</div>
+        </div>
+        {min_purchase_html}
+        {expiry_html}
+        <p style="color:#374151;font-size:14px;margin-top:20px;">
+          Show this email or mention the code at checkout — it's reserved just for you.
+        </p>
+      </div>
+      <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:20px;">
+        Sent from {business_name} POS.
+      </p>
+    </body>
+    </html>
+    """
+    text = (
+        f"Hi {customer_name},\n\n"
+        f"Here is your personalized coupon from {business_name}:\n\n"
+        f"  CODE: {code}\n"
+        f"  {discount_display}\n"
+        f"  {description}\n\n"
+        f"Show this email or mention the code at checkout.\n"
+    )
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Coupon email sent to {to_email} (code={code})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send coupon email: {e}")
+        return False

@@ -3,7 +3,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from core.config import db, logger
-from core.security import get_current_user, check_not_readonly
+from core.security import get_current_user, check_not_readonly, strip_html
+from services.email_service import send_coupon_email
 from models import Coupon, CouponCreate, CouponUpdate
 
 router = APIRouter(tags=["Coupons"])
@@ -149,3 +150,40 @@ async def increment_coupon_usage(coupon_id: str, current_user: dict = Depends(ge
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Coupon not found")
     return {"message": "Usage count incremented"}
+
+
+@router.post("/coupons/{coupon_id}/email-to-customer")
+async def email_coupon_to_customer(coupon_id: str, current_user: dict = Depends(get_current_user)):
+    """Email a personalized coupon to its assigned customer's email on file."""
+    if current_user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can send coupon emails")
+
+    coupon = await db.coupons.find_one({"id": coupon_id}, {"_id": 0})
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+
+    customer_id = coupon.get("customer_id")
+    if not customer_id:
+        raise HTTPException(
+            status_code=400,
+            detail="This coupon is not personalized — emailing requires a linked customer.",
+        )
+
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Linked customer not found")
+
+    email = (customer.get("email") or "").strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Customer has no email on file")
+
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
+    business_name = strip_html(settings.get("business_name", "TECHZONE"))
+
+    sent = send_coupon_email(email, customer.get("name", "Valued Customer"), coupon, business_name)
+    if not sent:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send email. Check SMTP settings / server logs.",
+        )
+    return {"sent": True, "recipient": email}

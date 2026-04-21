@@ -199,3 +199,86 @@ class TestAutoSummaryReports:
                 "auto_summary_monthly_enabled": False,
             },
         )
+
+
+# ---------------------------------------------------------------------------
+# P2B Extension — Email coupon to customer
+# ---------------------------------------------------------------------------
+class TestEmailCouponToCustomer:
+    PERS_CODE = "EMAIL_CPN_TEST_PERS"
+    NON_PERS_CODE = "EMAIL_CPN_TEST_NONP"
+
+    def _cleanup(self, token):
+        r = httpx.get(f"{API}/coupons", headers={"Authorization": f"Bearer {token}"})
+        for c in r.json():
+            if c.get("code") in (self.PERS_CODE, self.NON_PERS_CODE):
+                httpx.delete(
+                    f"{API}/coupons/{c['id']}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+    def test_01_setup(self, admin_token):
+        self._cleanup(admin_token)
+
+    def test_02_non_personalized_returns_400(self, admin_token):
+        r = httpx.post(
+            f"{API}/coupons",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "code": self.NON_PERS_CODE,
+                "discount_type": "percentage",
+                "discount_value": 5,
+                "is_active": True,
+            },
+        )
+        assert r.status_code == 200
+        coupon_id = r.json()["id"]
+        r2 = httpx.post(
+            f"{API}/coupons/{coupon_id}/email-to-customer",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert r2.status_code == 400
+        assert "not personalized" in r2.json()["detail"].lower()
+
+    def test_03_personalized_without_email_returns_400(self, admin_token):
+        # Create a customer with no email
+        cust = httpx.post(
+            f"{API}/customers",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"name": "NoEmail Test", "phone": "(876) 555-9999"},
+        )
+        assert cust.status_code == 200
+        cust_id = cust.json()["id"]
+        try:
+            r = httpx.post(
+                f"{API}/coupons",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={
+                    "code": "NOEMAILCPN_TEST",
+                    "discount_type": "percentage",
+                    "discount_value": 10,
+                    "is_active": True,
+                    "customer_id": cust_id,
+                    "customer_name": "NoEmail Test",
+                },
+            )
+            assert r.status_code == 200
+            coupon_id = r.json()["id"]
+            r2 = httpx.post(
+                f"{API}/coupons/{coupon_id}/email-to-customer",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+            assert r2.status_code == 400
+            assert "no email" in r2.json()["detail"].lower()
+            httpx.delete(
+                f"{API}/coupons/{coupon_id}",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+        finally:
+            httpx.delete(
+                f"{API}/customers/{cust_id}",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+
+    def test_04_cleanup(self, admin_token):
+        self._cleanup(admin_token)

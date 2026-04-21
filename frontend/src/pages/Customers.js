@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Edit2, Trash2, Eye, Ticket } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Ticket, MessageSquare, Mail, Send } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -26,6 +26,8 @@ const Customers = () => {
   // Personalized coupon modal state
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [couponForCustomer, setCouponForCustomer] = useState(null);
+  const [createdCoupon, setCreatedCoupon] = useState(null);
+  const [emailingCoupon, setEmailingCoupon] = useState(false);
   const [couponForm, setCouponForm] = useState({
     code: '',
     description: '',
@@ -37,8 +39,32 @@ const Customers = () => {
   const [couponMsg, setCouponMsg] = useState({ type: '', text: '' });
   const [couponSaving, setCouponSaving] = useState(false);
 
+  // Normalize local-format phone numbers (e.g., "(876) 843-2416") to E.164.
+  // Defaults to Jamaica (+1876) if the number has exactly 7 digits (local),
+  // otherwise uses the digits as-is with a leading '+'.
+  const normalizeToE164 = (raw) => {
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    if (raw.trim().startsWith('+')) return '+' + digits;
+    if (digits.length === 10 && digits.startsWith('876')) return '+1' + digits;
+    if (digits.length === 7) return '+1876' + digits;
+    if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+    if (digits.length === 10) return '+1' + digits;
+    return '+' + digits;
+  };
+
+  const buildShareMessage = (customer, coupon) => {
+    const disc = coupon.discount_type === 'percentage'
+      ? `${coupon.discount_value}% OFF`
+      : `$${coupon.discount_value.toFixed(2)} OFF`;
+    const minP = coupon.min_purchase > 0 ? ` (min purchase $${coupon.min_purchase.toFixed(2)})` : '';
+    return `Hi ${customer.name}! Here's your personalized coupon: ${coupon.code} — ${disc}${minP}. Show this at checkout. Thank you!`;
+  };
+
   const openCouponModal = (customer) => {
     setCouponForCustomer(customer);
+    setCreatedCoupon(null);
     const suggestedCode = `${(customer.name || 'VIP').split(' ')[0].toUpperCase().slice(0, 6)}${Math.floor(Math.random() * 900 + 100)}`;
     setCouponForm({
       code: suggestedCode,
@@ -64,7 +90,7 @@ const Customers = () => {
     setCouponSaving(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/coupons`, {
+      const response = await axios.post(`${API}/coupons`, {
         code: couponForm.code.toUpperCase().trim(),
         description: couponForm.description,
         discount_type: couponForm.discount_type,
@@ -75,12 +101,57 @@ const Customers = () => {
         customer_id: couponForCustomer.id,
         customer_name: couponForCustomer.name,
       }, { headers: { Authorization: `Bearer ${token}` } });
-      setCouponMsg({ type: 'success', text: `Coupon ${couponForm.code.toUpperCase()} created for ${couponForCustomer.name}` });
-      setTimeout(() => setShowCouponModal(false), 1400);
+      setCreatedCoupon(response.data);
+      setCouponMsg({ type: 'success', text: `Coupon ${response.data.code} created. Share it below.` });
     } catch (error) {
       setCouponMsg({ type: 'error', text: error.response?.data?.detail || 'Failed to create coupon' });
     } finally {
       setCouponSaving(false);
+    }
+  };
+
+  const shareViaSMS = () => {
+    if (!couponForCustomer || !createdCoupon) return;
+    const phone = normalizeToE164(couponForCustomer.phone);
+    if (!phone) {
+      setCouponMsg({ type: 'error', text: 'Customer has no phone number on file' });
+      return;
+    }
+    const body = encodeURIComponent(buildShareMessage(couponForCustomer, createdCoupon));
+    // sms: URI with ?body= works on iOS, Android, and most desktops (falls back gracefully)
+    window.open(`sms:${phone}?&body=${body}`, '_blank');
+  };
+
+  const shareViaWhatsApp = () => {
+    if (!couponForCustomer || !createdCoupon) return;
+    const phone = normalizeToE164(couponForCustomer.phone).replace(/\D/g, '');
+    if (!phone) {
+      setCouponMsg({ type: 'error', text: 'Customer has no phone number on file' });
+      return;
+    }
+    const text = encodeURIComponent(buildShareMessage(couponForCustomer, createdCoupon));
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  };
+
+  const emailCouponToCustomer = async () => {
+    if (!createdCoupon) return;
+    if (!couponForCustomer?.email) {
+      setCouponMsg({ type: 'error', text: 'Customer has no email on file' });
+      return;
+    }
+    setEmailingCoupon(true);
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.post(
+        `${API}/coupons/${createdCoupon.id}/email-to-customer`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCouponMsg({ type: 'success', text: `Emailed coupon to ${r.data.recipient}` });
+    } catch (error) {
+      setCouponMsg({ type: 'error', text: error.response?.data?.detail || 'Failed to send email' });
+    } finally {
+      setEmailingCoupon(false);
     }
   };
 
@@ -696,26 +767,100 @@ const Customers = () => {
                   type="button"
                   className="btn-secondary"
                   onClick={() => setShowCouponModal(false)}
-                >Cancel</button>
-                <button
-                  type="button"
-                  data-testid="submit-customer-coupon-btn"
-                  onClick={submitCustomerCoupon}
-                  disabled={couponSaving}
+                >{createdCoupon ? 'Done' : 'Cancel'}</button>
+                {!createdCoupon && (
+                  <button
+                    type="button"
+                    data-testid="submit-customer-coupon-btn"
+                    onClick={submitCustomerCoupon}
+                    disabled={couponSaving}
+                    style={{
+                      padding: '10px 18px',
+                      backgroundColor: '#7c3aed',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: couponSaving ? 'not-allowed' : 'pointer',
+                      opacity: couponSaving ? 0.7 : 1,
+                    }}
+                  >
+                    {couponSaving ? 'Creating...' : 'Create Coupon'}
+                  </button>
+                )}
+              </div>
+
+              {createdCoupon && (
+                <div
+                  data-testid="share-coupon-panel"
                   style={{
-                    padding: '10px 18px',
-                    backgroundColor: '#7c3aed',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: '600',
-                    cursor: couponSaving ? 'not-allowed' : 'pointer',
-                    opacity: couponSaving ? 0.7 : 1,
+                    marginTop: '16px',
+                    padding: '16px',
+                    background: '#faf5ff',
+                    border: '1px solid #ddd6fe',
+                    borderRadius: '10px',
                   }}
                 >
-                  {couponSaving ? 'Creating...' : 'Create Coupon'}
-                </button>
-              </div>
+                  <p style={{ fontSize: '13px', color: '#6b21a8', margin: '0 0 12px 0', fontWeight: '600' }}>
+                    Share this coupon with {couponForCustomer?.name}:
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      data-testid="share-sms-btn"
+                      onClick={shareViaSMS}
+                      disabled={!couponForCustomer?.phone}
+                      title={couponForCustomer?.phone ? 'Open SMS app' : 'No phone on file'}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 14px', backgroundColor: '#3b82f6', color: '#fff',
+                        border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                        cursor: couponForCustomer?.phone ? 'pointer' : 'not-allowed',
+                        opacity: couponForCustomer?.phone ? 1 : 0.5,
+                      }}
+                    >
+                      <MessageSquare size={14} /> SMS
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="share-whatsapp-btn"
+                      onClick={shareViaWhatsApp}
+                      disabled={!couponForCustomer?.phone}
+                      title={couponForCustomer?.phone ? 'Open WhatsApp' : 'No phone on file'}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 14px', backgroundColor: '#22c55e', color: '#fff',
+                        border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                        cursor: couponForCustomer?.phone ? 'pointer' : 'not-allowed',
+                        opacity: couponForCustomer?.phone ? 1 : 0.5,
+                      }}
+                    >
+                      <Send size={14} /> WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="share-email-btn"
+                      onClick={emailCouponToCustomer}
+                      disabled={emailingCoupon || !couponForCustomer?.email}
+                      title={couponForCustomer?.email ? `Email to ${couponForCustomer.email}` : 'No email on file'}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 14px', backgroundColor: '#8b5cf6', color: '#fff',
+                        border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                        cursor: (emailingCoupon || !couponForCustomer?.email) ? 'not-allowed' : 'pointer',
+                        opacity: (emailingCoupon || !couponForCustomer?.email) ? 0.5 : 1,
+                      }}
+                    >
+                      <Mail size={14} /> {emailingCoupon ? 'Sending...' : 'Email'}
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '10px', marginBottom: 0 }}>
+                    SMS and WhatsApp open the chat app with the message pre-filled — you tap Send.
+                    {!couponForCustomer?.email && ' · Email is disabled (no email on file).'}
+                    {!couponForCustomer?.phone && ' · SMS/WhatsApp are disabled (no phone on file).'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

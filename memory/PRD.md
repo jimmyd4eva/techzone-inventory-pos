@@ -26,7 +26,16 @@
 
 ## What's Been Implemented
 
-### P2 Features (NEW - Feb 21, 2026)
+### Coupon Sharing (SMS / WhatsApp / Email) — Feb 21, 2026
+- Hybrid share panel after creating a personalized coupon from the Customer Detail page:
+  - **SMS button** — opens native messaging app via `sms:+E164?body=...` with the coupon text pre-filled.
+  - **WhatsApp button** — opens `https://wa.me/<E164>?text=...` in a new tab.
+  - **Email button** — calls new `POST /api/coupons/{id}/email-to-customer` backend endpoint that sends a branded HTML email via existing Gmail SMTP.
+- Phone normalization: auto-converts Jamaican local numbers (e.g., `(876) 843-2416`) to E.164 (`+18768432416`). Handles 7/10/11-digit local and international formats.
+- No Twilio or paid SMS API required — `sms:` and `wa.me/` URL schemes work natively on every device.
+- 4 new pytest cases in `test_p2_features.py::TestEmailCouponToCustomer`. Total P2 suite: **16/16 pass**.
+
+### P2 Features (Feb 21, 2026)
 - **Auto-email weekly & monthly sales + tax summary PDFs**
   - New service `/app/backend/services/summary_service.py` builds a combined revenue/tax/daily-breakdown PDF.
   - New service `/app/backend/services/scheduler.py` runs an hourly background asyncio loop and emails the report when due (previous Mon–Sun for weekly; previous calendar month for monthly).
