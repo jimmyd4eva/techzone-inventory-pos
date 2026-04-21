@@ -150,6 +150,35 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     }
                 }
             )
+
+            # Send loyalty points email if enabled + customer has email + they earned points
+            if (
+                settings.get("loyalty_emails_enabled")
+                and customer.get("email")
+                and points_earned > 0
+            ):
+                new_balance = int(customer.get("points_balance", 0)) + int(points_earned) - int(points_used)
+                # Milestone detection: crossed 100 / 500 / 1000 with this sale
+                prev_balance = int(customer.get("points_balance", 0))
+                milestone = None
+                for m in (100, 500, 1000):
+                    if prev_balance < m <= new_balance:
+                        milestone = m  # take the highest crossed
+                try:
+                    from core.security import strip_html as _strip
+                    from services.email_service import send_loyalty_points_email
+                    business_name = _strip(settings.get("business_name", "TECHZONE"))
+                    send_loyalty_points_email(
+                        to_email=customer["email"],
+                        customer_name=customer.get("name", "Valued Customer"),
+                        points_earned=int(points_earned),
+                        points_balance=new_balance,
+                        sale_total=float(total),
+                        business_name=business_name,
+                        milestone=milestone,
+                    )
+                except Exception as _e:
+                    logger.warning(f"Loyalty email failed (non-fatal): {_e}")
         
         # Record cash sale in cash register if shift is open
         if sale_data.payment_method == "cash":

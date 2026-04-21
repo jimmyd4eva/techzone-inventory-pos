@@ -34,7 +34,8 @@ const Settings = () => {
     shift_report_email_enabled: false,
     shift_report_email: '',
     auto_summary_weekly_enabled: false,
-    auto_summary_monthly_enabled: false
+    auto_summary_monthly_enabled: false,
+    loyalty_emails_enabled: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -265,7 +266,8 @@ const Settings = () => {
         shift_report_email_enabled: response.data.shift_report_email_enabled === true,
         shift_report_email: response.data.shift_report_email || '',
         auto_summary_weekly_enabled: response.data.auto_summary_weekly_enabled === true,
-        auto_summary_monthly_enabled: response.data.auto_summary_monthly_enabled === true
+        auto_summary_monthly_enabled: response.data.auto_summary_monthly_enabled === true,
+        loyalty_emails_enabled: response.data.loyalty_emails_enabled === true
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -337,7 +339,8 @@ const Settings = () => {
         shift_report_email_enabled: settings.shift_report_email_enabled,
         shift_report_email: settings.shift_report_email || null,
         auto_summary_weekly_enabled: settings.auto_summary_weekly_enabled,
-        auto_summary_monthly_enabled: settings.auto_summary_monthly_enabled
+        auto_summary_monthly_enabled: settings.auto_summary_monthly_enabled,
+        loyalty_emails_enabled: settings.loyalty_emails_enabled
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {

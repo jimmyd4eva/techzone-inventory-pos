@@ -89,6 +89,26 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
         </div>
       </div>
 
+      <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+          Loyalty Email Notifications
+        </h3>
+        <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+          When enabled, customers with an email on file will automatically receive a branded email after each sale showing the points they earned. Customers crossing 100 / 500 / 1000 points also get a milestone celebration email.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Auto-Email Points Summary
+          </span>
+          <Switch
+            data-testid="loyalty-emails-toggle"
+            checked={settings.loyalty_emails_enabled}
+            onCheckedChange={(checked) => setSettings({ ...settings, loyalty_emails_enabled: checked })}
+            className="data-[state=checked]:bg-violet-500"
+          />
+        </div>
+      </div>
+
       <div className="card" style={{ padding: '24px', marginBottom: '24px', backgroundColor: '#faf5ff' }}>
         <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#7c3aed', marginBottom: '12px' }}>
           Points System Preview

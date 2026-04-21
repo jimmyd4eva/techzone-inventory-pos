@@ -390,3 +390,100 @@ def send_purchase_order_email(to_email: str, supplier_name: str, items: list, bu
     except Exception as e:
         logger.error(f"Failed to send PO email: {e}")
         return False
+
+
+def send_loyalty_points_email(
+    to_email: str,
+    customer_name: str,
+    points_earned: int,
+    points_balance: int,
+    sale_total: float,
+    business_name: str = "TECHZONE",
+    milestone: int = None,
+) -> bool:
+    """Email the customer after a sale: points earned + optional milestone celebration."""
+    sender_email = os.environ.get("EMAIL_ADDRESS", "")
+    sender_password = os.environ.get("EMAIL_PASSWORD", "")
+
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set; cannot send loyalty email")
+        return False
+
+    subject = (
+        f"🎉 Milestone! You've reached {milestone} points at {business_name}"
+        if milestone
+        else f"Thanks for your purchase — you earned {points_earned} points"
+    )
+
+    milestone_html = (
+        f"""
+        <div style="margin:20px 0;padding:18px;background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);
+                    border-radius:10px;border:2px dashed #d97706;text-align:center;">
+          <div style="font-size:32px;">🎉</div>
+          <div style="font-size:20px;font-weight:700;color:#92400e;margin-top:4px;">
+            Milestone unlocked: {milestone} points!
+          </div>
+          <div style="font-size:13px;color:#78350f;margin-top:6px;">
+            You're one of our most valued customers. Keep it up!
+          </div>
+        </div>
+        """
+        if milestone
+        else ""
+    )
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    html = f"""
+    <html>
+    <body style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f9fafb;">
+      <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6366f1 100%);padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:24px;">{business_name}</h1>
+        <p style="color:rgba(255,255,255,0.9);margin:6px 0 0 0;">Thanks for shopping with us, {customer_name}!</p>
+      </div>
+      <div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;">
+        {milestone_html}
+        <p style="color:#374151;font-size:15px;margin:0 0 12px 0;">
+          Your purchase of <strong>${sale_total:.2f}</strong> just earned you
+          <strong style="color:#7c3aed;">{points_earned} points</strong>.
+        </p>
+        <div style="padding:16px;background:#faf5ff;border:1px solid #ede9fe;border-radius:8px;text-align:center;">
+          <div style="font-size:13px;color:#6b7280;">Your current balance</div>
+          <div style="font-size:28px;font-weight:700;color:#7c3aed;">{points_balance} points</div>
+        </div>
+        <p style="color:#6b7280;font-size:13px;margin-top:16px;">
+          Points can be redeemed for discounts on your next visit.
+        </p>
+      </div>
+      <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:16px;">
+        You received this because you're part of our loyalty program at {business_name}.
+      </p>
+    </body>
+    </html>
+    """
+    text = (
+        f"Hi {customer_name},\n\n"
+        f"Thanks for your purchase of ${sale_total:.2f} at {business_name}.\n"
+        f"You earned {points_earned} points. Your current balance is {points_balance} points.\n"
+    )
+    if milestone:
+        text += f"\n🎉 Milestone: you've reached {milestone} points!\n"
+    text += "\nPoints can be redeemed for discounts on your next visit.\n"
+
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Loyalty email sent to {to_email} (+{points_earned} pts, balance {points_balance}, milestone={milestone})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send loyalty email: {e}")
+        return False

@@ -207,6 +207,8 @@ class Settings(BaseModel):
     auto_summary_monthly_enabled: bool = False
     auto_summary_last_weekly_sent: Optional[str] = None  # ISO timestamp
     auto_summary_last_monthly_sent: Optional[str] = None  # ISO timestamp
+    # Loyalty email notifications
+    loyalty_emails_enabled: bool = False  # Auto-email customers after sale with points earned
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -232,6 +234,7 @@ class SettingsUpdate(BaseModel):
     shift_report_email: Optional[str] = None
     auto_summary_weekly_enabled: Optional[bool] = None
     auto_summary_monthly_enabled: Optional[bool] = None
+    loyalty_emails_enabled: Optional[bool] = None
 
 # ============ COUPON MODELS ============
 

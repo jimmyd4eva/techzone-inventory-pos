@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Loyalty Email Notifications (Feb 21, 2026)
+- New Settings toggle `loyalty_emails_enabled` in Settings → Points System → Loyalty Email Notifications.
+- When enabled, after each completed sale where the customer has an email on file and earns >0 points, the backend automatically sends a branded HTML email showing:
+  - Points earned this purchase (+ sale total)
+  - Current points balance
+  - Milestone celebration block when the balance crosses 100, 500, or 1000 points (yellow dashed border + 🎉)
+- New `send_loyalty_points_email()` helper in `services/email_service.py`. Failures are logged but never break the sale (non-fatal).
+
 ### Dashboard: Staff Performance Leaderboard (Feb 21, 2026)
 - New `GET /api/reports/staff-performance?days=30` (admin/manager only) — aggregates completed sales per `created_by` and cash-register shifts per `closed_by_name` for the window; joins with users for role/email.
 - Returns per-user: `sales_count, total_revenue, avg_order_value, shifts_closed, sum_abs_variance, avg_shift_variance, net_variance, last_sale_at, role`.
