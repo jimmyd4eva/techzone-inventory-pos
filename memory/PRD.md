@@ -26,6 +26,13 @@
 
 ## What's Been Implemented
 
+### Google Review Link in Follow-up Emails (Feb 21, 2026)
+- New optional setting `google_review_url` (Settings → Points System → Follow-up Check-in Emails card).
+- Input appears only when Follow-up emails are enabled; accepts any URL (tip provided for Google Business Profile short link).
+- `send_followup_email()` renders a prominent green "★ Leave a review" CTA button (HTML) and inline link (plain-text) when `review_url` is set; button is fully omitted when the field is blank.
+- Scheduler loads `google_review_url` from settings each cycle and passes it to every queued follow-up, so the link updates retroactively for all pending sends.
+- Verified via backend: PUT /api/settings persists the field; `send_followup_email(..., review_url=...)` produces HTML + plain-text bodies containing the link in a quoted-printable MIME message.
+
 ### Follow-up Check-in Emails (Feb 21, 2026)
 - New Settings fields: `followup_emails_enabled` (toggle) + `followup_days` (default 14).
 - UI: Settings → Points System → "Follow-up Check-in Emails" card with toggle + days input that appears when enabled.

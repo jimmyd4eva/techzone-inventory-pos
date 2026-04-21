@@ -37,7 +37,8 @@ const Settings = () => {
     auto_summary_monthly_enabled: false,
     loyalty_emails_enabled: false,
     followup_emails_enabled: false,
-    followup_days: 14
+    followup_days: 14,
+    google_review_url: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -271,7 +272,8 @@ const Settings = () => {
         auto_summary_monthly_enabled: response.data.auto_summary_monthly_enabled === true,
         loyalty_emails_enabled: response.data.loyalty_emails_enabled === true,
         followup_emails_enabled: response.data.followup_emails_enabled === true,
-        followup_days: response.data.followup_days || 14
+        followup_days: response.data.followup_days || 14,
+        google_review_url: response.data.google_review_url || ''
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -346,7 +348,8 @@ const Settings = () => {
         auto_summary_monthly_enabled: settings.auto_summary_monthly_enabled,
         loyalty_emails_enabled: settings.loyalty_emails_enabled,
         followup_emails_enabled: settings.followup_emails_enabled,
-        followup_days: settings.followup_days
+        followup_days: settings.followup_days,
+        google_review_url: settings.google_review_url || null
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {

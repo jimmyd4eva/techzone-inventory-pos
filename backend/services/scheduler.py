@@ -61,6 +61,7 @@ async def _process_followups():
 
         settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
         business_name = strip_html(settings.get("business_name", "TECHZONE"))
+        review_url = (settings.get("google_review_url") or "").strip() or None
         from services.email_service import send_followup_email
 
         for f in followups:
@@ -70,6 +71,7 @@ async def _process_followups():
                 items_summary=f.get("items_summary", "your order"),
                 business_name=business_name,
                 days_ago=int(f.get("days", 14)),
+                review_url=review_url,
             )
             status = "sent" if sent else "failed"
             await db.followups.update_one(

@@ -144,6 +144,24 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
             <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
               Emails are dispatched hourly by the scheduler once the send time passes.
             </p>
+
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+                Google Review URL (optional)
+              </label>
+              <input
+                type="url"
+                data-testid="google-review-url-input"
+                placeholder="https://g.page/r/your-business-id/review"
+                value={settings.google_review_url || ''}
+                onChange={(e) => setSettings({ ...settings, google_review_url: e.target.value })}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', fontFamily: 'monospace' }}
+              />
+              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                When set, a green "★ Leave a review" button is added to every follow-up email.
+                Tip: paste the short link from your Google Business Profile → Get more reviews.
+              </p>
+            </div>
           </div>
         )}
       </div>
