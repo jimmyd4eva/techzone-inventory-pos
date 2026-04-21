@@ -7,9 +7,10 @@ from email.mime.multipart import MIMEMultipart
 
 from core.config import logger
 
-# VIP threshold (cumulative customer spend, in store currency) for the review-CTA upgrade.
-# Kept as a module constant so it's easy to tune in one place.
-_VIP_SPEND_THRESHOLD = 20000.0
+# Default VIP threshold (cumulative customer spend) — overridable per-deployment via
+# the `vip_spend_threshold` setting. Kept as a fallback so behavior stays consistent
+# if the setting is missing or zero.
+_VIP_SPEND_THRESHOLD_DEFAULT = 20000.0
 
 
 def _review_cta(
@@ -18,6 +19,7 @@ def _review_cta(
     is_first_purchase: bool = False,
     cumulative_total_spent: float = 0.0,
     business_name: str = "TECHZONE",
+    vip_threshold: float = _VIP_SPEND_THRESHOLD_DEFAULT,
 ):
     """Return (html_block, plain_text_line) for the review CTA.
 
@@ -27,13 +29,17 @@ def _review_cta(
     if not review_url:
         return "", ""
 
+    # Guard: a missing/0/negative threshold should fall back to the default,
+    # not accidentally promote every customer to VIP copy.
+    threshold = vip_threshold if vip_threshold and vip_threshold > 0 else _VIP_SPEND_THRESHOLD_DEFAULT
+
     if milestone:
         cta_label = "★ Share the love — leave a review"
         helper = "You're a top customer — a quick 5-star review would truly make our day."
     elif is_first_purchase:
         cta_label = f"★ How was your first {business_name} experience?"
         helper = "Your first-impression review helps other customers find us — thank you!"
-    elif cumulative_total_spent >= _VIP_SPEND_THRESHOLD:
+    elif cumulative_total_spent >= threshold:
         cta_label = "★ You're a VIP — a 5-star review would mean the world"
         helper = "As one of our top customers, your endorsement carries extra weight."
     else:
@@ -451,6 +457,7 @@ def send_loyalty_points_email(
     review_url: str = None,
     is_first_purchase: bool = False,
     cumulative_total_spent: float = 0.0,
+    vip_threshold: float = _VIP_SPEND_THRESHOLD_DEFAULT,
 ) -> bool:
     """Email the customer after a sale: points earned + optional milestone celebration."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
@@ -489,6 +496,7 @@ def send_loyalty_points_email(
         is_first_purchase=is_first_purchase,
         cumulative_total_spent=cumulative_total_spent,
         business_name=business_name,
+        vip_threshold=vip_threshold,
     )
 
     msg = MIMEMultipart("alternative")
@@ -550,7 +558,7 @@ def send_loyalty_points_email(
         return False
 
 
-def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14, review_url: str = None, is_first_purchase: bool = False, cumulative_total_spent: float = 0.0) -> bool:
+def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14, review_url: str = None, is_first_purchase: bool = False, cumulative_total_spent: float = 0.0, vip_threshold: float = _VIP_SPEND_THRESHOLD_DEFAULT) -> bool:
     """Friendly check-in email to a customer N days after a sale."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
     sender_password = os.environ.get("EMAIL_PASSWORD", "")
@@ -564,6 +572,7 @@ def send_followup_email(to_email: str, customer_name: str, items_summary: str, b
         is_first_purchase=is_first_purchase,
         cumulative_total_spent=cumulative_total_spent,
         business_name=business_name,
+        vip_threshold=vip_threshold,
     )
 
     msg = MIMEMultipart("alternative")

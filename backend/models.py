@@ -213,6 +213,7 @@ class Settings(BaseModel):
     followup_emails_enabled: bool = False  # Auto-schedule follow-up check-in email N days after sale
     followup_days: int = 14  # Days after sale to send follow-up
     google_review_url: Optional[str] = None  # Adds "Leave a review" button to follow-up email when set
+    vip_spend_threshold: float = 20000  # Cumulative spend at which a customer gets the VIP review CTA
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -242,6 +243,7 @@ class SettingsUpdate(BaseModel):
     followup_emails_enabled: Optional[bool] = None
     followup_days: Optional[int] = None
     google_review_url: Optional[str] = None
+    vip_spend_threshold: Optional[float] = None
 
 # ============ COUPON MODELS ============
 

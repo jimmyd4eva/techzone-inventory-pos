@@ -62,6 +62,7 @@ async def _process_followups():
         settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
         business_name = strip_html(settings.get("business_name", "TECHZONE"))
         review_url = (settings.get("google_review_url") or "").strip() or None
+        vip_threshold = float(settings.get("vip_spend_threshold") or 0) or 20000.0
         from services.email_service import send_followup_email
 
         for f in followups:
@@ -74,6 +75,7 @@ async def _process_followups():
                 review_url=review_url,
                 is_first_purchase=bool(f.get("is_first_purchase", False)),
                 cumulative_total_spent=float(f.get("cumulative_total_spent", 0) or 0),
+                vip_threshold=vip_threshold,
             )
             status = "sent" if sent else "failed"
             await db.followups.update_one(

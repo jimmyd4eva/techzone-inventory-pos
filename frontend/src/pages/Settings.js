@@ -38,7 +38,8 @@ const Settings = () => {
     loyalty_emails_enabled: false,
     followup_emails_enabled: false,
     followup_days: 14,
-    google_review_url: ''
+    google_review_url: '',
+    vip_spend_threshold: 20000
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -273,7 +274,8 @@ const Settings = () => {
         loyalty_emails_enabled: response.data.loyalty_emails_enabled === true,
         followup_emails_enabled: response.data.followup_emails_enabled === true,
         followup_days: response.data.followup_days || 14,
-        google_review_url: response.data.google_review_url || ''
+        google_review_url: response.data.google_review_url || '',
+        vip_spend_threshold: response.data.vip_spend_threshold ?? 20000
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -349,7 +351,8 @@ const Settings = () => {
         loyalty_emails_enabled: settings.loyalty_emails_enabled,
         followup_emails_enabled: settings.followup_emails_enabled,
         followup_days: settings.followup_days,
-        google_review_url: settings.google_review_url || null
+        google_review_url: settings.google_review_url || null,
+        vip_spend_threshold: settings.vip_spend_threshold
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {

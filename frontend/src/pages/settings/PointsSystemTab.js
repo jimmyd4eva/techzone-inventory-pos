@@ -162,6 +162,28 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
                 Tip: paste the short link from your Google Business Profile → Get more reviews.
               </p>
             </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+                VIP Spend Threshold
+              </label>
+              <div style={{ position: 'relative', maxWidth: '220px' }}>
+                <DollarSign size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input
+                  type="number"
+                  data-testid="vip-threshold-input"
+                  min="0"
+                  step="500"
+                  placeholder="20000"
+                  value={settings.vip_spend_threshold ?? 20000}
+                  onChange={(e) => setSettings({ ...settings, vip_spend_threshold: parseFloat(e.target.value) || 0 })}
+                  style={{ width: '100%', padding: '10px 12px 10px 32px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+              </div>
+              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                Customers whose lifetime spend reaches this amount get the upgraded "You're a VIP" review CTA. First-time buyers always get the "How was your first experience?" variant instead.
+              </p>
+            </div>
           </div>
         )}
       </div>

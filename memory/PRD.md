@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Configurable VIP Threshold in Settings (Feb 21, 2026)
+- New `vip_spend_threshold` field on `Settings` (default 20000). Surfaced in Settings → Points System → Follow-up card with a $-prefixed input (testid `vip-threshold-input`), directly under the Google Review URL field.
+- `_review_cta()`, `send_loyalty_points_email()`, and `send_followup_email()` all accept `vip_threshold`; `routes/sales.py` and `services/scheduler.py` now read it from settings on every send.
+- Safety rail: threshold of 0 / negative / missing falls back to the module default (20000) so a blank field cannot accidentally promote every customer to VIP copy.
+- Verified via backend: PUT/GET persists the value; tier decision correctly flips at the configured threshold (tested 5000/20000, 5000/3000, 15000/0 fallback, follow-up 1500/1000).
+
 ### Smart A/B Review CTA by Customer Tier (Feb 21, 2026)
 - Both loyalty and follow-up emails now vary the "Leave a review" copy based on customer tier. Priority order: **milestone > first-purchase > VIP (cumulative spend ≥ $20,000) > default**.
   - Milestone: "★ Share the love — leave a review" (unchanged, highest-trust moment)

@@ -172,6 +172,7 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     prev_total_spent = float(customer.get("total_spent", 0) or 0)
                     is_first_purchase = prev_total_spent == 0
                     cumulative_total_spent = prev_total_spent + float(total)
+                    vip_threshold = float(settings.get("vip_spend_threshold") or 0) or 20000.0
                     send_loyalty_points_email(
                         to_email=customer["email"],
                         customer_name=customer.get("name", "Valued Customer"),
@@ -183,6 +184,7 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                         review_url=review_url,
                         is_first_purchase=is_first_purchase,
                         cumulative_total_spent=cumulative_total_spent,
+                        vip_threshold=vip_threshold,
                     )
                 except Exception as _e:
                     logger.warning(f"Loyalty email failed (non-fatal): {_e}")
