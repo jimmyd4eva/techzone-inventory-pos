@@ -1063,3 +1063,76 @@ async def staff_performance(
     # Primary sort: revenue desc
     results.sort(key=lambda r: r["total_revenue"], reverse=True)
     return results
+
+
+
+def _normalize_mmdd(raw):
+    """Accept 'MM-DD', 'YYYY-MM-DD', or 'MM/DD' and return canonical 'MM-DD' or None."""
+    if not raw:
+        return None
+    s = str(raw).strip().replace("/", "-")
+    if len(s) == 10 and s[4] == "-":
+        s = s[5:]
+    if len(s) != 5 or s[2] != "-":
+        return None
+    try:
+        m = int(s[:2])
+        d = int(s[3:])
+        if 1 <= m <= 12 and 1 <= d <= 31:
+            return f"{m:02d}-{d:02d}"
+    except ValueError:
+        pass
+    return None
+
+
+@router.get("/reports/upcoming-birthdays")
+async def upcoming_birthdays(days: int = 7, current_user: dict = Depends(get_current_user)):
+    """Customers whose birthday falls in the next `days` days (inclusive of today).
+
+    Handles year-wrap (e.g., today = Dec 28, days = 7 → includes next January).
+    Returns a list sorted by days-until-birthday, then by name.
+    """
+    days = max(1, min(days, 60))
+    today = datetime.now(timezone.utc).date()
+
+    # Build the window of acceptable MM-DD strings, mapped to days-until.
+    window = {}
+    for offset in range(days + 1):  # inclusive
+        d = today + timedelta(days=offset)
+        window[f"{d.month:02d}-{d.day:02d}"] = offset
+
+    customers = await db.customers.find(
+        {"birthday": {"$exists": True, "$ne": None}},
+        {"_id": 0},
+    ).to_list(10000)
+
+    current_year = today.year
+    results = []
+    for c in customers:
+        mmdd = _normalize_mmdd(c.get("birthday"))
+        if not mmdd or mmdd not in window:
+            continue
+        days_until = window[mmdd]
+        # Check if they've already received a birthday coupon this year
+        dedupe_key = f"{c['id']}:{current_year}"
+        got_coupon = await db.birthday_coupons.find_one({"key": dedupe_key}, {"_id": 0})
+        # Compute the actual date this year (for label)
+        month, day = mmdd.split("-")
+        try:
+            birthday_date = (today + timedelta(days=days_until)).isoformat()
+        except Exception:
+            birthday_date = None
+        results.append({
+            "customer_id": c["id"],
+            "name": c.get("name", ""),
+            "email": c.get("email"),
+            "phone": c.get("phone"),
+            "birthday": mmdd,
+            "days_until": days_until,
+            "birthday_date": birthday_date,
+            "total_spent": float(c.get("total_spent", 0) or 0),
+            "coupon_already_sent": bool(got_coupon),
+        })
+
+    results.sort(key=lambda r: (r["days_until"], r["name"].lower()))
+    return results

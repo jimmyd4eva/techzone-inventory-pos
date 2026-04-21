@@ -167,3 +167,42 @@ class TestBirthdayCoupons:
             assert len(bday) == 0, "Sweep must no-op when birthday_coupons_enabled is False"
         finally:
             requests.delete(f"{API}/customers/{customer_id}", headers=headers)
+
+
+
+class TestUpcomingBirthdaysEndpoint:
+    def test_01_returns_customers_in_window_excludes_outside(self, headers):
+        from datetime import timedelta
+        today = datetime.now(timezone.utc).date()
+        mmdd = lambda d: f"{d.month:02d}-{d.day:02d}"  # noqa: E731
+        inside = mmdd(today + timedelta(days=3))
+        outside = mmdd(today + timedelta(days=20))
+
+        ids = []
+        try:
+            for name, b in [("Upc Inside", inside), ("Upc Outside", outside)]:
+                r = requests.post(
+                    f"{API}/customers",
+                    json={"name": name, "phone": f"876-555-91{len(ids):02d}", "birthday": b},
+                    headers=headers, timeout=10,
+                )
+                ids.append(r.json()["id"])
+
+            r = requests.get(f"{API}/reports/upcoming-birthdays?days=7", headers=headers, timeout=10)
+            assert r.status_code == 200
+            data = r.json()
+            result_ids = {row["customer_id"] for row in data}
+            assert ids[0] in result_ids, "Customer with birthday in window should appear"
+            assert ids[1] not in result_ids, "Customer beyond window should NOT appear"
+            inside_row = next(r for r in data if r["customer_id"] == ids[0])
+            assert inside_row["days_until"] == 3
+            assert "coupon_already_sent" in inside_row
+        finally:
+            for cid in ids:
+                requests.delete(f"{API}/customers/{cid}", headers=headers)
+
+    def test_02_days_param_clamped(self, headers):
+        # days=0 should clamp to 1 (at least today)
+        r = requests.get(f"{API}/reports/upcoming-birthdays?days=0", headers=headers, timeout=10)
+        assert r.status_code == 200
+        # Should not 500; just returns whatever matches today

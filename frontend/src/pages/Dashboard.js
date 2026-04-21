@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [slowMoving, setSlowMoving] = useState([]);
   const [couponPerf, setCouponPerf] = useState([]);
   const [staffPerf, setStaffPerf] = useState([]);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [poModal, setPoModal] = useState(null);
 
@@ -50,6 +51,7 @@ const Dashboard = () => {
       safe('/reports/slow-moving-inventory?days=90&limit=15', setSlowMoving),
       safe('/reports/coupon-performance?limit=20', setCouponPerf),
       safe('/reports/staff-performance?days=30', setStaffPerf, { silent: true }),
+      safe('/reports/upcoming-birthdays?days=7', setUpcomingBirthdays),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -91,6 +93,7 @@ const Dashboard = () => {
 
       <StatsGrid stats={stats} />
       <StaffPerformanceWidget staffPerf={staffPerf} />
+      <UpcomingBirthdaysWidget upcomingBirthdays={upcomingBirthdays} />
       <TopCustomersWidget topCustomers={topCustomers} onCreateCoupon={goCreateCoupon} />
       <AtRiskCustomersWidget lostCustomers={lostCustomers} onCreateCoupon={goCreateCoupon} />
       <CouponPerformanceWidget couponPerf={couponPerf} />
@@ -135,3 +138,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
