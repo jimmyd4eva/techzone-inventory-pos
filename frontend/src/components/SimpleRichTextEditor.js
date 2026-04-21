@@ -1,46 +1,71 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type } from 'lucide-react';
 
-const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label }) => {
+const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3 }) => {
   const editorRef = useRef(null);
   const [fontSize, setFontSize] = useState('16');
 
-  const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    // Trigger onChange with the new HTML content
+  // Sync external value -> editor DOM only when the editor is not focused
+  // (prevents caret jumps during typing).
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    const isActive = document.activeElement === el;
+    if (!isActive && (value || '') !== el.innerHTML) {
+      el.innerHTML = value || '';
+    }
+  }, [value]);
+
+  const emitChange = () => {
     if (onChange && editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
   };
 
-  const handleInput = () => {
-    if (onChange && editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
+  const execCommand = (command, commandValue = null) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, commandValue);
+    emitChange();
   };
+
+  const handleInput = () => emitChange();
 
   const handleFontSize = (size) => {
     setFontSize(size);
-    // Use CSS fontSize instead of deprecated fontSize command
+    editorRef.current?.focus();
     const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return; // nothing selected
+
+    try {
+      // Works when the selection is within a single container
       const span = document.createElement('span');
       span.style.fontSize = `${size}px`;
       range.surroundContents(span);
-      handleInput();
+    } catch {
+      // Fallback for complex selections spanning multiple nodes
+      const contents = range.extractContents();
+      const span = document.createElement('span');
+      span.style.fontSize = `${size}px`;
+      span.appendChild(contents);
+      range.insertNode(span);
     }
+    emitChange();
+  };
+
+  const btnStyle = {
+    padding: '6px 10px',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    backgroundColor: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center'
   };
 
   return (
-    <div style={{ marginBottom: '20px' }}>
-      {label && (
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
-          {label}
-        </label>
-      )}
-      
+    <div style={{ marginBottom: '4px' }} data-testid="rich-text-editor">
       {/* Toolbar */}
       <div style={{
         display: 'flex',
@@ -53,107 +78,25 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label })
         flexWrap: 'wrap',
         alignItems: 'center'
       }}>
-        <button
-          type="button"
-          onClick={() => execCommand('bold')}
-          title="Bold"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('bold')} title="Bold" style={btnStyle} data-testid="rte-bold">
           <Bold size={16} />
         </button>
-        
-        <button
-          type="button"
-          onClick={() => execCommand('italic')}
-          title="Italic"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('italic')} title="Italic" style={btnStyle} data-testid="rte-italic">
           <Italic size={16} />
         </button>
-        
-        <button
-          type="button"
-          onClick={() => execCommand('underline')}
-          title="Underline"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('underline')} title="Underline" style={btnStyle} data-testid="rte-underline">
           <Underline size={16} />
         </button>
 
         <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 4px' }} />
 
-        <button
-          type="button"
-          onClick={() => execCommand('justifyLeft')}
-          title="Align Left"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('justifyLeft')} title="Align Left" style={btnStyle} data-testid="rte-align-left">
           <AlignLeft size={16} />
         </button>
-        
-        <button
-          type="button"
-          onClick={() => execCommand('justifyCenter')}
-          title="Align Center"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('justifyCenter')} title="Align Center" style={btnStyle} data-testid="rte-align-center">
           <AlignCenter size={16} />
         </button>
-        
-        <button
-          type="button"
-          onClick={() => execCommand('justifyRight')}
-          title="Align Right"
-          style={{
-            padding: '6px 10px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('justifyRight')} title="Align Right" style={btnStyle} data-testid="rte-align-right">
           <AlignRight size={16} />
         </button>
 
@@ -164,6 +107,7 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label })
           <select
             value={fontSize}
             onChange={(e) => handleFontSize(e.target.value)}
+            data-testid="rte-font-size"
             style={{
               padding: '4px 8px',
               border: '1px solid #d1d5db',
@@ -190,6 +134,7 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label })
           type="color"
           onChange={(e) => execCommand('foreColor', e.target.value)}
           title="Text Color"
+          data-testid="rte-color"
           style={{
             width: '32px',
             height: '32px',
@@ -206,9 +151,11 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label })
       <div
         ref={editorRef}
         contentEditable
+        suppressContentEditableWarning
         onInput={handleInput}
-        dangerouslySetInnerHTML={{ __html: value || '' }}
-        placeholder={placeholder}
+        onBlur={handleInput}
+        data-testid="rte-editable"
+        data-placeholder={placeholder}
         style={{
           minHeight: `${rows * 24}px`,
           padding: '12px 16px',
@@ -220,11 +167,10 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3, label })
           backgroundColor: '#fff',
           overflow: 'auto'
         }}
-        data-placeholder={placeholder}
       />
 
       <style>{`
-        [contenteditable]:empty:before {
+        [contenteditable][data-placeholder]:empty:before {
           content: attr(data-placeholder);
           color: #9ca3af;
           pointer-events: none;

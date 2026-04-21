@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Settings as SettingsIcon, Save, Percent, DollarSign, Tag, Check, Building, Phone, Image, Star, Upload, Shield, Trash2, Download, RefreshCw, Monitor, Wallet, Plus, Minus, Clock, ChevronDown, ChevronUp, AlertCircle, CheckCircle, FileText, Mail } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
+import SimpleRichTextEditor from '../components/SimpleRichTextEditor';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -495,59 +496,43 @@ const Settings = () => {
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                 Business Name
               </label>
-              <input
-                type="text"
-                data-testid="business-name-input"
-                value={settings.business_name}
-                onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
+              <div data-testid="business-name-editor">
+                <SimpleRichTextEditor
+                  value={settings.business_name}
+                  onChange={(html) => setSettings({ ...settings, business_name: html })}
+                  placeholder="Enter business name"
+                  rows={1}
+                />
+              </div>
+              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                Tip: On the receipt, the blue/red split is applied on top of your formatting (bold/italic/underline/size preserved; custom text color is overridden by the split).
+              </p>
             </div>
 
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                 Address
               </label>
-              <textarea
-                data-testid="business-address-input"
-                value={settings.business_address}
-                onChange={(e) => setSettings({ ...settings, business_address: e.target.value })}
-                rows={2}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  resize: 'vertical'
-                }}
-              />
+              <div data-testid="business-address-editor">
+                <SimpleRichTextEditor
+                  value={settings.business_address}
+                  onChange={(html) => setSettings({ ...settings, business_address: html })}
+                  placeholder="Enter business address"
+                  rows={2}
+                />
+              </div>
             </div>
 
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '15px', fontWeight: '500', color: '#374151' }}>
                 Phone Number
               </label>
-              <div style={{ position: 'relative' }}>
-                <Phone size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="text"
-                  data-testid="business-phone-input"
+              <div data-testid="business-phone-editor">
+                <SimpleRichTextEditor
                   value={settings.business_phone}
-                  onChange={(e) => setSettings({ ...settings, business_phone: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px 12px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
+                  onChange={(html) => setSettings({ ...settings, business_phone: html })}
+                  placeholder="Enter phone number"
+                  rows={1}
                 />
               </div>
             </div>

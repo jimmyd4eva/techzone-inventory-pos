@@ -56,6 +56,28 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
+import re as _re
+
+_TAG_RE = _re.compile(r'<[^>]+>')
+_WS_RE = _re.compile(r'\s+')
+
+def strip_html(text) -> str:
+    """Strip HTML tags and decode common entities for PDF/email plain-text use."""
+    if not text:
+        return ""
+    s = str(text)
+    # Replace <br> and block-ish tags with spaces before stripping
+    s = _re.sub(r'<\s*br\s*/?\s*>', ' ', s, flags=_re.IGNORECASE)
+    s = _re.sub(r'</\s*(p|div|h[1-6])\s*>', ' ', s, flags=_re.IGNORECASE)
+    s = _TAG_RE.sub('', s)
+    s = (s.replace('&nbsp;', ' ')
+           .replace('&amp;', '&')
+           .replace('&lt;', '<')
+           .replace('&gt;', '>')
+           .replace('&quot;', '"')
+           .replace('&#39;', "'"))
+    return _WS_RE.sub(' ', s).strip()
+
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -2736,7 +2758,7 @@ async def close_shift(request: CloseShiftRequest, current_user: dict = Depends(g
             elements = []
             styles = getSampleStyleSheet()
             
-            business_name = settings.get("business_name", "TECHZONE")
+            business_name = strip_html(settings.get("business_name", "TECHZONE"))
             
             # Build simple PDF for email
             title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=20, textColor=colors.HexColor('#8b5cf6'), spaceAfter=6)
@@ -2960,9 +2982,9 @@ async def generate_shift_report(shift_id: str, current_user: dict = Depends(get_
     
     # Get business settings
     settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
-    business_name = settings.get("business_name", "TECHZONE") if settings else "TECHZONE"
-    business_address = settings.get("business_address", "") if settings else ""
-    business_phone = settings.get("business_phone", "") if settings else ""
+    business_name = strip_html(settings.get("business_name", "TECHZONE")) if settings else "TECHZONE"
+    business_address = strip_html(settings.get("business_address", "")) if settings else ""
+    business_phone = strip_html(settings.get("business_phone", "")) if settings else ""
     
     # Calculate totals
     cash_sales = sum(t["amount"] for t in transactions if t["transaction_type"] == "cash_sale")
