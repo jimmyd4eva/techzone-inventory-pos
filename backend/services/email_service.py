@@ -287,3 +287,106 @@ def send_coupon_email(to_email: str, customer_name: str, coupon: dict, business_
     except Exception as e:
         logger.error(f"Failed to send coupon email: {e}")
         return False
+
+
+def send_purchase_order_email(to_email: str, supplier_name: str, items: list, business_name: str = "TECHZONE", note: str = "") -> bool:
+    """Email a low-stock purchase-order draft to a supplier.
+
+    `items` is a list of dicts with keys: name, sku, quantity, low_stock_threshold, suggested_order_qty.
+    """
+    sender_email = os.environ.get("EMAIL_ADDRESS", "")
+    sender_password = os.environ.get("EMAIL_PASSWORD", "")
+
+    if not sender_password:
+        logger.warning("EMAIL_PASSWORD not set; cannot send PO email")
+        return False
+
+    rows_html = "".join(
+        f"""
+        <tr>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">{(it.get('name') or '-')}</td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-family:monospace;font-size:12px;">{(it.get('sku') or '-')}</td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right;">{int(it.get('quantity', 0))}</td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right;">{int(it.get('low_stock_threshold', 0))}</td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#059669;">{int(it.get('suggested_order_qty', 0))}</td>
+        </tr>
+        """
+        for it in items
+    )
+
+    rows_text = "\n".join(
+        f"- {it.get('name','-')} (SKU {it.get('sku','-')}): current {int(it.get('quantity', 0))}, threshold {int(it.get('low_stock_threshold', 0))}, suggested order qty {int(it.get('suggested_order_qty', 0))}"
+        for it in items
+    )
+
+    note_html = (
+        f"<p style='margin:12px 0 0 0;color:#374151;font-size:14px;padding:12px;background:#f9fafb;border-radius:6px;'><strong>Note:</strong> {note}</p>"
+        if note else ""
+    )
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"{business_name} — Purchase Order Request ({len(items)} items)"
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    html = f"""
+    <html>
+    <body style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:20px;">
+      <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6366f1 100%);padding:20px;border-radius:10px;text-align:center;">
+        <h1 style="color:#fff;margin:0;">{business_name}</h1>
+        <p style="color:rgba(255,255,255,0.9);margin:8px 0 0 0;">Purchase Order Request</p>
+      </div>
+      <div style="padding:20px;background:#fff;">
+        <p style="color:#374151;">Hello{(' ' + supplier_name) if supplier_name else ''},</p>
+        <p style="color:#374151;">
+          The items below have fallen at or below their low-stock threshold.
+          Please confirm availability and pricing for the suggested quantities so we can issue a formal purchase order.
+        </p>
+        {note_html}
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:10px;text-align:left;font-size:12px;color:#6b7280;text-transform:uppercase;">Item</th>
+              <th style="padding:10px;text-align:left;font-size:12px;color:#6b7280;text-transform:uppercase;">SKU</th>
+              <th style="padding:10px;text-align:right;font-size:12px;color:#6b7280;text-transform:uppercase;">On Hand</th>
+              <th style="padding:10px;text-align:right;font-size:12px;color:#6b7280;text-transform:uppercase;">Threshold</th>
+              <th style="padding:10px;text-align:right;font-size:12px;color:#6b7280;text-transform:uppercase;">Suggested Qty</th>
+            </tr>
+          </thead>
+          <tbody>{rows_html}</tbody>
+        </table>
+        <p style="color:#6b7280;font-size:13px;margin-top:20px;">
+          Thank you,<br/>{business_name}
+        </p>
+      </div>
+      <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:16px;">
+        Automated purchase-order draft from {business_name} POS.
+      </p>
+    </body>
+    </html>
+    """
+    text = (
+        f"{business_name} — Purchase Order Request\n\n"
+        f"Hello{' ' + supplier_name if supplier_name else ''},\n\n"
+        f"The items below have fallen at or below their low-stock threshold. "
+        f"Please confirm availability and pricing for the suggested quantities.\n\n"
+        f"{rows_text}\n"
+    )
+    if note:
+        text += f"\nNote: {note}\n"
+    text += f"\nThank you,\n{business_name}\n"
+
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"PO email sent to {to_email} ({len(items)} items)")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send PO email: {e}")
+        return False

@@ -26,6 +26,15 @@
 
 ## What's Been Implemented
 
+### Dashboard: Low Stock Auto-Reorder Card (Feb 21, 2026)
+- New `POST /api/inventory/email-purchase-order` — admin-only endpoint that composes a branded PO email with item list, on-hand qty, threshold, and suggested order quantity (formula: `max(threshold × 3 − on_hand, 5)`).
+- Reuses existing `GET /api/inventory/low-stock` for the data.
+- Dashboard "Low Stock — Reorder Needed" card groups items by supplier. Per group:
+  - **CSV** button downloads a ready-to-import spreadsheet client-side.
+  - **Email PO** button opens a modal to enter supplier email + optional note, then sends the branded PO via SMTP.
+- Gracefully handles items with no supplier ("— No supplier —" group).
+- Zero-quantity items styled in red for scannability.
+
 ### Dashboard: At-Risk / Customer Lost Alert (Feb 21, 2026)
 - New `GET /api/reports/lost-customers?days=60&limit=20` — top-spending customers whose last completed sale is older than `days` days.
 - Dashboard shows "At-Risk Customers" card with red severity color, count badge, and days-since-last-sale colored by severity tier (66→90→180 days).
