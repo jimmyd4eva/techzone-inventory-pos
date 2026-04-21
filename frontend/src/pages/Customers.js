@@ -62,15 +62,19 @@ const Customers = () => {
     return `Hi ${customer.name}! Here's your personalized coupon: ${coupon.code} — ${disc}${minP}. Show this at checkout. Thank you!`;
   };
 
-  const openCouponModal = (customer) => {
+  const openCouponModal = (customer, preset) => {
     setCouponForCustomer(customer);
     setCreatedCoupon(null);
-    const suggestedCode = `${(customer.name || 'VIP').split(' ')[0].toUpperCase().slice(0, 6)}${Math.floor(Math.random() * 900 + 100)}`;
+    const suggestedCode = preset === 'winback'
+      ? `MISS${(customer.name || 'VIP').split(' ')[0].toUpperCase().slice(0, 4)}${Math.floor(Math.random() * 900 + 100)}`
+      : `${(customer.name || 'VIP').split(' ')[0].toUpperCase().slice(0, 6)}${Math.floor(Math.random() * 900 + 100)}`;
     setCouponForm({
       code: suggestedCode,
-      description: `Personalized for ${customer.name}`,
+      description: preset === 'winback'
+        ? `We miss you, ${customer.name} — here's a little something to welcome you back`
+        : `Personalized for ${customer.name}`,
       discount_type: 'percentage',
-      discount_value: 10,
+      discount_value: preset === 'winback' ? 15 : 10,
       min_purchase: 0,
       usage_limit: 1,
     });
@@ -163,11 +167,11 @@ const Customers = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const targetId = params.get('coupon_for');
+    const preset = params.get('preset');
     if (!targetId || customers.length === 0) return;
     const cust = customers.find(c => c.id === targetId);
     if (cust) {
-      openCouponModal(cust);
-      // Clean URL so a refresh doesn't re-open
+      openCouponModal(cust, preset);
       window.history.replaceState({}, '', '/customers');
     }
      

@@ -26,6 +26,15 @@
 
 ## What's Been Implemented
 
+### Dashboard: At-Risk / Customer Lost Alert (Feb 21, 2026)
+- New `GET /api/reports/lost-customers?days=60&limit=20` — top-spending customers whose last completed sale is older than `days` days.
+- Dashboard shows "At-Risk Customers" card with red severity color, count badge, and days-since-last-sale colored by severity tier (66→90→180 days).
+- **We Miss You** button per row deep-links to `/customers?coupon_for=<id>&preset=winback`, which auto-opens the coupon modal pre-filled with:
+  - Code `MISS<NAME><NNN>` (e.g. `MISSDANN652`)
+  - Description "We miss you, <name> — here's a little something to welcome you back"
+  - Discount: 15% (vs. 10% for regular personalized)
+- From there: existing SMS / WhatsApp / Email share buttons reach the customer.
+
 ### Dashboard: Top Customers Widget (Feb 21, 2026)
 - New `GET /api/reports/top-customers?limit=10` aggregates completed sales per customer and returns rank/name/contact/orders/total_spent/last_sale_at.
 - Dashboard shows a "Top Customers" card with gold/silver/bronze rank badges and a one-click **🎫 Coupon** button per row.

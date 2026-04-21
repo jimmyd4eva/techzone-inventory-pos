@@ -764,3 +764,62 @@ async def top_customers(limit: int = 10, current_user: dict = Depends(get_curren
             "points_balance": cust.get("points_balance", 0),
         })
     return results
+
+
+@router.get("/reports/lost-customers")
+async def lost_customers(
+    days: int = 60,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return top-spending customers whose last completed sale is older than `days` days."""
+    if days < 1:
+        days = 60
+    if limit < 1 or limit > 100:
+        limit = 20
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff_iso = cutoff.isoformat()
+
+    pipeline = [
+        {"$match": {"payment_status": "completed", "customer_id": {"$ne": None}}},
+        {"$group": {
+            "_id": "$customer_id",
+            "total_spent": {"$sum": "$total"},
+            "sales_count": {"$sum": 1},
+            "last_sale_at": {"$max": "$created_at"},
+        }},
+        {"$match": {"last_sale_at": {"$lt": cutoff_iso}}},
+        {"$sort": {"total_spent": -1}},
+        {"$limit": limit},
+    ]
+    agg = await db.sales.aggregate(pipeline).to_list(limit)
+    if not agg:
+        return []
+
+    customer_ids = [row["_id"] for row in agg]
+    customers_cursor = db.customers.find({"id": {"$in": customer_ids}}, {"_id": 0})
+    customer_map = {c["id"]: c async for c in customers_cursor}
+
+    now = datetime.now(timezone.utc)
+    results = []
+    for row in agg:
+        cust = customer_map.get(row["_id"])
+        if not cust:
+            continue
+        try:
+            last_dt = datetime.fromisoformat(str(row["last_sale_at"]).replace("Z", "+00:00"))
+            days_away = max(0, (now - last_dt).days)
+        except Exception:
+            days_away = None
+        results.append({
+            "customer_id": row["_id"],
+            "name": cust.get("name", "Unknown"),
+            "phone": cust.get("phone"),
+            "email": cust.get("email"),
+            "total_spent": float(row["total_spent"]),
+            "sales_count": int(row["sales_count"]),
+            "last_sale_at": row["last_sale_at"],
+            "days_since_last_sale": days_away,
+        })
+    return results
