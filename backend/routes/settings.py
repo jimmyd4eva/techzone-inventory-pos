@@ -140,3 +140,23 @@ async def get_uploaded_file(filename: str):
     content_type = content_types.get(ext, 'application/octet-stream')
     
     return FileResponse(file_path, media_type=content_type)
+
+
+@router.post("/settings/run-birthday-sweep")
+async def run_birthday_sweep(current_user: dict = Depends(get_current_user)):
+    """Admin-only: manually trigger today's birthday-coupon sweep (also runs hourly)."""
+    if current_user.get("role") not in ("admin", "manager"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    # Clear the daily guard so the sweep runs immediately even if it already ran today.
+    await db.settings.update_one(
+        {"id": "app_settings"},
+        {"$set": {"birthday_coupons_last_run": None}},
+        upsert=True,
+    )
+    from services.birthday_service import process_birthday_coupons
+    await process_birthday_coupons()
+    # Report what got created today
+    today_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    year = datetime.now(timezone.utc).year
+    created = await db.birthday_coupons.count_documents({"year": year})
+    return {"ok": True, "last_run": today_iso, "coupons_this_year": created}

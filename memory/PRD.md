@@ -26,6 +26,27 @@
 
 ## What's Been Implemented
 
+### Dashboard Refactor (Feb 21, 2026)
+- `frontend/src/pages/Dashboard.js` split from 1062 lines → 137-line container.
+- New components under `frontend/src/components/dashboard/`:
+  - `StatsGrid.js` (4 headline stat cards)
+  - `StaffPerformanceWidget.js`
+  - `TopCustomersWidget.js`
+  - `AtRiskCustomersWidget.js`
+  - `CouponPerformanceWidget.js`
+  - `SlowMovingWidget.js`
+  - `LowStockWidget.js` (exports `suggestedQty`, `groupBySupplier`, `downloadGroupCSV` helpers)
+  - `PurchaseOrderModal.js` (self-contained modal state + WhatsApp/email PO logic)
+- All existing data-testids preserved; no behavior change. Lint clean on 9 files.
+
+### Birthday Coupons (Feb 21, 2026)
+- New `birthday` field on Customer (MM-DD, year-agnostic) with editable input + profile display in the Customers page (`customer-birthday-input`).
+- New settings: `birthday_coupons_enabled`, `birthday_discount_percent` (default 15), `birthday_valid_days` (default 14), `birthday_coupons_last_run` (internal daily guard). Surfaced in Settings → Points System as a dedicated "Birthday Coupons" card with a pink Cake icon, inputs for % off and validity days, and a **Run today's sweep now** button (admin-only endpoint for testing or forcing a resweep).
+- New `services/birthday_service.py` with `process_birthday_coupons()`; wired into the hourly scheduler loop (runs once per UTC day via the `birthday_coupons_last_run` guard).
+- On match, it creates a personalized coupon (`BDAY-<custId4>-<year>`, 1-use, customer-locked, % off, expires in N days, `source="birthday"`), inserts a dedupe doc into `birthday_coupons` collection keyed on `(customer_id, year)`, and emails the coupon via the existing `send_coupon_email()` flow.
+- Idempotent at every level: daily guard prevents same-day resweeps; `birthday_coupons` dedupe prevents same-year duplicates; the manual trigger endpoint clears only the daily guard (dedupe survives).
+- Verified with 4 backend regression tests (`tests/test_birthday_coupons.py`): field persistence, positive sweep, negative sweep (non-matching birthday), disabled-flag no-op. All 60+4 tests pass.
+
 ### Configurable VIP Threshold in Settings (Feb 21, 2026)
 - New `vip_spend_threshold` field on `Settings` (default 20000). Surfaced in Settings → Points System → Follow-up card with a $-prefixed input (testid `vip-threshold-input`), directly under the Google Review URL field.
 - `_review_cta()`, `send_loyalty_points_email()`, and `send_followup_email()` all accept `vip_threshold`; `routes/sales.py` and `services/scheduler.py` now read it from settings on every send.

@@ -34,6 +34,7 @@ class Customer(BaseModel):
     phone: str
     address: Optional[str] = None
     customer_type: str = "retail"  # retail or wholesale
+    birthday: Optional[str] = None  # MM-DD (year-agnostic) for birthday coupons
     # Points system
     total_spent: float = 0  # Total amount spent by customer
     points_balance: float = 0  # Current points balance
@@ -48,6 +49,7 @@ class CustomerCreate(BaseModel):
     phone: str
     address: Optional[str] = None
     customer_type: str = "retail"  # retail or wholesale
+    birthday: Optional[str] = None
 
 class InventoryItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -214,6 +216,11 @@ class Settings(BaseModel):
     followup_days: int = 14  # Days after sale to send follow-up
     google_review_url: Optional[str] = None  # Adds "Leave a review" button to follow-up email when set
     vip_spend_threshold: float = 20000  # Cumulative spend at which a customer gets the VIP review CTA
+    # Birthday coupons
+    birthday_coupons_enabled: bool = False
+    birthday_discount_percent: float = 15  # Default % off
+    birthday_valid_days: int = 14  # Days the coupon remains valid after birthday
+    birthday_coupons_last_run: Optional[str] = None  # ISO date (YYYY-MM-DD) of last daily sweep
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -244,6 +251,9 @@ class SettingsUpdate(BaseModel):
     followup_days: Optional[int] = None
     google_review_url: Optional[str] = None
     vip_spend_threshold: Optional[float] = None
+    birthday_coupons_enabled: Optional[bool] = None
+    birthday_discount_percent: Optional[float] = None
+    birthday_valid_days: Optional[int] = None
 
 # ============ COUPON MODELS ============
 

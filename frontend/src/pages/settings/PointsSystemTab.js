@@ -1,8 +1,34 @@
-import React from 'react';
-import { Star, DollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Star, DollarSign, Cake } from 'lucide-react';
 import { Switch } from '../../components/ui/switch';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
 export const PointsSystemTab = ({ settings, setSettings }) => {
+  const [bdayMsg, setBdayMsg] = useState({ type: '', text: '' });
+  const [bdayRunning, setBdayRunning] = useState(false);
+
+  const runBirthdaySweep = async () => {
+    setBdayRunning(true);
+    setBdayMsg({ type: '', text: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.post(`${API}/settings/run-birthday-sweep`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBdayMsg({
+        type: 'success',
+        text: `Sweep ran for ${r.data.last_run}. ${r.data.coupons_this_year} birthday coupon(s) issued this year.`,
+      });
+    } catch (e) {
+      setBdayMsg({ type: 'error', text: e.response?.data?.detail || 'Failed to run sweep' });
+    } finally {
+      setBdayRunning(false);
+    }
+  };
+
   return (
     <>
       <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
@@ -184,6 +210,88 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
                 Customers whose lifetime spend reaches this amount get the upgraded "You're a VIP" review CTA. First-time buyers always get the "How was your first experience?" variant instead.
               </p>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Cake size={18} color="#ec4899" />
+          Birthday Coupons
+        </h3>
+        <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+          Once a day the system sweeps your customer list. Anyone whose birthday is today gets a personalized % off coupon automatically created and emailed (only if they have an email on file). Each customer is guaranteed only one birthday coupon per year.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+            Enable Birthday Coupons
+          </span>
+          <Switch
+            data-testid="birthday-coupons-toggle"
+            checked={settings.birthday_coupons_enabled}
+            onCheckedChange={(checked) => setSettings({ ...settings, birthday_coupons_enabled: checked })}
+            className="data-[state=checked]:bg-pink-500"
+          />
+        </div>
+        {settings.birthday_coupons_enabled && (
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '12px' }}>
+            <div style={{ flex: '1 1 180px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+                Discount %
+              </label>
+              <input
+                type="number"
+                data-testid="birthday-discount-input"
+                min="1"
+                max="90"
+                step="1"
+                value={settings.birthday_discount_percent ?? 15}
+                onChange={(e) => setSettings({ ...settings, birthday_discount_percent: parseFloat(e.target.value) || 0 })}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+              />
+            </div>
+            <div style={{ flex: '1 1 180px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#374151' }}>
+                Coupon Valid (days)
+              </label>
+              <input
+                type="number"
+                data-testid="birthday-valid-days-input"
+                min="1"
+                max="90"
+                step="1"
+                value={settings.birthday_valid_days ?? 14}
+                onChange={(e) => setSettings({ ...settings, birthday_valid_days: parseInt(e.target.value, 10) || 14 })}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+              />
+            </div>
+            <div style={{ flex: '1 1 100%', display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                data-testid="run-birthday-sweep-btn"
+                onClick={runBirthdaySweep}
+                disabled={bdayRunning}
+                style={{
+                  padding: '10px 16px', background: '#ec4899', color: '#fff',
+                  border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600,
+                  cursor: bdayRunning ? 'not-allowed' : 'pointer', opacity: bdayRunning ? 0.7 : 1,
+                }}
+              >
+                {bdayRunning ? 'Running…' : 'Run today\u2019s sweep now'}
+              </button>
+              {bdayMsg.text ? (
+                <span
+                  data-testid="birthday-sweep-msg"
+                  style={{
+                    fontSize: '13px',
+                    color: bdayMsg.type === 'success' ? '#065f46' : '#991b1b',
+                  }}
+                >{bdayMsg.text}</span>
+              ) : null}
+            </div>
+            <p style={{ fontSize: '12px', color: '#6b7280', width: '100%', marginTop: '4px' }}>
+              Customers must have a <code>birthday</code> (MM-DD) set on their profile. The sweep runs automatically every hour; the button above forces it to re-run today.
+            </p>
           </div>
         )}
       </div>

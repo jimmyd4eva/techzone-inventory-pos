@@ -20,7 +20,8 @@ const Customers = () => {
     email: '',
     phone: '',
     address: '',
-    customer_type: 'retail'
+    customer_type: 'retail',
+    birthday: ''
   });
 
   // Personalized coupon modal state
@@ -266,7 +267,8 @@ const Customers = () => {
         email: customer.email || '',
         phone: customer.phone,
         address: customer.address || '',
-        customer_type: customer.customer_type || 'retail'
+        customer_type: customer.customer_type || 'retail',
+        birthday: customer.birthday || ''
       });
     } else {
       setEditingCustomer(null);
@@ -276,7 +278,8 @@ const Customers = () => {
         email: '',
         phone: '',
         address: '',
-        customer_type: 'retail'
+        customer_type: 'retail',
+        birthday: ''
       });
     }
     setShowModal(true);
@@ -514,6 +517,22 @@ const Customers = () => {
                     <option value="retail">Retail (Standard Pricing)</option>
                     <option value="wholesale">Wholesale (Bulk Pricing)</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Birthday (MM-DD, optional)</label>
+                  <input
+                    type="text"
+                    data-testid="customer-birthday-input"
+                    value={formData.birthday || ''}
+                    onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                    placeholder="03-15"
+                    pattern="^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$"
+                    title="Format: MM-DD (e.g. 03-15 for March 15)"
+                    style={{ width: '140px', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                  />
+                  <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
+                    Used for automated birthday-coupon emails. Format: MM-DD (e.g. 03-15). No year needed.
+                  </p>
                 </div>
               </div>
               <div className="modal-footer">

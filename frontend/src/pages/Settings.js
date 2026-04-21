@@ -39,7 +39,10 @@ const Settings = () => {
     followup_emails_enabled: false,
     followup_days: 14,
     google_review_url: '',
-    vip_spend_threshold: 20000
+    vip_spend_threshold: 20000,
+    birthday_coupons_enabled: false,
+    birthday_discount_percent: 15,
+    birthday_valid_days: 14
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -275,7 +278,10 @@ const Settings = () => {
         followup_emails_enabled: response.data.followup_emails_enabled === true,
         followup_days: response.data.followup_days || 14,
         google_review_url: response.data.google_review_url || '',
-        vip_spend_threshold: response.data.vip_spend_threshold ?? 20000
+        vip_spend_threshold: response.data.vip_spend_threshold ?? 20000,
+        birthday_coupons_enabled: response.data.birthday_coupons_enabled === true,
+        birthday_discount_percent: response.data.birthday_discount_percent ?? 15,
+        birthday_valid_days: response.data.birthday_valid_days ?? 14
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -352,7 +358,10 @@ const Settings = () => {
         followup_emails_enabled: settings.followup_emails_enabled,
         followup_days: settings.followup_days,
         google_review_url: settings.google_review_url || null,
-        vip_spend_threshold: settings.vip_spend_threshold
+        vip_spend_threshold: settings.vip_spend_threshold,
+        birthday_coupons_enabled: settings.birthday_coupons_enabled,
+        birthday_discount_percent: settings.birthday_discount_percent,
+        birthday_valid_days: settings.birthday_valid_days
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {
