@@ -72,6 +72,8 @@ async def _process_followups():
                 business_name=business_name,
                 days_ago=int(f.get("days", 14)),
                 review_url=review_url,
+                is_first_purchase=bool(f.get("is_first_purchase", False)),
+                cumulative_total_spent=float(f.get("cumulative_total_spent", 0) or 0),
             )
             status = "sent" if sent else "failed"
             await db.followups.update_one(

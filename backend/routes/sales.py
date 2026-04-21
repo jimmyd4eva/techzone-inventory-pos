@@ -169,6 +169,9 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     from services.email_service import send_loyalty_points_email
                     business_name = _strip(settings.get("business_name", "TECHZONE"))
                     review_url = (settings.get("google_review_url") or "").strip() or None
+                    prev_total_spent = float(customer.get("total_spent", 0) or 0)
+                    is_first_purchase = prev_total_spent == 0
+                    cumulative_total_spent = prev_total_spent + float(total)
                     send_loyalty_points_email(
                         to_email=customer["email"],
                         customer_name=customer.get("name", "Valued Customer"),
@@ -178,6 +181,8 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                         business_name=business_name,
                         milestone=milestone,
                         review_url=review_url,
+                        is_first_purchase=is_first_purchase,
+                        cumulative_total_spent=cumulative_total_spent,
                     )
                 except Exception as _e:
                     logger.warning(f"Loyalty email failed (non-fatal): {_e}")
@@ -196,6 +201,7 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                 items_summary = ", ".join(i.item_name for i in sale_data.items[:3])
                 if len(sale_data.items) > 3:
                     items_summary += f" and {len(sale_data.items) - 3} more"
+                prev_total_spent = float(customer.get("total_spent", 0) or 0)
                 await db.followups.insert_one({
                     "id": str(uuid.uuid4()),
                     "sale_id": sale.id,
@@ -206,6 +212,8 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
                     "days": days,
                     "send_at": send_at,
                     "status": "pending",
+                    "is_first_purchase": prev_total_spent == 0,
+                    "cumulative_total_spent": prev_total_spent + float(total),
                     "created_at": datetime.now(timezone.utc).isoformat(),
                 })
             except Exception as _e:

@@ -26,6 +26,16 @@
 
 ## What's Been Implemented
 
+### Smart A/B Review CTA by Customer Tier (Feb 21, 2026)
+- Both loyalty and follow-up emails now vary the "Leave a review" copy based on customer tier. Priority order: **milestone > first-purchase > VIP (cumulative spend ≥ $20,000) > default**.
+  - Milestone: "★ Share the love — leave a review" (unchanged, highest-trust moment)
+  - First-purchase: "★ How was your first {business} experience?" — drives first-impression reviews
+  - VIP: "★ You're a VIP — a 5-star review would mean the world" — VIP endorsements carry extra weight
+  - Default: "★ Leave a review"
+- Centralized in `_review_cta()` helper (one place to tune copy / threshold). VIP threshold constant: `_VIP_SPEND_THRESHOLD = 20000.0`.
+- `routes/sales.py` derives `is_first_purchase` from pre-sale `customer.total_spent == 0` and computes `cumulative_total_spent = prev + sale_total`, then passes both to loyalty emails (immediate) and persists them on the `followups` doc (scheduler uses the sale-time snapshot).
+- Verified across 8 scenarios (5 loyalty + 3 follow-up) — all tiers render correct copy; blank `google_review_url` still fully hides the CTA.
+
 ### Google Review Link in Loyalty Emails (Feb 21, 2026)
 - `send_loyalty_points_email()` now accepts `review_url`; when set, a green CTA button is rendered after the points balance block.
 - Milestone emails (100 / 500 / 1000 pts) get **upgraded CTA copy** ("★ Share the love — leave a review" + "top customer" helper text) since milestone = highest-trust moment for 5-star reviews.

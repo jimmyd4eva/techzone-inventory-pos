@@ -7,6 +7,54 @@ from email.mime.multipart import MIMEMultipart
 
 from core.config import logger
 
+# VIP threshold (cumulative customer spend, in store currency) for the review-CTA upgrade.
+# Kept as a module constant so it's easy to tune in one place.
+_VIP_SPEND_THRESHOLD = 20000.0
+
+
+def _review_cta(
+    review_url: str,
+    milestone: int = None,
+    is_first_purchase: bool = False,
+    cumulative_total_spent: float = 0.0,
+    business_name: str = "TECHZONE",
+):
+    """Return (html_block, plain_text_line) for the review CTA.
+
+    Copy tier priority: milestone > first-purchase > VIP > default.
+    Returns ("", "") when review_url is falsy.
+    """
+    if not review_url:
+        return "", ""
+
+    if milestone:
+        cta_label = "★ Share the love — leave a review"
+        helper = "You're a top customer — a quick 5-star review would truly make our day."
+    elif is_first_purchase:
+        cta_label = f"★ How was your first {business_name} experience?"
+        helper = "Your first-impression review helps other customers find us — thank you!"
+    elif cumulative_total_spent >= _VIP_SPEND_THRESHOLD:
+        cta_label = "★ You're a VIP — a 5-star review would mean the world"
+        helper = "As one of our top customers, your endorsement carries extra weight."
+    else:
+        cta_label = "★ Leave a review"
+        helper = "30 seconds — it means the world to a small business."
+
+    html = f"""
+        <div style="margin:22px 0 8px 0;text-align:center;">
+          <a href="{review_url}" target="_blank"
+             style="display:inline-block;padding:14px 26px;background:#16a34a;color:#fff;
+                    text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">
+            {cta_label}
+          </a>
+          <div style="font-size:12px;color:#6b7280;margin-top:8px;">
+            {helper}
+          </div>
+        </div>
+        """
+    text = f"\n{cta_label.replace('★ ', '')}: {review_url}\n"
+    return html, text
+
 
 def send_activation_email(to_email: str, activation_code: str) -> bool:
     """Send activation code via Gmail SMTP"""
@@ -401,6 +449,8 @@ def send_loyalty_points_email(
     business_name: str = "TECHZONE",
     milestone: int = None,
     review_url: str = None,
+    is_first_purchase: bool = False,
+    cumulative_total_spent: float = 0.0,
 ) -> bool:
     """Email the customer after a sale: points earned + optional milestone celebration."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
@@ -433,29 +483,12 @@ def send_loyalty_points_email(
         else ""
     )
 
-    # Make review CTA extra prominent on milestone emails — that's the high-trust moment.
-    review_html = ""
-    if review_url:
-        cta_label = "★ Share the love — leave a review" if milestone else "★ Leave a review"
-        helper_text = (
-            "You're a top customer — a quick 5-star review would truly make our day."
-            if milestone
-            else "30 seconds — it means the world to a small business."
-        )
-        review_html = f"""
-        <div style="margin:22px 0 8px 0;text-align:center;">
-          <a href="{review_url}" target="_blank"
-             style="display:inline-block;padding:14px 26px;background:#16a34a;color:#fff;
-                    text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">
-            {cta_label}
-          </a>
-          <div style="font-size:12px;color:#6b7280;margin-top:8px;">
-            {helper_text}
-          </div>
-        </div>
-        """
-    review_text = (
-        f"\nLeave a review (means a lot): {review_url}\n" if review_url else ""
+    review_html, review_text = _review_cta(
+        review_url=review_url,
+        milestone=milestone,
+        is_first_purchase=is_first_purchase,
+        cumulative_total_spent=cumulative_total_spent,
+        business_name=business_name,
     )
 
     msg = MIMEMultipart("alternative")
@@ -517,7 +550,7 @@ def send_loyalty_points_email(
         return False
 
 
-def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14, review_url: str = None) -> bool:
+def send_followup_email(to_email: str, customer_name: str, items_summary: str, business_name: str = "TECHZONE", days_ago: int = 14, review_url: str = None, is_first_purchase: bool = False, cumulative_total_spent: float = 0.0) -> bool:
     """Friendly check-in email to a customer N days after a sale."""
     sender_email = os.environ.get("EMAIL_ADDRESS", "")
     sender_password = os.environ.get("EMAIL_PASSWORD", "")
@@ -525,22 +558,13 @@ def send_followup_email(to_email: str, customer_name: str, items_summary: str, b
         logger.warning("EMAIL_PASSWORD not set; cannot send followup email")
         return False
 
-    review_html = (
-        f"""
-        <div style="margin:20px 0;text-align:center;">
-          <a href="{review_url}" target="_blank"
-             style="display:inline-block;padding:14px 26px;background:#16a34a;color:#fff;
-                    text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;">
-            ★ Leave a review
-          </a>
-          <div style="font-size:12px;color:#6b7280;margin-top:8px;">
-            30 seconds — it means the world to a small business.
-          </div>
-        </div>
-        """
-        if review_url else ""
+    review_html, review_text = _review_cta(
+        review_url=review_url,
+        milestone=None,
+        is_first_purchase=is_first_purchase,
+        cumulative_total_spent=cumulative_total_spent,
+        business_name=business_name,
     )
-    review_text = f"\nLeave a review (means a lot): {review_url}\n" if review_url else ""
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"How's it going with your purchase from {business_name}?"
