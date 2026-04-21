@@ -718,3 +718,49 @@ async def send_summary_now(data: dict, current_user: dict = Depends(get_current_
         "range": {"start": start.isoformat(), "end": end.isoformat()},
         "recipient": to_email,
     }
+
+
+@router.get("/reports/top-customers")
+async def top_customers(limit: int = 10, current_user: dict = Depends(get_current_user)):
+    """Return top N customers by completed-sale spend."""
+    if limit < 1 or limit > 100:
+        limit = 10
+
+    # Aggregate completed sales by customer_id
+    pipeline = [
+        {"$match": {"payment_status": "completed", "customer_id": {"$ne": None}}},
+        {"$group": {
+            "_id": "$customer_id",
+            "total_spent": {"$sum": "$total"},
+            "sales_count": {"$sum": 1},
+            "last_sale_at": {"$max": "$created_at"},
+        }},
+        {"$sort": {"total_spent": -1}},
+        {"$limit": limit},
+    ]
+    agg = await db.sales.aggregate(pipeline).to_list(limit)
+
+    if not agg:
+        return []
+
+    customer_ids = [row["_id"] for row in agg]
+    customers_cursor = db.customers.find({"id": {"$in": customer_ids}}, {"_id": 0})
+    customer_map = {c["id"]: c async for c in customers_cursor}
+
+    results = []
+    for idx, row in enumerate(agg, start=1):
+        cust = customer_map.get(row["_id"])
+        if not cust:
+            continue
+        results.append({
+            "rank": idx,
+            "customer_id": row["_id"],
+            "name": cust.get("name", "Unknown"),
+            "phone": cust.get("phone"),
+            "email": cust.get("email"),
+            "total_spent": float(row["total_spent"]),
+            "sales_count": int(row["sales_count"]),
+            "last_sale_at": row["last_sale_at"],
+            "points_balance": cust.get("points_balance", 0),
+        })
+    return results

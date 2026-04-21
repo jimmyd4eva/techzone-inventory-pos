@@ -159,6 +159,20 @@ const Customers = () => {
     fetchCustomers();
   }, []);
 
+  // Auto-open coupon modal when navigated from Dashboard with ?coupon_for=<id>
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetId = params.get('coupon_for');
+    if (!targetId || customers.length === 0) return;
+    const cust = customers.find(c => c.id === targetId);
+    if (cust) {
+      openCouponModal(cust);
+      // Clean URL so a refresh doesn't re-open
+      window.history.replaceState({}, '', '/customers');
+    }
+     
+  }, [customers]);
+
   useEffect(() => {
     const filtered = customers.filter(customer =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

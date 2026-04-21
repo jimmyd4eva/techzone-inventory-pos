@@ -26,6 +26,11 @@
 
 ## What's Been Implemented
 
+### Dashboard: Top Customers Widget (Feb 21, 2026)
+- New `GET /api/reports/top-customers?limit=10` aggregates completed sales per customer and returns rank/name/contact/orders/total_spent/last_sale_at.
+- Dashboard shows a "Top Customers" card with gold/silver/bronze rank badges and a one-click **🎫 Coupon** button per row.
+- Clicking Coupon navigates to `/customers?coupon_for=<id>` → Customers.js auto-opens the personalized coupon modal (from there: SMS/WhatsApp/Email share).
+
 ### Coupon Sharing (SMS / WhatsApp / Email) — Feb 21, 2026
 - Hybrid share panel after creating a personalized coupon from the Customer Detail page:
   - **SMS button** — opens native messaging app via `sms:+E164?body=...` with the coupon text pre-filled.
