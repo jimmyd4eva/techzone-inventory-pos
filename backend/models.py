@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    remember_me: bool = False  # When true, cookie Max-Age = 30 days instead of 24h
 
 class Customer(BaseModel):
     model_config = ConfigDict(extra="ignore")

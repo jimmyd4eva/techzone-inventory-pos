@@ -26,6 +26,11 @@
 
 ## What's Been Implemented
 
+### "Remember this device for 30 days" (Feb 21, 2026)
+- New checkbox on Login page (testid `remember-me-checkbox`) — when ticked, the login request sends `remember_me: true`.
+- Backend: `UserLogin` model has a new `remember_me: bool = False` field (backward compat — omit it and login still works). `_set_auth_cookie()` accepts `remember_me` and uses `Max-Age=2592000` (30 days) instead of the default `86400` (24h).
+- Verified via curl: both paths tested, 30d max-age correct, backward compat preserved. All 66 tests pass.
+
 ### Auth Migration: localStorage → httpOnly Cookies (Feb 21, 2026) [Task f]
 
 **Backend changes:**

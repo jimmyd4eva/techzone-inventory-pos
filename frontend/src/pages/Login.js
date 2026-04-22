@@ -7,7 +7,8 @@ const API = `${BACKEND_URL}/api`;
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
+    remember_me: false
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -133,6 +134,25 @@ const Login = ({ onLogin }) => {
               data-testid="password-input"
               placeholder="Enter your password"
             />
+          </div>
+
+          <div className="form-group" style={{ marginTop: '4px' }}>
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: '14px', color: '#475569', cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                data-testid="remember-me-checkbox"
+                checked={formData.remember_me}
+                onChange={(e) => setFormData({ ...formData, remember_me: e.target.checked })}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              Remember this device for 30 days
+            </label>
           </div>
 
           <button 

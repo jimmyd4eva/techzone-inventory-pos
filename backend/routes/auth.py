@@ -25,16 +25,17 @@ router = APIRouter(tags=["Auth"])
 _COOKIE_SECURE = os.environ.get("REACT_APP_BACKEND_URL", "").startswith("https://") or \
     os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 _COOKIE_MAX_AGE = int(timedelta(hours=JWT_EXPIRATION_HOURS).total_seconds())
+_REMEMBER_ME_MAX_AGE = int(timedelta(days=30).total_seconds())
 
 
-def _set_auth_cookie(response: Response, token: str) -> None:
+def _set_auth_cookie(response: Response, token: str, remember_me: bool = False) -> None:
     response.set_cookie(
         key=AUTH_COOKIE_NAME,
         value=token,
         httponly=True,
         secure=_COOKIE_SECURE,
         samesite="lax",
-        max_age=_COOKIE_MAX_AGE,
+        max_age=_REMEMBER_ME_MAX_AGE if remember_me else _COOKIE_MAX_AGE,
         path="/",
     )
 
@@ -95,12 +96,12 @@ async def login(credentials: UserLogin, response: Response):
     
     # Create token
     token = create_token(user_doc['id'], user_doc['role'], user_doc['username'])
-    _set_auth_cookie(response, token)
-    
+    _set_auth_cookie(response, token, remember_me=credentials.remember_me)
+
     # Remove password hash from response
     user_doc.pop('password_hash', None)
     user_doc.pop('_id', None)
-    
+
     return {"user": user_doc, "token": token}
 
 
