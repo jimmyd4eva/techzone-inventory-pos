@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { Download, Database, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,10 +14,52 @@ const API = `${BACKEND_URL}/api`;
  */
 export const DataBackupTab = () => {
   const [downloading, setDownloading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [msg, setMsg] = useState(null);
   const [lastBackupAt, setLastBackupAt] = useState(
     localStorage.getItem('last_backup_at') || null
   );
+  const fileRef = useRef(null);
+
+  const handleRestore = async (event) => {
+    const f = event.target.files?.[0];
+    if (!f) return;
+    // Deliberately scary confirmation — this action is irreversible.
+    const go = window.confirm(
+      `This will REPLACE the current database with the contents of "${f.name}".\n\n` +
+      'Every customer, sale, repair and setting will be overwritten. You may be ' +
+      'signed out after the restore completes.\n\n' +
+      'Have you taken a fresh backup first? Click OK only if you are sure.'
+    );
+    if (!go) {
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+    setRestoring(true);
+    setMsg(null);
+    try {
+      const form = new FormData();
+      form.append('file', f);
+      const r = await axios.post(`${API}/admin/restore`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const restored = r.data?.total_restored ?? 0;
+      const collCount = Object.keys(r.data?.collections || {}).length;
+      setMsg({
+        type: 'success',
+        text: `Restore complete — ${restored} documents across ${collCount} collections. Signing you out so you can log in with the restored credentials…`,
+      });
+      setTimeout(() => {
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }, 2200);
+    } catch (e) {
+      setMsg({ type: 'error', text: e.response?.data?.detail || 'Restore failed. Your data is unchanged.' });
+    } finally {
+      setRestoring(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -104,6 +146,40 @@ export const DataBackupTab = () => {
           {msg.text}
         </div>
       ) : null}
+
+      {/* ----- Restore from backup (danger zone) ----- */}
+      <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px dashed #e5e7eb' }}>
+        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={16} />
+          Danger zone · Restore from backup
+        </h4>
+        <p style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 14px 0' }}>
+          Pick a <code>.zip</code> produced by the Download button above. Every collection it contains will be <b>replaced</b> — current data will be lost. You will be signed out afterwards so you can log in with the restored credentials.
+        </p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".zip,application/zip"
+          onChange={handleRestore}
+          disabled={restoring}
+          style={{ display: 'none' }}
+          data-testid="restore-file-input"
+        />
+        <button
+          type="button"
+          data-testid="restore-backup-btn"
+          onClick={() => fileRef.current?.click()}
+          disabled={restoring}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '8px 16px', background: '#fff', color: '#b91c1c',
+            border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+            cursor: restoring ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <Upload size={14} /> {restoring ? 'Restoring…' : 'Restore from .zip'}
+        </button>
+      </div>
     </div>
   );
 };

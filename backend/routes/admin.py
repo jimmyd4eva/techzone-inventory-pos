@@ -3,7 +3,7 @@ import io
 import json
 import zipfile
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
@@ -59,6 +59,75 @@ async def download_backup(current_user: dict = Depends(get_current_user)):
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# Collections intentionally NOT wiped on restore, to avoid locking the admin
+# out of their own machine mid-operation. They are still replaced if the zip
+# contains them — just never blindly cleared beforehand.
+_PROTECTED_COLLECTIONS = {"activated_devices"}
+
+
+@router.post("/admin/restore")
+async def restore_backup(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Replace every collection in the DB with the JSON documents in the
+    uploaded backup zip. Admin-only. DESTRUCTIVE — the frontend must show a
+    confirmation dialog before calling this.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can restore data")
+
+    if not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Please upload a .zip file produced by the Backup button")
+
+    try:
+        payload = await file.read()
+        zf = zipfile.ZipFile(io.BytesIO(payload))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="File is not a valid zip archive")
+
+    names = [n for n in zf.namelist() if n.endswith(".json") and n != "_manifest.json"]
+    if not names:
+        raise HTTPException(status_code=400, detail="Zip contains no collection JSON files")
+
+    # Quick sanity check: every entry must parse as a JSON list of objects
+    # BEFORE we start mutating the DB. This turns a partial-restore disaster
+    # into a clean "bad file, nothing changed" error.
+    parsed: Dict[str, List[Dict[str, Any]]] = {}
+    for n in names:
+        try:
+            docs = json.loads(zf.read(n).decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise HTTPException(status_code=400, detail=f"{n} is not valid JSON: {e}")
+        if not isinstance(docs, list):
+            raise HTTPException(status_code=400, detail=f"{n} must be a JSON array of documents")
+        parsed[n[:-5]] = docs  # strip ".json"
+
+    # Apply: clear + bulk-insert per collection.
+    summary: Dict[str, Dict[str, Any]] = {}
+    total_restored = 0
+    for coll_name, docs in parsed.items():
+        try:
+            if coll_name not in _PROTECTED_COLLECTIONS:
+                deleted = await db[coll_name].delete_many({})
+                deleted_count = deleted.deleted_count
+            else:
+                deleted_count = 0  # leave activated_devices intact
+            if docs:
+                await db[coll_name].insert_many(docs)
+            summary[coll_name] = {"deleted": deleted_count, "inserted": len(docs)}
+            total_restored += len(docs)
+        except Exception as e:  # pragma: no cover — defensive
+            summary[coll_name] = {"error": str(e)}
+
+    return {
+        "status": "completed",
+        "total_restored": total_restored,
+        "collections": summary,
+        "note": "You may need to sign in again — the users collection was replaced.",
+    }
 
 
 @router.post("/admin/migrate-data")

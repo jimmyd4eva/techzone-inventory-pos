@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Restore from Backup (Feb 22, 2026) ✅
+- **New `POST /api/admin/restore`** endpoint (admin-only, multipart) accepts a zip produced by the Backup endpoint. Validates it parses as valid JSON BEFORE mutating the DB (turns a partial-restore disaster into a clean "bad file, nothing changed" error). Then for each `<collection>.json` entry: `delete_many({})` + `insert_many(docs)`.
+- `activated_devices` is the single protected collection — it's never blindly wiped (only replaced if the zip contains it), so the current workstation can't accidentally lock itself out mid-restore.
+- Curl-verified round-trip: snapshot → pollute (add bogus supplier) → restore → supplier count returns to original. 814 documents across 15 collections restored correctly, admin can still log in afterwards.
+- Error paths tested: non-zip extension (400 "Please upload a .zip file"), corrupted zip (400 "File is not a valid zip archive"), zip without JSON (400 "Zip contains no collection JSON files").
+- **Frontend**: red "Danger zone · Restore from backup" section inside the existing Backup tab (testid `restore-backup-btn`, `restore-file-input`). Uses a native `<input type=file accept=".zip">`, triggers a deliberately scary `window.confirm` dialog before upload, and after success auto-logs the user out + bounces to `/login` so they can sign in with the restored credentials.
+
+
 ### Data & Backup Panel (Feb 22, 2026) ✅
 - **New `GET /api/admin/backup`** endpoint (admin-only) in `routes/admin.py` streams an in-memory ZIP containing one `.json` per collection + a `_manifest.json`. No `mongodump` binary required — works identically on cloud preview and portable Windows builds. Verified: 16 collections exported, 51KB zip, non-admin returns 401/403.
 - **New "Backup" tab** in Settings (`DataBackupTab.js`, testid `section-backup`, `download-backup-btn`, `data-backup-tab`, `backup-msg`): informative copy, recommendation callout, purple primary Download button with downloading state, last-backup-on-this-browser timestamp cached in `localStorage.last_backup_at`.
