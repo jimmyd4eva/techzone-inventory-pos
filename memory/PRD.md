@@ -26,6 +26,16 @@
 
 ## What's Been Implemented
 
+### One-Click Receipt Themes (Feb 21, 2026)
+- Added a **"One-click themes"** row at the top of the Receipt Footer Messages card in Settings → Business Information. Four presets:
+  - **Classic Thermal** — Courier monospace, centered, uppercase "THANK YOU!" — classic register tape look.
+  - **Boutique** — Georgia serif, italic "Thank you, dearly." with warm-brown accent + "Small shop. Big heart." tagline.
+  - **Bold Retail** — Impact 24px red "THANKS FOR SHOPPING!" with Arial warranty reminder in footer.
+  - **Minimal** — Verdana, single line, no tagline — clean and modern.
+- Each button preview-renders in its own theme font/color so operators can see before clicking. Clicking sets only the three footer rich-text fields (preserves user's business name / address / phone untouched).
+- Every theme's HTML is pre-formatted with `<span>` / `<div>` tags that round-trip through the existing DOMPurify sanitizer (verified: `font-family`, `font-size`, `color` all preserved for all four themes).
+- Operators can still tweak individual fields after applying a theme. Testids: `receipt-theme-classic / boutique / bold / minimal`.
+
 ### Font-Family Selector on All Rich-Text Fields (Feb 21, 2026)
 - `SimpleRichTextEditor` toolbar now includes a font-family dropdown (testid `rte-font-family`) with 9 curated options: Default, Sans-Serif, Serif, **Monospace (receipt)** for classic thermal-printer look, Georgia, Verdana, Trebuchet MS, Comic Sans, Impact.
 - Applies to the currently-selected range; uses `span[style="font-family: ..."]` so it composes cleanly with existing bold / italic / underline / font-size / color.

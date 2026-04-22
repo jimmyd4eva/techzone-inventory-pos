@@ -177,8 +177,89 @@ export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUp
           Receipt Footer Messages
         </h3>
         <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 14px 0' }}>
-          These three lines appear at the bottom of every on-screen receipt after a sale. Each supports bold, italic, underline, font size, alignment, and color.
+          These three lines appear at the bottom of every on-screen receipt after a sale. Each supports bold, italic, underline, font size, alignment, font family, and color.
         </p>
+
+        {/* Quick Themes */}
+        <div style={{
+          padding: '12px',
+          background: '#fff',
+          border: '1px solid #e9d5ff',
+          borderRadius: '8px',
+          marginBottom: '16px',
+        }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b21a8', marginBottom: '8px' }}>
+            One-click themes
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              {
+                id: 'classic',
+                label: 'Classic Thermal',
+                preview: { family: '"Courier New", Courier, monospace', color: '#111827' },
+                apply: {
+                  receipt_thankyou_html: '<div style="text-align:center;font-family:&quot;Courier New&quot;, Courier, monospace;"><b><span style="font-size:18px;">THANK YOU!</span></b></div>',
+                  receipt_tagline_html: '<div style="text-align:center;font-family:&quot;Courier New&quot;, Courier, monospace;font-size:13px;">Quality repairs &middot; Trusted service</div>',
+                  receipt_footer_note_html: '<div style="text-align:center;font-family:&quot;Courier New&quot;, Courier, monospace;font-size:11px;color:#6b7280;">PLEASE KEEP THIS RECEIPT FOR YOUR RECORDS</div>',
+                },
+              },
+              {
+                id: 'boutique',
+                label: 'Boutique',
+                preview: { family: 'Georgia, "Times New Roman", serif', color: '#7c2d12' },
+                apply: {
+                  receipt_thankyou_html: '<div style="text-align:center;font-family:Georgia, &quot;Times New Roman&quot;, serif;"><i><span style="font-size:20px;color:rgb(124,45,18);">Thank you, dearly.</span></i></div>',
+                  receipt_tagline_html: '<div style="text-align:center;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:14px;"><i>Small shop. Big heart.</i></div>',
+                  receipt_footer_note_html: '<div style="text-align:center;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:12px;color:#6b7280;"><i>Every visit makes our day — please come again.</i></div>',
+                },
+              },
+              {
+                id: 'bold',
+                label: 'Bold Retail',
+                preview: { family: 'Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif', color: '#dc2626' },
+                apply: {
+                  receipt_thankyou_html: '<div style="text-align:center;font-family:Impact, Haettenschweiler, &quot;Arial Narrow Bold&quot;, sans-serif;"><span style="font-size:24px;color:rgb(220,38,38);letter-spacing:1px;">THANKS FOR SHOPPING!</span></div>',
+                  receipt_tagline_html: '<div style="text-align:center;font-family:Arial, Helvetica, sans-serif;font-size:13px;"><b>Fast. Fair. Fixed.</b></div>',
+                  receipt_footer_note_html: '<div style="text-align:center;font-family:Arial, Helvetica, sans-serif;font-size:11px;color:#374151;">Bring this receipt for <b>30-day warranty</b> claims.</div>',
+                },
+              },
+              {
+                id: 'minimal',
+                label: 'Minimal',
+                preview: { family: 'Verdana, Geneva, sans-serif', color: '#111827' },
+                apply: {
+                  receipt_thankyou_html: '<div style="text-align:center;font-family:Verdana, Geneva, sans-serif;"><span style="font-size:16px;">Thank you.</span></div>',
+                  receipt_tagline_html: '',
+                  receipt_footer_note_html: '<div style="text-align:center;font-family:Verdana, Geneva, sans-serif;font-size:11px;color:#9ca3af;">Keep this receipt for returns.</div>',
+                },
+              },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                data-testid={`receipt-theme-${t.id}`}
+                onClick={() => setSettings({ ...settings, ...t.apply })}
+                title={`Apply the ${t.label} theme to all three footer fields`}
+                style={{
+                  padding: '8px 14px',
+                  background: '#fff',
+                  color: t.preview.color,
+                  border: '1px solid #c4b5fd',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: t.preview.family,
+                  cursor: 'pointer',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '11px', color: '#6b7280', margin: '8px 0 0 0' }}>
+            Preview each theme in the live receipt below — you can still tweak individual fields after applying.
+          </p>
+        </div>
 
         <div className="form-group" style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
