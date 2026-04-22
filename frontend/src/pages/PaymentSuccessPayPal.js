@@ -20,12 +20,9 @@ const PaymentSuccessPayPal = () => {
   }, [token]);
 
   const capturePayment = async () => {
-    const authToken = localStorage.getItem('token');
 
     try {
-      const response = await axios.post(`${API}/payments/paypal/capture/${token}`, {}, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
+      const response = await axios.post(`${API}/payments/paypal/capture/${token}`, {});
 
       if (response.data.payment_status === 'completed') {
         setStatus('success');

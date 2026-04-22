@@ -17,11 +17,9 @@ const AutoSummaryCard = ({ settings, setSettings }) => {
     setSending(period);
     setMsg({ type: '', text: '' });
     try {
-      const token = localStorage.getItem('token');
       const r = await axios.post(
         `${API}/reports/send-summary-now`,
-        { period },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { period }
       );
       if (r.data.sent) {
         setMsg({ type: 'success', text: `${period === 'weekly' ? 'Weekly' : 'Monthly'} summary sent to ${r.data.recipient}` });

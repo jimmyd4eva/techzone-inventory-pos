@@ -92,15 +92,12 @@ const Settings = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
-  const authHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  });
 
   // Cash Register
   const fetchCurrentShift = async () => {
     setLoadingRegister(true);
     try {
-      const response = await axios.get(`${API}/cash-register/current`, { headers: authHeaders() });
+      const response = await axios.get(`${API}/cash-register/current`);
       setCurrentShift(response.data.shift);
       setShiftTransactions(response.data.transactions || []);
       setShiftTotals(response.data.totals || {});
@@ -113,7 +110,7 @@ const Settings = () => {
 
   const fetchShiftHistory = async () => {
     try {
-      const response = await axios.get(`${API}/cash-register/history?limit=10`, { headers: authHeaders() });
+      const response = await axios.get(`${API}/cash-register/history?limit=10`);
       setShiftHistory(response.data);
     } catch (error) {
       console.error('Error fetching shift history:', error);
@@ -127,8 +124,7 @@ const Settings = () => {
     }
     try {
       await axios.post(`${API}/cash-register/open`,
-        { opening_amount: parseFloat(openingAmount) },
-        { headers: authHeaders() }
+        { opening_amount: parseFloat(openingAmount) }
       );
       setMessage({ type: 'success', text: 'Shift opened successfully!' });
       setOpeningAmount('');
@@ -148,8 +144,7 @@ const Settings = () => {
     }
     try {
       const response = await axios.post(`${API}/cash-register/close`,
-        { closing_amount: parseFloat(closingAmount), notes: closingNotes },
-        { headers: authHeaders() }
+        { closing_amount: parseFloat(closingAmount), notes: closingNotes }
       );
       const summary = response.data.summary;
       const status = summary.difference > 0 ? 'OVER' : summary.difference < 0 ? 'SHORT' : 'BALANCED';
@@ -177,8 +172,7 @@ const Settings = () => {
           transaction_type: transactionType,
           amount: parseFloat(transactionAmount),
           description: transactionDesc
-        },
-        { headers: authHeaders() }
+        }
       );
       setMessage({ type: 'success', text: `${transactionType.charAt(0).toUpperCase() + transactionType.slice(1)} recorded!` });
       setTransactionAmount('');
@@ -192,7 +186,6 @@ const Settings = () => {
   const exportShiftReport = async (shiftId) => {
     try {
       const response = await axios.get(`${API}/cash-register/report/${shiftId}`, {
-        headers: authHeaders(),
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -214,7 +207,7 @@ const Settings = () => {
   const fetchDevices = async () => {
     setLoadingDevices(true);
     try {
-      const response = await axios.get(`${API}/activation/list`, { headers: authHeaders() });
+      const response = await axios.get(`${API}/activation/list`);
       setDevices(response.data);
     } catch (error) {
       console.error('Error fetching devices:', error);
@@ -230,7 +223,7 @@ const Settings = () => {
     }
     setRevokingDevice(deviceId);
     try {
-      await axios.delete(`${API}/activation/revoke/${encodeURIComponent(deviceId)}`, { headers: authHeaders() });
+      await axios.delete(`${API}/activation/revoke/${encodeURIComponent(deviceId)}`);
       setDevices(devices.filter(d => d.device_id !== deviceId));
       setMessage({ type: 'success', text: 'Device activation revoked successfully' });
     } catch (error) {
@@ -263,7 +256,7 @@ const Settings = () => {
   // Settings
   const fetchSettings = async () => {
     try {
-      const response = await axios.get(`${API}/settings`, { headers: authHeaders() });
+      const response = await axios.get(`${API}/settings`);
       setSettings({
         tax_rate: (response.data.tax_rate || 0) * 100,
         tax_enabled: response.data.tax_enabled === true,
@@ -328,7 +321,6 @@ const Settings = () => {
       formData.append('file', file);
       const response = await axios.post(`${API}/upload/logo`, formData, {
         headers: {
-          ...authHeaders(),
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -383,7 +375,7 @@ const Settings = () => {
         custom_theme_thankyou_html: settings.custom_theme_thankyou_html,
         custom_theme_tagline_html: settings.custom_theme_tagline_html,
         custom_theme_footer_note_html: settings.custom_theme_footer_note_html
-      }, { headers: authHeaders() });
+      });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {
       console.error('Error saving settings:', error);

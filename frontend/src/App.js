@@ -111,31 +111,48 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    }
-    setLoading(false);
+    // Auth state now lives in an httpOnly cookie (not localStorage). Hydrate
+    // the user by calling /auth/me — the cookie is sent automatically because
+    // `axios.defaults.withCredentials = true`. If the cookie is missing,
+    // expired, or revoked, we clear any stale cached `user` object and stay
+    // on the login screen.
+    const hydrate = async () => {
+      const cachedUser = localStorage.getItem('user');
+      if (!cachedUser) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const me = await axios.get(`${API_URL}/api/auth/me`);
+        setUser(me.data);
+        localStorage.setItem('user', JSON.stringify(me.data));
+      } catch {
+        localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    hydrate();
   }, []);
 
-  const handleLogin = (userData, token) => {
-    localStorage.setItem('token', token);
+  const handleLogin = (userData) => {
+    // We no longer store the JWT in localStorage — the backend sets an
+    // httpOnly cookie `techzone_token` that JavaScript cannot read, which
+    // closes the classic XSS token-theft attack surface. Only the non-
+    // sensitive user profile is cached locally so the UI can render instantly
+    // on the next boot while /auth/me re-validates.
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
   const handleLogout = async () => {
-    // Clear both the httpOnly cookie (server-side) and any lingering localStorage
-    // token (backward compat during the cookie rollout).
     try {
       await axios.post(`${API_URL}/api/auth/logout`);
     } catch (e) {
       // Non-fatal — the backend request may fail if already logged out / offline.
       console.debug('logout endpoint failed:', e?.message);
     }
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
   };

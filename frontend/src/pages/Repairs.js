@@ -45,10 +45,7 @@ const Repairs = () => {
 
   const fetchRepairs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/repairs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/repairs`);
       setRepairs(response.data);
       setFilteredRepairs(response.data);
     } catch (error) {
@@ -60,10 +57,7 @@ const Repairs = () => {
 
   const fetchCustomers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/customers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/customers`);
       setCustomers(response.data);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -72,17 +66,12 @@ const Repairs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
 
     try {
       if (editingRepair) {
-        await axios.put(`${API}/repairs/${editingRepair.id}`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API}/repairs/${editingRepair.id}`, formData);
       } else {
-        await axios.post(`${API}/repairs`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API}/repairs`, formData);
       }
       fetchRepairs();
       closeModal();
@@ -95,10 +84,7 @@ const Repairs = () => {
     if (!window.confirm('Are you sure you want to delete this repair job?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/repairs/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/repairs/${id}`);
       fetchRepairs();
     } catch (error) {
       console.error('Error deleting repair:', error);
@@ -150,10 +136,7 @@ const Repairs = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/customers`, newCustomerData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(`${API}/customers`, newCustomerData);
       
       // Refresh customers list
       await fetchCustomers();
@@ -179,10 +162,7 @@ const Repairs = () => {
 
   const updateStatus = async (repairId, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API}/repairs/${repairId}`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API}/repairs/${repairId}`, { status: newStatus });
       fetchRepairs();
     } catch (error) {
       console.error('Error updating status:', error);

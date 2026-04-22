@@ -14,7 +14,6 @@ import { UpcomingBirthdaysWidget } from '../components/dashboard/UpcomingBirthda
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -39,7 +38,7 @@ const Dashboard = () => {
   useEffect(() => {
     const safe = (url, setter, opts = {}) =>
       axios
-        .get(`${API}${url}`, { headers: authHeader() })
+        .get(`${API}${url}`)
         .then((r) => setter(opts.mapper ? opts.mapper(r.data) : r.data || (opts.defaultValue ?? [])))
         .catch((e) => {
           if (!opts.silent) console.error(`Error fetching ${url}:`, e);
@@ -61,7 +60,7 @@ const Dashboard = () => {
         if (plain) setBusinessName(plain);
       }).catch(() => {}),
     ]).finally(() => setLoading(false));
-    // Intentional mount-once effect: API, axios, authHeader and setters are stable
+    // Intentional mount-once effect: API, axios, and setters are stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -75,8 +74,7 @@ const Dashboard = () => {
     setPoModal({ supplier, items });
     try {
       const r = await axios.get(
-        `${API}/suppliers/lookup?name=${encodeURIComponent(supplier)}`,
-        { headers: authHeader() }
+        `${API}/suppliers/lookup?name=${encodeURIComponent(supplier)}`
       );
       if (r.data) {
         setPoModal({ supplier, items, directory: r.data });

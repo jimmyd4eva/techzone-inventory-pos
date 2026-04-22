@@ -22,8 +22,7 @@ const Suppliers = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const r = await axios.get(`${API}/suppliers`, { headers: { Authorization: `Bearer ${token}` } });
+      const r = await axios.get(`${API}/suppliers`);
       setSuppliers(r.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -55,12 +54,10 @@ const Suppliers = () => {
     }
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
       if (modal.editing) {
-        await axios.put(`${API}/suppliers/${modal.editing.id}`, form, { headers });
+        await axios.put(`${API}/suppliers/${modal.editing.id}`, form);
       } else {
-        await axios.post(`${API}/suppliers`, form, { headers });
+        await axios.post(`${API}/suppliers`, form);
       }
       setMsg({ type: 'success', text: `Supplier ${modal.editing ? 'updated' : 'created'}` });
       setTimeout(() => setModal(null), 900);
@@ -75,8 +72,7 @@ const Suppliers = () => {
   const remove = async (s) => {
     if (!window.confirm(`Delete supplier "${s.name}"?`)) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/suppliers/${s.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/suppliers/${s.id}`);
       fetchSuppliers();
     } catch (e) {
       alert(e.response?.data?.detail || 'Failed to delete');

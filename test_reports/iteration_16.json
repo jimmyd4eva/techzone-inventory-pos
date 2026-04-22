@@ -1,0 +1,65 @@
+{
+  "summary": "Frontend-only regression after XSS-hardening sweep that removed all localStorage token usage in favor of httpOnly cookie auth. 11/12 verifications PASS (cookie-only auth proven, every nav page loads via cookie, Settings + new Security tab works, hard-refresh re-hydrates from /api/auth/me, 0 failed /api/* requests). 1 CRITICAL UNRELATED regression discovered: Sales.js has 4 undefined-symbol references that crash the page with ReferenceError on render and the resulting dev error overlay blocks all further SPA navigation (which is why the logout button could not be clicked in the second test run).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Sales (/app/frontend/src/pages/Sales.js)",
+        "issue": "ReferenceError: categories is not defined. JSX at lines 472-475 references `categories`, `selectedCategory`, `setSelectedCategory`, `filteredItems` but NONE of those identifiers are declared/imported anywhere in the file (state only has `inventory`, `filteredInventory`, `searchTerm`). The component throws on first render → React shows the dev red error overlay full-screen → all subsequent SPA route changes appear blank (body innerText length = 0) and the Logout sidebar button cannot be clicked because the overlay intercepts pointer events.",
+        "selector": "[data-testid=\"sales-page\"] (never mounts)",
+        "priority": "CRITICAL",
+        "file_lines": "Sales.js:472-475",
+        "console_error": "ReferenceError: categories is not defined  at Sales (bundle.js:77666:21)"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Login flow (admin/admin123) → redirects to /, returns 200, NO `token` key written to localStorage (proves cookie-only auth)",
+    "`techzone_token` httpOnly cookie set by login response: httpOnly=true, sameSite=Lax, secure=true",
+    "`user` object IS persisted in localStorage (expected — non-sensitive)",
+    "Authenticated pages load without 401: Dashboard, Inventory (1248 chars), SalesHistory (1370), Repairs (690), Customers (1639), Suppliers (340), Coupons (2755), Users (452), Reports (456)",
+    "0 failed /api/* requests across full nav sweep (cookie auth flowing correctly with withCredentials)",
+    "Settings page: all 7 tabs clickable — Business Info, Cash Register, Pricing, Tax, Points System, Devices, Security",
+    "NEW Security tab renders [data-testid=section-security], [data-testid=revoke-other-sessions-btn], [data-testid=refresh-sessions-btn], and lists 5 active sessions with [data-testid^=revoke-session-] entries",
+    "Refresh-sessions-btn click works (no error)",
+    "Hard refresh on /dashboard while logged in: stays on /dashboard, /api/auth/me re-hydrates user (token still null in localStorage, user still present)",
+    "Login form testids work: [data-testid=username-input], [data-testid=password-input], [data-testid=remember-me-checkbox]",
+    "Cookies visible to browser after login: cf_clearance, __cf_bm, ph_phc_*_posthog, techzone_token (techzone_token is HttpOnly so document.cookie does NOT expose it — verified)"
+  ],
+  "not_verified_due_to_blocking_bug": [
+    "Logout flow (POST /api/auth/logout, cookie cleared, user removed from LS, redirect to /login, protected-route bounce after logout) — could not click Logout sidebar button because Sales.js error overlay covered the page after navigating to /sales. First test run navigated /sales briefly without error (body_len=0 anyway) and could not find logout selector either — overlay was already up."
+  ],
+  "test_report_links": [
+    "/app/backend/tests/ (NOT re-run this round — frontend-only request)"
+  ],
+  "action_items": [
+    "FIX Sales.js lines 472-475 — either (a) remove the categories/selectedCategory/filteredItems props from <ProductSelection .../> if no longer needed, or (b) re-add the missing useState hooks + categories fetch (probably from /api/inventory or /api/categories) and a derived filteredItems memo. Strongly suspect this is a leftover from a refactor unrelated to the XSS sweep but it was masked because Inventory/Dashboard render before Sales was visited.",
+    "After fix, re-test: navigate /sales → ProductSelection list shows products with category filter; then click sidebar Logout → confirm POST /api/auth/logout 200, techzone_token cookie cleared (Set-Cookie with Max-Age=0), localStorage.user removed, redirect to /login, and re-attempting /dashboard bounces back to /login."
+  ],
+  "critical_code_review_comments": [
+    "Sales.js declares `const user = JSON.parse(localStorage.getItem('user'))` at module init (line 51). If localStorage is cleared in another tab while this page is open, parse will receive `null` (which JSON.parse handles → null) but downstream usages of `user.role` etc. will throw. Move into useState + useEffect or guard with `?.`.",
+    "Removing token Bearer headers across many files is fine, but a CI safety-net is missing: add an ESLint rule (no-restricted-syntax for `localStorage.getItem('token')`) and a no-undef pre-build check would have caught the Sales.js regression before deploy. The Sales bug shows that removing imports/state without updating JSX silently passes webpack until runtime.",
+    "Security tab lists 5 sessions including 3 `curl on Unknown OS` rows — leftover from backend pytest sessions. Consider auto-revoking very-old sessions (>30 days) or letting admin filter UA prefixes for cleanliness.",
+    "App.js's hydration on boot via /api/auth/me is good, but if the call fails with a network error (not 401) it should show a retry rather than silently bouncing to /login — current behaviour was not exhaustively tested but worth a code review."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "not tested this round (frontend-only request)",
+    "frontend": "92% — 11/12 frontend regression checks pass; 1 critical Sales-page ReferenceError blocks Sales + cascades to logout test"
+  },
+  "test_credentials": {
+    "admin_username": "admin",
+    "admin_password": "admin123",
+    "device_bypass": "localStorage.device_id='TEST-DEVICE'; localStorage.device_activated='true' BEFORE first authenticated load"
+  },
+  "seed_data_creation": "None — read-only verification of existing data.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Cookie-only auth migration is otherwise SOLID — every page tested except Sales hits backend successfully via the httpOnly techzone_token cookie alone (no Bearer header sent, no token in localStorage). The single blocker is Sales.js using 4 undefined identifiers in JSX (categories, selectedCategory, setSelectedCategory, filteredItems). Once that is restored, also re-verify the logout flow (could not be tested this round because the dev error overlay from Sales prevented clicking the sidebar Logout button). Use the remember-me-checkbox=false default; cookie Max-Age=86400 (24h) was observed which is fine.",
+  "rca of the issue": "Sales.js Reference Error RCA: A prior refactor (likely unrelated to the cookie/XSS sweep but recently merged) extracted `<ProductSelection>` into its own component and was supposed to lift state up — but the lifted state (`categories`, `selectedCategory`, `setSelectedCategory`, `filteredItems`) was never actually declared in the parent Sales component. JSX at lines 472-475 still passes those identifiers down. Webpack/Babel does not emit a build-time error for undeclared identifiers used inside JSX expressions, so this passed CI silently. At runtime, the first render evaluates `categories={categories}` → ReferenceError → React error boundary not configured → CRA dev overlay takes over the entire viewport. Reproduction: log in → click Sidebar 'Sales' (or navigate to /sales). Mitigation: declare missing state in Sales.js and a fetch for categories (probably distinct values from inventory.category), or remove the props if ProductSelection is supposed to derive them internally."
+}

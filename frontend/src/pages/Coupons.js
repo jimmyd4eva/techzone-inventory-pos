@@ -62,10 +62,7 @@ const Coupons = () => {
 
   const fetchCoupons = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/coupons`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/coupons`);
       setCoupons(response.data);
     } catch (error) {
       console.error('Error fetching coupons:', error);
@@ -76,10 +73,7 @@ const Coupons = () => {
 
   const fetchCustomers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/customers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/customers`);
       setCustomers(response.data);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -133,7 +127,6 @@ const Coupons = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
       const selectedCust = formData.customer_id
         ? customers.find(c => c.id === formData.customer_id)
         : null;
@@ -148,13 +141,9 @@ const Coupons = () => {
       };
 
       if (editingCoupon) {
-        await axios.put(`${API}/coupons/${editingCoupon.id}`, data, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API}/coupons/${editingCoupon.id}`, data);
       } else {
-        await axios.post(`${API}/coupons`, data, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API}/coupons`, data);
       }
 
       fetchCoupons();
@@ -168,10 +157,7 @@ const Coupons = () => {
     if (!window.confirm('Are you sure you want to delete this coupon?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/coupons/${couponId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/coupons/${couponId}`);
       fetchCoupons();
     } catch (error) {
       alert(error.response?.data?.detail || 'Failed to delete coupon');
@@ -180,10 +166,7 @@ const Coupons = () => {
 
   const toggleActive = async (coupon) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API}/coupons/${coupon.id}`, { is_active: !coupon.is_active }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API}/coupons/${coupon.id}`, { is_active: !coupon.is_active });
       fetchCoupons();
     } catch (error) {
       alert('Failed to update coupon status');

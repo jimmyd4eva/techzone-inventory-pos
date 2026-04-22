@@ -52,7 +52,7 @@ const Login = ({ onLogin }) => {
 
     try {
       const response = await axios.post(`${API}/auth/login`, formData);
-      onLogin(response.data.user, response.data.token);
+      onLogin(response.data.user);
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
     } finally {

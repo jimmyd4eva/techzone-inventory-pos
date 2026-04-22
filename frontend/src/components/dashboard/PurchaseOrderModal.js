@@ -69,7 +69,6 @@ export const PurchaseOrderModal = ({ poModal, setPoModal }) => {
     }
     setPoSending(true);
     try {
-      const token = localStorage.getItem('token');
       const r = await axios.post(
         `${API}/inventory/email-purchase-order`,
         {
@@ -77,8 +76,7 @@ export const PurchaseOrderModal = ({ poModal, setPoModal }) => {
           supplier_name: poModal.supplier,
           note: poNote,
           item_ids: poModal.items.map((it) => it.id),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
       setPoMsg({ type: 'success', text: `PO emailed to ${r.data.recipient} (${r.data.items_count} items)` });
       setTimeout(() => setPoModal(null), 1600);

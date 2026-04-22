@@ -67,10 +67,7 @@ const Inventory = () => {
 
   const fetchItems = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/inventory`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/inventory`);
       setItems(response.data);
       setFilteredItems(response.data);
     } catch (error) {
@@ -82,17 +79,12 @@ const Inventory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
 
     try {
       if (editingItem) {
-        await axios.put(`${API}/inventory/${editingItem.id}`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API}/inventory/${editingItem.id}`, formData);
       } else {
-        await axios.post(`${API}/inventory`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API}/inventory`, formData);
       }
       fetchItems();
       closeModal();
@@ -105,10 +97,7 @@ const Inventory = () => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/inventory/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/inventory/${id}`);
       fetchItems();
     } catch (error) {
       console.error('Error deleting item:', error);

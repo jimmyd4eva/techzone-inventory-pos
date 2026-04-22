@@ -36,10 +36,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/users`);
       setUsers(response.data);
       setFilteredUsers(response.data);
     } catch (error) {
@@ -54,7 +51,6 @@ const Users = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
 
     try {
       if (editingUser) {
@@ -68,14 +64,10 @@ const Users = () => {
           updateData.password = formData.password;
         }
         
-        await axios.put(`${API}/users/${editingUser.id}`, updateData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API}/users/${editingUser.id}`, updateData);
       } else {
         // Create new user
-        await axios.post(`${API}/auth/register`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API}/auth/register`, formData);
       }
       fetchUsers();
       closeModal();
@@ -94,10 +86,7 @@ const Users = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/users/${id}`);
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);

@@ -56,10 +56,7 @@ const SalesHistory = () => {
 
   const fetchSales = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/sales`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/sales`);
       setSales(response.data);
       setFilteredSales(response.data);
     } catch (error) {
@@ -71,10 +68,7 @@ const SalesHistory = () => {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/settings`);
       setBusinessSettings(response.data);
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -87,10 +81,7 @@ const SalesHistory = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/sales/${saleId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/sales/${saleId}`);
       alert('Sale deleted successfully!');
       fetchSales(); // Refresh the list
     } catch (error) {

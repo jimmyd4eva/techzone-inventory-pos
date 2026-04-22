@@ -9,7 +9,6 @@ import { CouponsReportTab } from '../components/reports/CouponsReportTab';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
 const TABS = [
   { id: 'sales', label: 'Sales Reports', Icon: TrendingUp, testid: 'tab-sales' },
@@ -56,12 +55,12 @@ const Reports = () => {
     const fetchReports = async () => {
       try {
         const [salesR, weeklyR, monthlyR, lowStockR, taxR, couponR] = await Promise.all([
-          axios.get(`${API}/reports/daily-sales`, { headers: authHeader() }),
-          axios.get(`${API}/reports/weekly-sales`, { headers: authHeader() }),
-          axios.get(`${API}/reports/monthly-sales`, { headers: authHeader() }),
-          axios.get(`${API}/inventory/low-stock`, { headers: authHeader() }),
-          axios.get(`${API}/reports/tax-summary`, { headers: authHeader() }),
-          axios.get(`${API}/reports/coupon-analytics`, { headers: authHeader() }),
+          axios.get(`${API}/reports/daily-sales`),
+          axios.get(`${API}/reports/weekly-sales`),
+          axios.get(`${API}/reports/monthly-sales`),
+          axios.get(`${API}/inventory/low-stock`),
+          axios.get(`${API}/reports/tax-summary`),
+          axios.get(`${API}/reports/coupon-analytics`),
         ]);
         setDailySales(salesR.data);
         setWeeklySales(weeklyR.data);
@@ -82,7 +81,6 @@ const Reports = () => {
     setDownloading(true);
     try {
       const response = await axios.get(`${API}/reports/tax-summary/pdf`, {
-        headers: authHeader(),
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

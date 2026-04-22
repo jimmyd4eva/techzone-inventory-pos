@@ -20,7 +20,6 @@ const PaymentSuccess = () => {
   }, [sessionId]);
 
   const checkPaymentStatus = async () => {
-    const token = localStorage.getItem('token');
     let attempts = 0;
     const maxAttempts = 5;
 
@@ -31,9 +30,7 @@ const PaymentSuccess = () => {
       }
 
       try {
-        const response = await axios.get(`${API}/payments/status/${sessionId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get(`${API}/payments/status/${sessionId}`);
 
         if (response.data.payment_status === 'paid') {
           setStatus('success');

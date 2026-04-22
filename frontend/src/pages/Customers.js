@@ -97,7 +97,6 @@ const Customers = () => {
     }
     setCouponSaving(true);
     try {
-      const token = localStorage.getItem('token');
       const response = await axios.post(`${API}/coupons`, {
         code: couponForm.code.toUpperCase().trim(),
         description: couponForm.description,
@@ -108,7 +107,7 @@ const Customers = () => {
         is_active: true,
         customer_id: couponForCustomer.id,
         customer_name: couponForCustomer.name,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      });
       setCreatedCoupon(response.data);
       setCouponMsg({ type: 'success', text: `Coupon ${response.data.code} created. Share it below.` });
     } catch (error) {
@@ -149,11 +148,9 @@ const Customers = () => {
     }
     setEmailingCoupon(true);
     try {
-      const token = localStorage.getItem('token');
       const r = await axios.post(
         `${API}/coupons/${createdCoupon.id}/email-to-customer`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        {}
       );
       setCouponMsg({ type: 'success', text: `Emailed coupon to ${r.data.recipient}` });
     } catch (error) {
@@ -193,10 +190,7 @@ const Customers = () => {
 
   const fetchCustomers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/customers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/customers`);
       setCustomers(response.data);
       setFilteredCustomers(response.data);
     } catch (error) {
@@ -208,20 +202,15 @@ const Customers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
 
     try {
       if (editingCustomer) {
         // When editing, don't send account_number (it's locked)
         const { account_number, ...updateData } = formData;
-        await axios.put(`${API}/customers/${editingCustomer.id}`, updateData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API}/customers/${editingCustomer.id}`, updateData);
         alert('Customer updated successfully!');
       } else {
-        await axios.post(`${API}/customers`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API}/customers`, formData);
         alert('Customer added successfully!');
       }
       fetchCustomers();
@@ -236,10 +225,7 @@ const Customers = () => {
     if (!window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/customers/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API}/customers/${id}`);
       alert('Customer deleted successfully!');
       fetchCustomers();
     } catch (error) {
@@ -250,10 +236,7 @@ const Customers = () => {
 
   const viewCustomerDetails = async (customerId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/customers/${customerId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/customers/${customerId}`);
       setSelectedCustomer(response.data);
       setShowDetailModal(true);
     } catch (error) {

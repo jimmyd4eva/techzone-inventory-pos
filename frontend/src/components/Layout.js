@@ -20,11 +20,8 @@ const Layout = ({ user, onLogout }) => {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await axios.get(`${API}/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/settings`);
       setBusinessSettings({
         business_name: response.data.business_name || 'TECHZONE',
         business_address: response.data.business_address || '30 Giltress Street, Kingston 2, JA',

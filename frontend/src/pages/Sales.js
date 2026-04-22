@@ -59,10 +59,7 @@ const Sales = () => {
 
   const fetchCurrentShift = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/cash-register/current`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/cash-register/current`);
       setCurrentShift(response.data.shift);
     } catch (error) {
       console.error('Error fetching current shift:', error);
@@ -75,10 +72,8 @@ const Sales = () => {
       return;
     }
     try {
-      const token = localStorage.getItem('token');
       await axios.post(`${API}/cash-register/open`, 
-        { opening_amount: parseFloat(openingAmount) },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { opening_amount: parseFloat(openingAmount) }
       );
       setShowOpenRegisterModal(false);
       setOpeningAmount('');
@@ -91,10 +86,7 @@ const Sales = () => {
 
   const fetchAvailableCoupons = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/coupons`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/coupons`);
       // Filter only active coupons that haven't exceeded usage limit
       const active = response.data.filter(c => 
         c.is_active && 
@@ -108,10 +100,7 @@ const Sales = () => {
 
   const fetchTaxSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/settings`);
       setTaxSettings({
         tax_rate: response.data.tax_rate || 0,
         tax_enabled: response.data.tax_enabled || false,
@@ -140,14 +129,11 @@ const Sales = () => {
     setShowCouponList(false);
     
     try {
-      const token = localStorage.getItem('token');
       const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
       const response = await axios.post(`${API}/coupons/validate`, {
         code: codeToApply,
         subtotal: subtotal,
         customer_id: selectedCustomer ? selectedCustomer.id : undefined
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       
       setAppliedCoupon(response.data.coupon);
@@ -206,10 +192,7 @@ const Sales = () => {
 
   const fetchInventory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/inventory`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/inventory`);
       const inStockItems = response.data.filter(item => item.quantity > 0);
       setInventory(inStockItems);
       setFilteredInventory(inStockItems);
@@ -228,10 +211,7 @@ const Sales = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/customers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API}/customers`);
       
       const searchLower = accountNum.toLowerCase();
       const filtered = response.data.filter(customer =>
@@ -402,7 +382,6 @@ const Sales = () => {
     if (cart.length === 0) return;
 
     setProcessing(true);
-    const token = localStorage.getItem('token');
 
     try {
       const saleData = {
@@ -422,9 +401,7 @@ const Sales = () => {
         points_to_use: saleData.points_to_use
       });
 
-      const response = await axios.post(`${API}/sales`, saleData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(`${API}/sales`, saleData);
 
       if (paymentMethod === 'stripe') {
         // Create Stripe checkout session
@@ -433,9 +410,7 @@ const Sales = () => {
           origin_url: window.location.origin
         };
 
-        const checkoutResponse = await axios.post(`${API}/payments/checkout`, checkoutData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const checkoutResponse = await axios.post(`${API}/payments/checkout`, checkoutData);
 
         // Redirect to Stripe
         window.location.href = checkoutResponse.data.url;
@@ -445,9 +420,7 @@ const Sales = () => {
           sale_id: response.data.id
         };
 
-        const paypalResponse = await axios.post(`${API}/payments/paypal/create-order`, paypalData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const paypalResponse = await axios.post(`${API}/payments/paypal/create-order`, paypalData);
 
         // Redirect to PayPal
         window.location.href = paypalResponse.data.approval_url;

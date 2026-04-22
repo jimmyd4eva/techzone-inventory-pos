@@ -14,9 +14,7 @@ export const PointsSystemTab = ({ settings, setSettings }) => {
     setBdayRunning(true);
     setBdayMsg({ type: '', text: '' });
     try {
-      const token = localStorage.getItem('token');
       const r = await axios.post(`${API}/settings/run-birthday-sweep`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       setBdayMsg({
         type: 'success',
