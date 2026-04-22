@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Font-Family Selector on All Rich-Text Fields (Feb 21, 2026)
+- `SimpleRichTextEditor` toolbar now includes a font-family dropdown (testid `rte-font-family`) with 9 curated options: Default, Sans-Serif, Serif, **Monospace (receipt)** for classic thermal-printer look, Georgia, Verdana, Trebuchet MS, Comic Sans, Impact.
+- Applies to the currently-selected range; uses `span[style="font-family: ..."]` so it composes cleanly with existing bold / italic / underline / font-size / color.
+- Automatically appears on all 6 receipt fields (Business name/address/phone + Thank-You/Tagline/Footer-Note) since they all share the same editor component.
+- Verified round-trip through DOMPurify with the existing `ALLOWED_TAGS / ALLOWED_ATTR` config — font-family, font-size, color all preserved (including quoted family names like `"Courier New"`). No backend changes.
+
 ### Code Review Fixes — Priority 1 (Bugs & Security) (Feb 21, 2026)
 Applied fixes from the device-lock-1 code review (critical/high-priority items):
 

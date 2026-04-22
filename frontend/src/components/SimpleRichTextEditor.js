@@ -1,9 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type, TextQuote } from 'lucide-react';
+
+// Fonts we advertise in the dropdown. Each option specifies a display label
+// (what the user sees) and a CSS stack (applied to the selection).
+// We intentionally prefer web-safe families plus 1-2 Google-style picks so
+// receipts render identically on print, email, and desktop thermal printers.
+const FONT_OPTIONS = [
+  { label: 'Default', stack: '' },
+  { label: 'Sans-Serif', stack: 'Arial, Helvetica, sans-serif' },
+  { label: 'Serif', stack: '"Times New Roman", Times, serif' },
+  { label: 'Monospace (receipt)', stack: '"Courier New", Courier, monospace' },
+  { label: 'Georgia', stack: 'Georgia, "Times New Roman", serif' },
+  { label: 'Verdana', stack: 'Verdana, Geneva, sans-serif' },
+  { label: 'Trebuchet MS', stack: '"Trebuchet MS", "Lucida Sans", sans-serif' },
+  { label: 'Comic Sans', stack: '"Comic Sans MS", "Chalkboard SE", cursive' },
+  { label: 'Impact', stack: 'Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif' },
+];
 
 const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3 }) => {
   const editorRef = useRef(null);
   const [fontSize, setFontSize] = useState('16');
+  const [fontFamily, setFontFamily] = useState('');
 
   // Sync external value -> editor DOM only when the editor is not focused
   // (prevents caret jumps during typing).
@@ -48,6 +65,28 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3 }) => {
       const contents = range.extractContents();
       const span = document.createElement('span');
       span.style.fontSize = `${size}px`;
+      span.appendChild(contents);
+      range.insertNode(span);
+    }
+    emitChange();
+  };
+
+  const handleFontFamily = (stack) => {
+    setFontFamily(stack);
+    editorRef.current?.focus();
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return; // nothing selected
+
+    try {
+      const span = document.createElement('span');
+      if (stack) span.style.fontFamily = stack;
+      range.surroundContents(span);
+    } catch {
+      const contents = range.extractContents();
+      const span = document.createElement('span');
+      if (stack) span.style.fontFamily = stack;
       span.appendChild(contents);
       range.insertNode(span);
     }
@@ -99,6 +138,33 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3 }) => {
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('justifyRight')} title="Align Right" style={btnStyle} data-testid="rte-align-right">
           <AlignRight size={16} />
         </button>
+
+        <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 4px' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <TextQuote size={16} style={{ color: '#6b7280' }} />
+          <select
+            value={fontFamily}
+            onChange={(e) => handleFontFamily(e.target.value)}
+            data-testid="rte-font-family"
+            title="Font family (select text first)"
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              backgroundColor: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              minWidth: '140px',
+            }}
+          >
+            {FONT_OPTIONS.map((f) => (
+              <option key={f.label} value={f.stack} style={{ fontFamily: f.stack || undefined }}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div style={{ width: '1px', height: '24px', backgroundColor: '#d1d5db', margin: '0 4px' }} />
 
