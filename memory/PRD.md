@@ -26,6 +26,13 @@
 
 ## What's Been Implemented
 
+### Save-as-My-Theme (Feb 21, 2026)
+- Three new nullable settings fields: `custom_theme_thankyou_html`, `custom_theme_tagline_html`, `custom_theme_footer_note_html`.
+- New purple **"💾 Save current as My Custom"** button captures the live 3-field footer HTML into the custom slot.
+- When populated, a fifth theme button **★ My Custom** (dashed purple border) appears alongside the 4 built-ins — one click snaps back to the saved look.
+- New **Clear custom** button wipes the slot by sending empty strings (matches the PUT endpoint's `None = don't update` semantics while still persisting a falsy value so the UI correctly hides "My Custom"). Backend round-trip verified; 66 tests pass.
+- Testids: `save-custom-theme-btn`, `clear-custom-theme-btn`, `receipt-theme-custom`.
+
 ### One-Click Receipt Themes (Feb 21, 2026)
 - Added a **"One-click themes"** row at the top of the Receipt Footer Messages card in Settings → Business Information. Four presets:
   - **Classic Thermal** — Courier monospace, centered, uppercase "THANK YOU!" — classic register tape look.

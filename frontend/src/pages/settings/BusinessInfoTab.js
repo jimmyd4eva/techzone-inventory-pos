@@ -255,9 +255,88 @@ export const BusinessInfoTab = ({ settings, setSettings, uploading, handleFileUp
                 {t.label}
               </button>
             ))}
+
+            {/* Custom saved theme — appears alongside built-ins when one is saved */}
+            {settings.custom_theme_thankyou_html || settings.custom_theme_tagline_html || settings.custom_theme_footer_note_html ? (
+              <button
+                type="button"
+                data-testid="receipt-theme-custom"
+                onClick={() => setSettings({
+                  ...settings,
+                  receipt_thankyou_html: settings.custom_theme_thankyou_html ?? '',
+                  receipt_tagline_html: settings.custom_theme_tagline_html ?? '',
+                  receipt_footer_note_html: settings.custom_theme_footer_note_html ?? '',
+                })}
+                title="Apply your saved custom theme"
+                style={{
+                  padding: '8px 14px',
+                  background: '#faf5ff',
+                  color: '#6b21a8',
+                  border: '2px dashed #a855f7',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                ★ My Custom
+              </button>
+            ) : null}
+          </div>
+
+          <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              data-testid="save-custom-theme-btn"
+              onClick={() => setSettings({
+                ...settings,
+                custom_theme_thankyou_html: settings.receipt_thankyou_html,
+                custom_theme_tagline_html: settings.receipt_tagline_html,
+                custom_theme_footer_note_html: settings.receipt_footer_note_html,
+              })}
+              style={{
+                padding: '6px 12px',
+                background: '#7c3aed',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              💾 Save current as My Custom
+            </button>
+            {settings.custom_theme_thankyou_html || settings.custom_theme_tagline_html || settings.custom_theme_footer_note_html ? (
+              <button
+                type="button"
+                data-testid="clear-custom-theme-btn"
+                onClick={() => setSettings({
+                  ...settings,
+                  custom_theme_thankyou_html: '',
+                  custom_theme_tagline_html: '',
+                  custom_theme_footer_note_html: '',
+                })}
+                style={{
+                  padding: '6px 12px',
+                  background: '#fff',
+                  color: '#991b1b',
+                  border: '1px solid #fecaca',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Clear custom
+              </button>
+            ) : null}
+            <span style={{ fontSize: '11px', color: '#6b7280' }}>
+              Remember to click <b>Save Settings</b> below to persist changes.
+            </span>
           </div>
           <p style={{ fontSize: '11px', color: '#6b7280', margin: '8px 0 0 0' }}>
-            Preview each theme in the live receipt below — you can still tweak individual fields after applying.
+            Preview each theme in the live receipt below — you can still tweak individual fields after applying. Save your final look as <b>My Custom</b> to snap back to it later.
           </p>
         </div>
 

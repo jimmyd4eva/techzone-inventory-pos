@@ -225,6 +225,10 @@ class Settings(BaseModel):
     receipt_thankyou_html: str = "Thank you for your business!"
     receipt_tagline_html: str = "Quality repairs, trusted service"
     receipt_footer_note_html: str = "Please keep this receipt for your records"
+    # Custom saved theme (nullable — None means no custom theme saved)
+    custom_theme_thankyou_html: Optional[str] = None
+    custom_theme_tagline_html: Optional[str] = None
+    custom_theme_footer_note_html: Optional[str] = None
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -261,6 +265,9 @@ class SettingsUpdate(BaseModel):
     receipt_thankyou_html: Optional[str] = None
     receipt_tagline_html: Optional[str] = None
     receipt_footer_note_html: Optional[str] = None
+    custom_theme_thankyou_html: Optional[str] = None
+    custom_theme_tagline_html: Optional[str] = None
+    custom_theme_footer_note_html: Optional[str] = None
 
 # ============ COUPON MODELS ============
 

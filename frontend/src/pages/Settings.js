@@ -45,7 +45,10 @@ const Settings = () => {
     birthday_valid_days: 14,
     receipt_thankyou_html: 'Thank you for your business!',
     receipt_tagline_html: 'Quality repairs, trusted service',
-    receipt_footer_note_html: 'Please keep this receipt for your records'
+    receipt_footer_note_html: 'Please keep this receipt for your records',
+    custom_theme_thankyou_html: null,
+    custom_theme_tagline_html: null,
+    custom_theme_footer_note_html: null
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -289,7 +292,10 @@ const Settings = () => {
         birthday_valid_days: response.data.birthday_valid_days ?? 14,
         receipt_thankyou_html: response.data.receipt_thankyou_html ?? 'Thank you for your business!',
         receipt_tagline_html: response.data.receipt_tagline_html ?? 'Quality repairs, trusted service',
-        receipt_footer_note_html: response.data.receipt_footer_note_html ?? 'Please keep this receipt for your records'
+        receipt_footer_note_html: response.data.receipt_footer_note_html ?? 'Please keep this receipt for your records',
+        custom_theme_thankyou_html: response.data.custom_theme_thankyou_html ?? null,
+        custom_theme_tagline_html: response.data.custom_theme_tagline_html ?? null,
+        custom_theme_footer_note_html: response.data.custom_theme_footer_note_html ?? null
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -372,7 +378,10 @@ const Settings = () => {
         birthday_valid_days: settings.birthday_valid_days,
         receipt_thankyou_html: settings.receipt_thankyou_html,
         receipt_tagline_html: settings.receipt_tagline_html,
-        receipt_footer_note_html: settings.receipt_footer_note_html
+        receipt_footer_note_html: settings.receipt_footer_note_html,
+        custom_theme_thankyou_html: settings.custom_theme_thankyou_html,
+        custom_theme_tagline_html: settings.custom_theme_tagline_html,
+        custom_theme_footer_note_html: settings.custom_theme_footer_note_html
       }, { headers: authHeaders() });
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
     } catch (error) {
