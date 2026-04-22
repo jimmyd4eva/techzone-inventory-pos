@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Data & Backup Panel (Feb 22, 2026) ✅
+- **New `GET /api/admin/backup`** endpoint (admin-only) in `routes/admin.py` streams an in-memory ZIP containing one `.json` per collection + a `_manifest.json`. No `mongodump` binary required — works identically on cloud preview and portable Windows builds. Verified: 16 collections exported, 51KB zip, non-admin returns 401/403.
+- **New "Backup" tab** in Settings (`DataBackupTab.js`, testid `section-backup`, `download-backup-btn`, `data-backup-tab`, `backup-msg`): informative copy, recommendation callout, purple primary Download button with downloading state, last-backup-on-this-browser timestamp cached in `localStorage.last_backup_at`.
+- Designed to be universal: owners on the portable single-PC install, on cloud preview, or on production all use the same one-click flow. Replaces the earlier "open Explorer on data folder" idea because downloading a zip is platform-independent and works for remote admins too.
+
+
 ### Portable Windows Installer (Feb 22, 2026) ✅
 - **One-command portable build** via rewritten `BUILD_PORTABLE.bat` (v1.1.0). Produces a self-contained `TechZone-Portable\` folder + `TechZone-Portable-1.1.0.zip` that drops onto any Windows 10/11 PC and runs with a double-click. No admin rights, no Python/Node/MongoDB installs on the target.
 - **Bundled at build time**: embedded Python 3.11 with all of `backend/requirements.txt` installed, embedded MongoDB 7.0 (`mongod.exe`), production React build, auto-generated `.env` with a fresh random 64-char JWT secret per install.

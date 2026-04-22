@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
   Settings as SettingsIcon, Save, Percent, DollarSign, Building,
-  Star, Shield, Wallet, Lock
+  Star, Shield, Wallet, Lock, Database
 } from 'lucide-react';
 
 import BusinessInfoTab from './settings/BusinessInfoTab';
@@ -12,6 +12,7 @@ import TaxTab from './settings/TaxTab';
 import PointsSystemTab from './settings/PointsSystemTab';
 import DevicesTab from './settings/DevicesTab';
 import AccountSecurityTab from './settings/AccountSecurityTab';
+import DataBackupTab from './settings/DataBackupTab';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -430,7 +431,8 @@ const Settings = () => {
     { id: 'tax', label: 'Tax', icon: Percent },
     { id: 'points', label: 'Points System', icon: Star },
     { id: 'devices', label: 'Devices', icon: Shield },
-    { id: 'security', label: 'Security', icon: Lock }
+    { id: 'security', label: 'Security', icon: Lock },
+    { id: 'backup', label: 'Backup', icon: Database }
   ];
 
   return (
@@ -556,7 +558,11 @@ const Settings = () => {
           <AccountSecurityTab />
         )}
 
-        {activeSection !== 'devices' && activeSection !== 'security' && (
+        {activeSection === 'backup' && (
+          <DataBackupTab />
+        )}
+
+        {activeSection !== 'devices' && activeSection !== 'security' && activeSection !== 'backup' && (
           <button
             data-testid="save-settings-btn"
             onClick={handleSave}
