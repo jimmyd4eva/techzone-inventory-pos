@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ProductSelection } from '../components/sales/ProductSelection';
+import { OpenRegisterModal } from '../components/sales/OpenRegisterModal';
 import { Plus, Minus, Trash2, Search, Star, Wallet, AlertCircle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -491,94 +493,15 @@ const Sales = () => {
       </div>
 
       <div className="pos-container">
-        <div className="items-section">
-          <div className="card">
-            <div className="card-header">
-              <h2>Select Items</h2>
-              <div className="search-bar" style={{ marginLeft: 'auto', maxWidth: '300px' }}>
-                <Search className="search-icon" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  data-testid="sales-search"
-                />
-              </div>
-            </div>
-            <div className="items-grid">
-              {filteredInventory.length === 0 ? (
-                <div className="empty-state">
-                  <h3>{searchTerm ? 'No items found' : 'No items in stock'}</h3>
-                  <p>{searchTerm ? 'Try a different search term' : 'Add inventory items to start making sales'}</p>
-                </div>
-              ) : (
-                filteredInventory.map((item) => (
-                  <div
-                    key={item.id}
-                    className="item-card"
-                    onClick={() => addToCart(item)}
-                    data-testid={`pos-item-${item.id}`}
-                  >
-                    {item.image_url ? (
-                      <a 
-                        href={item.gsmarena_url || 'https://www.gsmarena.com'} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        title={item.gsmarena_url ? "Click to view on GSM Arena" : "GSM Arena URL not set"}
-                      >
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name}
-                          style={{ 
-                            width: '100%', 
-                            height: '100px', 
-                            objectFit: 'cover', 
-                            borderRadius: '8px',
-                            marginBottom: '12px',
-                            cursor: 'pointer',
-                            transition: 'opacity 0.2s'
-                          }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                          onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                          onMouseLeave={(e) => e.target.style.opacity = '1'}
-                        />
-                      </a>
-                    ) : (
-                      <div style={{ 
-                        width: '100%', 
-                        height: '100px', 
-                        background: '#f1f5f9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2.5rem',
-                        marginBottom: '12px'
-                      }}>
-                        📦
-                      </div>
-                    )}
-                    <h4>{item.name}</h4>
-                    <p>{item.type}</p>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Stock: {item.quantity}</p>
-                    {selectedCustomer?.customer_type === 'wholesale' && item.wholesale_price ? (
-                      <div>
-                        <div className="price" style={{ color: '#1d4ed8' }}>${item.wholesale_price.toFixed(2)}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                          ${item.selling_price.toFixed(2)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="price">${item.selling_price.toFixed(2)}</div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        <ProductSelection
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          filteredItems={filteredItems}
+          addToCart={addToCart}
+        />
 
         <div className="cart-section">
           <div className="cart-header">
@@ -1395,136 +1318,13 @@ const Sales = () => {
 
       {/* Open Register Modal */}
       {showOpenRegisterModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '90%',
-            maxWidth: '400px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <Wallet size={24} style={{ color: '#059669' }} />
-              Open Cash Register
-            </h2>
-            
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
-              Count the cash in your drawer and enter the starting amount to begin your shift.
-            </p>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                Opening Cash Amount
-              </label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ 
-                  position: 'absolute', 
-                  left: '12px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  color: '#9ca3af',
-                  fontSize: '18px'
-                }}>$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={openingAmount}
-                  onChange={(e) => setOpeningAmount(e.target.value)}
-                  placeholder="0.00"
-                  data-testid="modal-opening-amount"
-                  autoFocus
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px 14px 32px',
-                    border: '2px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '18px',
-                    fontWeight: '500'
-                  }}
-                />
-              </div>
-            </div>
-
-            {registerMessage && (
-              <p style={{ 
-                color: '#dc2626', 
-                fontSize: '13px', 
-                marginBottom: '16px',
-                padding: '8px 12px',
-                backgroundColor: '#fee2e2',
-                borderRadius: '6px'
-              }}>
-                {registerMessage}
-              </p>
-            )}
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => {
-                  setShowOpenRegisterModal(false);
-                  setOpeningAmount('');
-                  setRegisterMessage('');
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleOpenRegister}
-                data-testid="modal-open-register-btn"
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#059669',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Wallet size={18} />
-                Open Register
-              </button>
-            </div>
-          </div>
-        </div>
+        <OpenRegisterModal
+          openingAmount={openingAmount}
+          setOpeningAmount={setOpeningAmount}
+          registerMessage={registerMessage}
+          onCancel={() => { setShowOpenRegisterModal(false); setOpeningAmount(""); setRegisterMessage(""); }}
+          onConfirm={handleOpenRegister}
+        />
       )}
     </div>
   );

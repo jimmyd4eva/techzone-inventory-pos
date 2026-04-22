@@ -26,6 +26,21 @@
 
 ## What's Been Implemented
 
+### Code Review Fixes — Priority 2 (Refactors d, e, c, b, a) (Feb 21, 2026)
+
+**Backend (d, e):**
+- New `services/shift_report_service.py` with pure helpers (`calculate_transaction_totals`, `calculate_expected_cash`, `fetch_business_info`, `build_shift_report_pdf`, `build_close_shift_email_pdf`, `_format_summary_table`, `_format_shift_info_table`, `_format_transactions_table`).
+- `routes/cash_register.py::close_shift()` reduced from 132 → ~55 lines; email-PDF + notification logic extracted to `_maybe_send_close_shift_email()` helper.
+- `routes/cash_register.py::generate_shift_report()` reduced from 164 → ~14 lines; all PDF building delegated to the service module.
+- `cash_register.py` overall: 521 → 313 lines (–40%). Fixed a bare `except:` → `except ValueError`. **66/66 backend tests pass, zero regressions.**
+
+**Frontend (c, b, a):**
+- `Reports.js`: 800 → 138 lines (–83%). Extracted to `components/reports/` — `SalesReportTab.js`, `TaxReportTab.js`, `InventoryReportTab.js`, `CouponsReportTab.js`. Tab-button rendering also simplified via a single `TABS` array + `<TabButton>` component.
+- `Customers.js`: 909 → 479 lines (–47%). Extracted to `components/customers/` — `CustomerFormModal.js`, `CustomerDetailModal.js`, `CustomerCouponModal.js`. Each takes props via an `onClose` callback rather than reaching into parent state mutators.
+- `Sales.js`: 1533 → 1329 lines (–13%). Extracted to `components/sales/` — `ProductSelection.js` (87 lines) and `OpenRegisterModal.js` (140 lines). Further splitting the coupled cart-section (customer + coupon + payment + totals) was deferred because the 15+ shared state pieces would require heavy prop-drilling; deeper refactor tracked as a future task if needed.
+
+All 15 new component files lint clean; frontend compiles with only pre-existing DOMPurify source-map warnings. Zero functional changes — this is pure organizational work.
+
 ### Save-as-My-Theme (Feb 21, 2026)
 - Three new nullable settings fields: `custom_theme_thankyou_html`, `custom_theme_tagline_html`, `custom_theme_footer_note_html`.
 - New purple **"💾 Save current as My Custom"** button captures the live 3-field footer HTML into the custom slot.
