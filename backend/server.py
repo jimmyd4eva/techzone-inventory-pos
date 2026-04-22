@@ -52,7 +52,15 @@ start_scheduler(app)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    # Note: with allow_credentials=True, browsers reject `Access-Control-Allow-Origin: *`.
+    # We read an explicit list from CORS_ORIGINS; if the admin set "*", fall back to
+    # allow_origin_regex=".*" so Starlette echoes the actual Origin header back —
+    # preserving "allow any origin" behavior while being credentials-compatible.
+    **(
+        {"allow_origin_regex": ".*"}
+        if os.environ.get('CORS_ORIGINS', '*').strip() == '*'
+        else {"allow_origins": [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]}
+    ),
     allow_methods=["*"],
     allow_headers=["*"],
 )

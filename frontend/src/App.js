@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import '@/App.css';
+
+// Send the httpOnly auth cookie on every API call. The cookie is set by
+// /api/auth/login and cleared by /api/auth/logout. This is safer than
+// localStorage (not readable by JS → immune to XSS token theft).
+axios.defaults.withCredentials = true;
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
@@ -121,7 +126,15 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear both the httpOnly cookie (server-side) and any lingering localStorage
+    // token (backward compat during the cookie rollout).
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`);
+    } catch (e) {
+      // Non-fatal — the backend request may fail if already logged out / offline.
+      console.debug('logout endpoint failed:', e?.message);
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

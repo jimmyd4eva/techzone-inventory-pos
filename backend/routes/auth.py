@@ -1,15 +1,50 @@
 """Route module extracted from server.py."""
-from fastapi import APIRouter, HTTPException, Depends
+import os
+
+from fastapi import APIRouter, HTTPException, Depends, Response
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
-from core.config import db, logger
-from core.security import hash_password, verify_password, create_token, get_current_user, check_not_readonly
+from core.config import db, logger, JWT_EXPIRATION_HOURS
+from core.security import (
+    AUTH_COOKIE_NAME,
+    hash_password,
+    verify_password,
+    create_token,
+    get_current_user,
+    check_not_readonly,
+)
 from models import User, UserCreate, UserLogin, UserUpdate
 
 router = APIRouter(tags=["Auth"])
 
+# --- Cookie helpers ---------------------------------------------------------
+# `secure=True` is required in production (browsers refuse Secure cookies over
+# plain HTTP). We infer it from the preview/prod URL so local http dev still
+# works. SameSite=lax is required for cross-site navigation to carry the
+# cookie when user logs in via a redirect.
+_COOKIE_SECURE = os.environ.get("REACT_APP_BACKEND_URL", "").startswith("https://") or \
+    os.environ.get("COOKIE_SECURE", "false").lower() == "true"
+_COOKIE_MAX_AGE = int(timedelta(hours=JWT_EXPIRATION_HOURS).total_seconds())
+
+
+def _set_auth_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=_COOKIE_SECURE,
+        samesite="lax",
+        max_age=_COOKIE_MAX_AGE,
+        path="/",
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    response.delete_cookie(key=AUTH_COOKIE_NAME, path="/")
+
+
 @router.post("/auth/register")
-async def register(user_data: UserCreate):
+async def register(user_data: UserCreate, response: Response):
     # Check if user exists
     existing_user = await db.users.find_one({"username": user_data.username})
     if existing_user:
@@ -34,11 +69,12 @@ async def register(user_data: UserCreate):
     
     # Create token
     token = create_token(user.id, user.role, user.username)
+    _set_auth_cookie(response, token)
     
     return {"user": user, "token": token}
 
 @router.post("/auth/login")
-async def login(credentials: UserLogin):
+async def login(credentials: UserLogin, response: Response):
     # Find user
     user_doc = await db.users.find_one({"username": credentials.username})
     if not user_doc:
@@ -59,12 +95,20 @@ async def login(credentials: UserLogin):
     
     # Create token
     token = create_token(user_doc['id'], user_doc['role'], user_doc['username'])
+    _set_auth_cookie(response, token)
     
     # Remove password hash from response
     user_doc.pop('password_hash', None)
     user_doc.pop('_id', None)
     
     return {"user": user_doc, "token": token}
+
+
+@router.post("/auth/logout")
+async def logout(response: Response):
+    """Clear the httpOnly auth cookie. Idempotent — safe to call when already logged out."""
+    _clear_auth_cookie(response)
+    return {"message": "Logged out"}
 
 @router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):

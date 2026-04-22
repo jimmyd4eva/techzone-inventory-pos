@@ -43,11 +43,22 @@ def verify_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+# Cookie used to transport the JWT. Reading from a httpOnly cookie is safer than
+# localStorage because JavaScript cannot steal it via XSS.
+AUTH_COOKIE_NAME = "techzone_token"
+
+
 async def get_current_user(request: Request) -> dict:
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    # Primary: httpOnly cookie (set by login endpoint when `withCredentials=true`)
+    token = request.cookies.get(AUTH_COOKIE_NAME)
+    # Fallback: legacy `Authorization: Bearer <jwt>` header. Kept for backward
+    # compatibility during the cookie rollout so existing sessions don't break.
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if not token:
         raise HTTPException(status_code=401, detail="Missing authentication token")
-    token = auth_header.split(" ")[1]
     return verify_token(token)
 
 
