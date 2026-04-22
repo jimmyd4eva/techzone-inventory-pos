@@ -1,11 +1,12 @@
 import React from 'react';
+import { Ticket } from 'lucide-react';
 
 export const CustomerDetailModal = ({ selectedCustomer, onClose, openCouponModal }) => (
-  <div className="modal-overlay" onClick={closeDetailModal}>
+  <div className="modal-overlay" onClick={onClose}>
     <div className="modal" onClick={(e) => e.stopPropagation()} data-testid="customer-detail-modal" style={{ maxWidth: '800px' }}>
       <div className="modal-header">
         <h2>Customer Profile</h2>
-        <button className="btn-close" onClick={closeDetailModal} data-testid="close-detail-modal-btn">
+        <button className="btn-close" onClick={onClose} data-testid="close-detail-modal-btn">
           ×
         </button>
       </div>
@@ -149,7 +150,7 @@ export const CustomerDetailModal = ({ selectedCustomer, onClose, openCouponModal
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-secondary" onClick={closeDetailModal}>
+        <button className="btn btn-secondary" onClick={onClose}>
           Close
         </button>
       </div>
