@@ -169,6 +169,23 @@ async def revoke_session(session_id: str, current_user: dict = Depends(get_curre
     )
     return {"ok": True, "revoked": session_id}
 
+
+@router.post("/auth/sessions/revoke-others")
+async def revoke_other_sessions(current_user: dict = Depends(get_current_user)):
+    """Revoke every session for this user except the one making the request.
+    Handy if the owner suspects an ex-employee still has a browser logged in.
+    """
+    current_jti = current_user.get("jti")
+    result = await db.login_audit.update_many(
+        {
+            "user_id": current_user["user_id"],
+            "id": {"$ne": current_jti},
+            "revoked_at": None,
+        },
+        {"$set": {"revoked_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"ok": True, "revoked_count": result.modified_count}
+
 @router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     user_doc = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "password_hash": 0})

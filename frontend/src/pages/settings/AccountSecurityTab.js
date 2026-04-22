@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Shield, Monitor, LogOut, RefreshCw, Check } from 'lucide-react';
+import { Shield, Monitor, LogOut, RefreshCw, Check, ShieldOff } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,6 +41,7 @@ export const AccountSecurityTab = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState(null);
+  const [revokingOthers, setRevokingOthers] = useState(false);
   const [message, setMessage] = useState(null);
 
   const load = async () => {
@@ -77,6 +78,26 @@ export const AccountSecurityTab = () => {
     }
   };
 
+  const revokeOthers = async () => {
+    const activeOthers = sessions.filter((s) => !s.revoked_at && !s.is_current).length;
+    if (activeOthers === 0) {
+      setMessage({ type: 'success', text: 'No other active sessions to sign out.' });
+      return;
+    }
+    if (!window.confirm(`Sign out ${activeOthers} other session${activeOthers === 1 ? '' : 's'}? You will stay signed in on this browser.`)) return;
+    setRevokingOthers(true);
+    setMessage(null);
+    try {
+      const r = await axios.post(`${API}/auth/sessions/revoke-others`);
+      setMessage({ type: 'success', text: `Signed out ${r.data.revoked_count} other session${r.data.revoked_count === 1 ? '' : 's'}.` });
+      await load();
+    } catch (e) {
+      setMessage({ type: 'error', text: e.response?.data?.detail || 'Failed to revoke other sessions' });
+    } finally {
+      setRevokingOthers(false);
+    }
+  };
+
   return (
     <div data-testid="account-security-tab" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       <div style={{ padding: '20px', background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
@@ -85,20 +106,37 @@ export const AccountSecurityTab = () => {
             <Shield size={18} color="#7c3aed" />
             Recent Sign-ins
           </h3>
-          <button
-            type="button"
-            data-testid="refresh-sessions-btn"
-            onClick={load}
-            disabled={loading}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '6px 12px', background: '#f3f4f6', color: '#374151',
-              border: '1px solid #e5e7eb', borderRadius: '6px',
-              fontSize: '12px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <RefreshCw size={12} /> {loading ? 'Loading…' : 'Refresh'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              data-testid="revoke-other-sessions-btn"
+              onClick={revokeOthers}
+              disabled={revokingOthers || loading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '6px 12px', background: '#fff', color: '#dc2626',
+                border: '1px solid #fecaca', borderRadius: '6px',
+                fontSize: '12px', fontWeight: 600,
+                cursor: (revokingOthers || loading) ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <ShieldOff size={12} /> {revokingOthers ? 'Signing out…' : 'Sign out other devices'}
+            </button>
+            <button
+              type="button"
+              data-testid="refresh-sessions-btn"
+              onClick={load}
+              disabled={loading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '6px 12px', background: '#f3f4f6', color: '#374151',
+                border: '1px solid #e5e7eb', borderRadius: '6px',
+                fontSize: '12px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <RefreshCw size={12} /> {loading ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
         </div>
         <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 14px 0' }}>
           Every successful login is recorded here so you can spot unfamiliar activity. Click <b>Sign out</b> on any suspicious row to invalidate that session immediately — the next request from it will be rejected.

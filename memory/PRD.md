@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Account Security Tab — Session Management (Feb 22, 2026) ✅
+- New **Security** tab in Settings (testid `section-security`) lists recent sign-ins for the current user: device/browser, IP, signed-in time, duration (24h vs 30d remember-me), and status.
+- Per-row **Sign out** button revokes that session's `jti`. The active browser is tagged `This browser` with a confirmation dialog before self-signout (bounces to `/login` after success).
+- Bonus: **"Sign out other devices"** header button (testid `revoke-other-sessions-btn`) → new endpoint `POST /api/auth/sessions/revoke-others` revokes every session for the user except the current `jti` in one click.
+- Backend already had `jti` enforcement in `get_current_user` — revoked tokens return `401 "Session revoked — please sign in again"`. Curl-verified end-to-end (TOKEN1 revokes TOKEN2 → TOKEN2 is rejected, TOKEN1 continues working).
+- Files: `routes/auth.py` (+ revoke-others endpoint), `pages/Settings.js` (wire-up), `pages/settings/AccountSecurityTab.js` (UI).
+
+
 ### "Remember this device for 30 days" (Feb 21, 2026)
 - New checkbox on Login page (testid `remember-me-checkbox`) — when ticked, the login request sends `remember_me: true`.
 - Backend: `UserLogin` model has a new `remember_me: bool = False` field (backward compat — omit it and login still works). `_set_auth_cookie()` accepts `remember_me` and uses `Max-Age=2592000` (30 days) instead of the default `86400` (24h).
