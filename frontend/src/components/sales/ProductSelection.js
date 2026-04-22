@@ -3,8 +3,7 @@ import { Search } from 'lucide-react';
 
 export const ProductSelection = ({
   searchTerm, setSearchTerm,
-  categories, selectedCategory, setSelectedCategory,
-  filteredItems, addToCart,
+  filteredInventory, selectedCustomer, addToCart,
 }) => (
 <div className="items-section">
   <div className="card">

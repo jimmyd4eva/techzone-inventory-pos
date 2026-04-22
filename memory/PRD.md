@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Full XSS Hardening: localStorage Token Removal (Feb 22, 2026) ✅
+- Swept every `localStorage.getItem('token')` / `localStorage.setItem('token')` / `localStorage.removeItem('token')` call out of the frontend. 17 page/component files updated: `App.js`, `Login.js`, `Dashboard.js`, `Reports.js`, `Settings.js` (and all 6 settings tabs), `Inventory.js`, `Sales.js`, `SalesHistory.js`, `Repairs.js`, `Customers.js`, `Suppliers.js`, `Coupons.js`, `Users.js`, `PaymentSuccess.js`, `PaymentSuccessPayPal.js`, `Layout.js`, `PurchaseOrderModal.js`.
+- `App.js` now hydrates the user on boot via `GET /api/auth/me` (cookie-authenticated). If the cookie is missing/expired/revoked, cached `user` is cleared and the app bounces to `/login`. `handleLogin(userData)` now takes a single argument — no token.
+- Verified end-to-end: after login, `localStorage.getItem('token')` returns `null`; every authenticated API call succeeds via the `techzone_token` httpOnly cookie alone (no `Authorization` header sent from the SPA). XSS token-theft surface fully closed.
+- Bonus fix during regression: `Sales.js` / `ProductSelection.js` had 4 undefined identifiers (`categories`, `selectedCategory`, `setSelectedCategory`, `filteredItems`) from a prior extraction that would crash the POS page — rewrote the prop contract to the actually-used `filteredInventory` + `selectedCustomer`. Sales now renders 86 products.
+- Testing agent iteration 16: 11/12 frontend regression checks passed pre-fix, 12/12 post-fix (Sales + logout flow confirmed green manually).
+
+
 ### Account Security Tab — Session Management (Feb 22, 2026) ✅
 - New **Security** tab in Settings (testid `section-security`) lists recent sign-ins for the current user: device/browser, IP, signed-in time, duration (24h vs 30d remember-me), and status.
 - Per-row **Sign out** button revokes that session's `jti`. The active browser is tagged `This browser` with a confirmation dialog before self-signout (bounces to `/login` after success).

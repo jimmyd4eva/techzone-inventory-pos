@@ -469,10 +469,8 @@ const Sales = () => {
         <ProductSelection
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          filteredItems={filteredItems}
+          filteredInventory={filteredInventory}
+          selectedCustomer={selectedCustomer}
           addToCart={addToCart}
         />
 
