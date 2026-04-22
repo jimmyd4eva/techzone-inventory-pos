@@ -20,7 +20,6 @@ const Layout = ({ user, onLogout }) => {
 
   const fetchSettings = async () => {
     try {
-      if (!token) return;
       const response = await axios.get(`${API}/settings`);
       setBusinessSettings({
         business_name: response.data.business_name || 'TECHZONE',

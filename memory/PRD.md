@@ -26,6 +26,20 @@
 
 ## What's Been Implemented
 
+### Sales.js Cart Section Refactor (Feb 22, 2026) ✅
+Final item from the Code Quality Report — fully done.
+
+- **Sales.js dropped from 1309 → 583 lines** (-55%) by extracting 6 focused presentational components under `/app/frontend/src/components/sales/`:
+  - `CartItems.js` — the cart line-items list with per-row quantity +/- and remove
+  - `CartSummary.js` — totals breakdown (subtotal, taxable, tax, discounts, payment adjustment, total, points-earned)
+  - `CouponPanel.js` — coupon entry + "View Available Coupons" picker with min-purchase guard
+  - `PointsPanel.js` — loyalty points redemption panel (only when points enabled AND customer selected)
+  - `CustomerLookup.js` — account/phone/name search + walk-in skip + manual-name entry
+  - `CheckoutPanel.js` — payment method toggle + register warnings + checkout + clear-cart
+- Every previously-existing `data-testid` preserved (Sales still has 30+ testids intact). Testing agent iteration 17: **16/16 Sales refactor checks PASS**, ErrorBoundary did NOT trigger on any page, Customer view/edit modals still open cleanly.
+- **Bonus fix**: testing agent surfaced one leftover `token is not defined` ReferenceError in `components/Layout.js::fetchSettings()` that I missed during the earlier XSS sweep. Removed the dead `if (!token) return;` guard (the cookie auth handles 401s cleanly by itself). Re-verified via Playwright: navigating through Sales → Inventory → Customers → Reports now produces **0 console errors**.
+
+
 ### Safety Net: ErrorBoundary + Prop Audit (Feb 22, 2026) ✅
 - **App-wide `<ErrorBoundary>`** (`components/ErrorBoundary.js`) wrapped around every authenticated route in `App.js`. Any render-time exception now shows a branded "Something went wrong" card with the error message + Reload / Go to Dashboard buttons (testids: `error-boundary-fallback`, `error-reload-btn`, `error-home-btn`) instead of blanking the entire production page. The CRA dev overlay still wins in preview (intentional — it shows the stack trace for devs), but end users on `emergent.host` now always see a recoverable screen.
 - **Static prop audit** (`/tmp/scan_jsx.py`) scanned every extracted subcomponent for undeclared JSX identifiers. Found one additional lurking bug — **`CustomerFormModal.js`** was referencing `closeModal` 3× (instead of the `onClose` prop it received), meaning the edit/add-customer modal would also have gone blank on close-click. Fixed all 3 callsites → confirmed via screenshot both the Edit modal and the Detail modal now open and close cleanly.
