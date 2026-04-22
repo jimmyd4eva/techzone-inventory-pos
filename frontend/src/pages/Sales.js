@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ProductSelection } from '../components/sales/ProductSelection';
 import { OpenRegisterModal } from '../components/sales/OpenRegisterModal';
-import { Plus, Minus, Trash2, Search, Star, Wallet, AlertCircle } from 'lucide-react';
+import { CartItems } from '../components/sales/CartItems';
+import { CartSummary } from '../components/sales/CartSummary';
+import { CouponPanel } from '../components/sales/CouponPanel';
+import { PointsPanel } from '../components/sales/PointsPanel';
+import { CustomerLookup } from '../components/sales/CustomerLookup';
+import { CheckoutPanel } from '../components/sales/CheckoutPanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -479,810 +484,84 @@ const Sales = () => {
             <h3>Current Sale</h3>
           </div>
 
-          <div className="cart-items">
-            {cart.length === 0 ? (
-              <div className="empty-state">
-                <p>Cart is empty</p>
-              </div>
-            ) : (
-              cart.map((item) => (
-                <div key={item.item_id} className="cart-item" data-testid={`cart-item-${item.item_id}`}>
-                  {item.image_url && (
-                    <div className="cart-item-image">
-                      {item.gsm_arena_url ? (
-                        <a 
-                          href={item.gsm_arena_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          title="View on GSM Arena"
-                        >
-                          <img 
-                            src={item.image_url} 
-                            alt={item.item_name}
-                            style={{ 
-                              width: '60px', 
-                              height: '60px', 
-                              objectFit: 'cover', 
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'opacity 0.2s'
-                            }}
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                            onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                            onMouseLeave={(e) => e.target.style.opacity = '1'}
-                          />
-                        </a>
-                      ) : (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.item_name}
-                          style={{ 
-                            width: '60px', 
-                            height: '60px', 
-                            objectFit: 'cover', 
-                            borderRadius: '6px'
-                          }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                      )}
-                    </div>
-                  )}
-                  <div className="cart-item-info">
-                    <h4>{item.item_name}</h4>
-                    <p>${item.price.toFixed(2)} each</p>
-                  </div>
-                  <div className="cart-item-qty">
-                    <button
-                      className="qty-btn"
-                      onClick={() => updateQuantity(item.item_id, -1)}
-                      data-testid={`decrease-qty-${item.item_id}`}
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="qty-value" data-testid={`qty-${item.item_id}`}>{item.quantity}</span>
-                    <button
-                      className="qty-btn"
-                      onClick={() => updateQuantity(item.item_id, 1)}
-                      data-testid={`increase-qty-${item.item_id}`}
-                    >
-                      <Plus size={14} />
-                    </button>
-                    <button
-                      className="btn-icon delete"
-                      onClick={() => removeFromCart(item.item_id)}
-                      data-testid={`remove-item-${item.item_id}`}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <CartItems
+            cart={cart}
+            updateQuantity={updateQuantity}
+            removeFromCart={removeFromCart}
+          />
 
           <div className="cart-summary">
-            <div className="summary-row">
-              <span>Subtotal:</span>
-              <span data-testid="cart-subtotal">${subtotal.toFixed(2)}</span>
-            </div>
-            {taxSettings.tax_enabled && taxSettings.tax_exempt_categories.length > 0 && taxableSubtotal !== subtotal && (
-              <div className="summary-row" style={{ fontSize: '13px', color: '#6b7280' }}>
-                <span>Taxable Amount:</span>
-                <span data-testid="cart-taxable">${taxableSubtotal.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="summary-row">
-              <span>Tax ({taxRate.toFixed(0)}%):</span>
-              <span data-testid="cart-tax">${tax.toFixed(2)}</span>
-            </div>
-            {discount > 0 && (
-              <div className="summary-row" style={{ color: '#059669' }}>
-                <span>Coupon Discount:</span>
-                <span data-testid="cart-discount">-${discount.toFixed(2)}</span>
-              </div>
-            )}
-            {pointsDiscount > 0 && (
-              <div className="summary-row" style={{ color: '#8b5cf6' }}>
-                <span>Points Discount:</span>
-                <span data-testid="cart-points-discount">-${pointsDiscount.toFixed(2)}</span>
-              </div>
-            )}
-            {paymentAdjustment !== 0 && (
-              <div className="summary-row" style={{ color: paymentAdjustment < 0 ? '#059669' : '#dc2626' }}>
-                <span>{paymentAdjustmentLabel}:</span>
-                <span data-testid="cart-payment-adjustment">
-                  {paymentAdjustment < 0 ? '-' : '+'}${Math.abs(paymentAdjustment).toFixed(2)}
-                </span>
-              </div>
-            )}
-            <div className="summary-row total">
-              <span>Total:</span>
-              <span data-testid="cart-total">${total.toFixed(2)}</span>
-            </div>
-            {pointsSettings.points_enabled && pointsEarned > 0 && (
-              <div className="summary-row" style={{ color: '#8b5cf6', fontSize: '13px', marginTop: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Star size={14} /> Points to Earn:
-                </span>
-                <span data-testid="points-to-earn">+{pointsEarned} pts</span>
-              </div>
-            )}
+            <CartSummary
+              subtotal={subtotal}
+              taxableSubtotal={taxableSubtotal}
+              taxSettings={taxSettings}
+              taxRate={taxRate}
+              tax={tax}
+              discount={discount}
+              pointsDiscount={pointsDiscount}
+              paymentAdjustment={paymentAdjustment}
+              paymentAdjustmentLabel={paymentAdjustmentLabel}
+              total={total}
+              pointsSettings={pointsSettings}
+              pointsEarned={pointsEarned}
+            />
 
-            {/* Coupon Code Section */}
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px',
-              background: '#faf5ff',
-              borderRadius: '8px',
-              border: '1px solid #e9d5ff'
-            }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                color: '#7c3aed'
-              }}>
-                🎟️ Coupon Code
-              </label>
-              {appliedCoupon ? (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  backgroundColor: '#d1fae5',
-                  borderRadius: '6px',
-                  border: '1px solid #a7f3d0'
-                }}>
-                  <div>
-                    <span style={{ fontWeight: '700', fontFamily: 'monospace', color: '#065f46' }}>
-                      {appliedCoupon.code}
-                    </span>
-                    <span style={{ marginLeft: '8px', fontSize: '13px', color: '#047857' }}>
-                      ({appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}% off` : `$${appliedCoupon.discount_value} off`})
-                    </span>
-                  </div>
-                  <button
-                    onClick={removeCoupon}
-                    data-testid="remove-coupon-btn"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#dc2626',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                      fontWeight: '700'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="text"
-                      data-testid="coupon-input"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Enter code"
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontFamily: 'monospace',
-                        textTransform: 'uppercase',
-                        fontSize: '14px'
-                      }}
-                      onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
-                    />
-                    <button
-                      onClick={() => applyCoupon()}
-                      data-testid="apply-coupon-btn"
-                      disabled={!couponCode.trim() || cart.length === 0}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: couponCode.trim() && cart.length > 0 ? '#8b5cf6' : '#e5e7eb',
-                        color: couponCode.trim() && cart.length > 0 ? '#fff' : '#9ca3af',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: '600',
-                        cursor: couponCode.trim() && cart.length > 0 ? 'pointer' : 'not-allowed',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {couponError && (
-                    <div style={{ 
-                      marginTop: '8px', 
-                      fontSize: '13px', 
-                      color: '#dc2626' 
-                    }} data-testid="coupon-error">
-                      {couponError}
-                    </div>
-                  )}
+            <CouponPanel
+              appliedCoupon={appliedCoupon}
+              removeCoupon={removeCoupon}
+              couponCode={couponCode}
+              setCouponCode={setCouponCode}
+              applyCoupon={applyCoupon}
+              couponError={couponError}
+              cart={cart}
+              availableCoupons={availableCoupons}
+              showCouponList={showCouponList}
+              setShowCouponList={setShowCouponList}
+              selectCoupon={selectCoupon}
+            />
 
-                  {/* Available Coupons List */}
-                  {availableCoupons.length > 0 && cart.length > 0 && (
-                    <div style={{ marginTop: '12px' }}>
-                      <button
-                        onClick={() => setShowCouponList(!showCouponList)}
-                        data-testid="show-coupons-btn"
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          backgroundColor: 'transparent',
-                          border: '1px dashed #c4b5fd',
-                          borderRadius: '6px',
-                          color: '#7c3aed',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        {showCouponList ? '▲ Hide' : '▼ View'} Available Coupons ({availableCoupons.length})
-                      </button>
-                      
-                      {showCouponList && (
-                        <div style={{
-                          marginTop: '8px',
-                          maxHeight: '200px',
-                          overflowY: 'auto',
-                          border: '1px solid #e9d5ff',
-                          borderRadius: '8px',
-                          backgroundColor: '#fff'
-                        }}>
-                          {availableCoupons.map((coupon) => {
-                            const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-                            const meetsMinimum = cartSubtotal >= (coupon.min_purchase || 0);
-                            
-                            return (
-                              <button
-                                key={coupon.id}
-                                data-testid={`select-coupon-${coupon.code}`}
-                                onClick={() => meetsMinimum && selectCoupon(coupon)}
-                                disabled={!meetsMinimum}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px 12px',
-                                  backgroundColor: meetsMinimum ? '#fff' : '#f9fafb',
-                                  border: 'none',
-                                  borderBottom: '1px solid #f3e8ff',
-                                  cursor: meetsMinimum ? 'pointer' : 'not-allowed',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  opacity: meetsMinimum ? 1 : 0.6,
-                                  transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => meetsMinimum && (e.target.style.backgroundColor = '#faf5ff')}
-                                onMouseLeave={(e) => meetsMinimum && (e.target.style.backgroundColor = '#fff')}
-                              >
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{
-                                      fontFamily: 'monospace',
-                                      fontWeight: '700',
-                                      fontSize: '14px',
-                                      color: '#7c3aed'
-                                    }}>
-                                      {coupon.code}
-                                    </span>
-                                    <span style={{
-                                      backgroundColor: '#d1fae5',
-                                      color: '#065f46',
-                                      padding: '2px 6px',
-                                      borderRadius: '4px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}>
-                                      {coupon.discount_type === 'percentage' 
-                                        ? `${coupon.discount_value}% OFF` 
-                                        : `$${coupon.discount_value} OFF`}
-                                    </span>
-                                  </div>
-                                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                    {coupon.description || 'No description'}
-                                    {coupon.min_purchase > 0 && (
-                                      <span style={{ 
-                                        marginLeft: '8px',
-                                        color: meetsMinimum ? '#059669' : '#dc2626'
-                                      }}>
-                                        • Min ${coupon.min_purchase}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div style={{
-                                  color: meetsMinimum ? '#8b5cf6' : '#9ca3af',
-                                  fontSize: '18px'
-                                }}>
-                                  →
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Points Redemption Section */}
             {pointsSettings.points_enabled && selectedCustomer && (
-              <div style={{ 
-                marginTop: '16px', 
-                padding: '12px',
-                background: '#fef3c7',
-                borderRadius: '8px',
-                border: '1px solid #fcd34d'
-              }}>
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#92400e'
-                }}>
-                  <Star size={16} /> Loyalty Points
-                </label>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
-                  fontSize: '14px'
-                }}>
-                  <span style={{ color: '#78350f' }}>Available Points:</span>
-                  <span style={{ fontWeight: '700', color: '#b45309' }} data-testid="available-points">
-                    {(selectedCustomer.points_balance || 0).toFixed(0)} pts
-                  </span>
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
-                  fontSize: '13px',
-                  color: '#92400e'
-                }}>
-                  <span>Total Spent:</span>
-                  <span>${(selectedCustomer.total_spent || 0).toFixed(2)}</span>
-                </div>
-                
-                {canRedeemPoints ? (
-                  <>
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: '#059669', 
-                      marginBottom: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      ✓ Eligible to redeem (1 pt = ${pointsSettings.points_value})
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input
-                        type="number"
-                        min="0"
-                        max={maxPointsToUse}
-                        value={pointsToUse}
-                        onChange={(e) => setPointsToUse(Math.min(Math.max(0, parseInt(e.target.value) || 0), maxPointsToUse))}
-                        placeholder="0"
-                        data-testid="points-input"
-                        style={{
-                          flex: 1,
-                          padding: '8px 12px',
-                          border: '1px solid #fcd34d',
-                          borderRadius: '6px',
-                          fontSize: '14px'
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPointsToUse(maxPointsToUse)}
-                        data-testid="use-all-points-btn"
-                        style={{
-                          padding: '8px 12px',
-                          backgroundColor: '#f59e0b',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        Use All
-                      </button>
-                    </div>
-                    {pointsToUse > 0 && (
-                      <div style={{ 
-                        marginTop: '8px', 
-                        fontSize: '13px', 
-                        color: '#059669',
-                        fontWeight: '600'
-                      }}>
-                        Discount: -${(pointsToUse * pointsSettings.points_value).toFixed(2)}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: '#b45309',
-                    padding: '8px',
-                    backgroundColor: '#fef9c3',
-                    borderRadius: '6px'
-                  }}>
-                    {selectedCustomer.points_balance <= 0 
-                      ? '⚠️ No points to redeem'
-                      : `⚠️ Need $${pointsSettings.points_redemption_threshold.toLocaleString()} total spent to redeem (currently $${(selectedCustomer.total_spent || 0).toFixed(2)})`
-                    }
-                  </div>
-                )}
-              </div>
+              <PointsPanel
+                selectedCustomer={selectedCustomer}
+                pointsSettings={pointsSettings}
+                canRedeemPoints={canRedeemPoints}
+                maxPointsToUse={maxPointsToUse}
+                pointsToUse={pointsToUse}
+                setPointsToUse={setPointsToUse}
+              />
             )}
 
-            <div style={{ 
-              marginTop: '16px', 
-              marginBottom: '16px',
-              padding: '12px',
-              background: '#f8fafc',
-              borderRadius: '8px'
-            }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                color: '#334155'
-              }}>
-                Customer Lookup (Optional)
-              </label>
-              <small style={{ 
-                display: 'block', 
-                marginBottom: '8px',
-                fontSize: '0.85rem',
-                color: '#64748b'
-              }}>
-                Search by account #, name, or phone number
-              </small>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  value={customerAccountNumber}
-                  onChange={(e) => {
-                    setCustomerAccountNumber(e.target.value);
-                    searchCustomerByAccount(e.target.value);
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    // Re-show dropdown if there are existing results
-                    if (customerSearchResults.length > 0) {
-                      setShowCustomerDropdown(true);
-                    }
-                  }}
-                  placeholder="Enter account #, name, or phone..."
-                  data-testid="customer-account-input"
-                  disabled={!!selectedCustomer}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '6px',
-                    fontSize: '0.95rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    background: selectedCustomer ? '#e2e8f0' : 'white'
-                  }}
-                  onBlur={(e) => setTimeout(() => {
-                    e.target.style.borderColor = '#cbd5e1';
-                    setShowCustomerDropdown(false);
-                  }, 300)}
-                />
-                
-                {showCustomerDropdown && customerSearchResults.length > 0 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: 'white',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '6px',
-                    marginTop: '4px',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    zIndex: 1000,
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}>
-                    {customerSearchResults.map((customer) => (
-                      <div
-                        key={customer.id}
-                        onClick={() => selectCustomer(customer)}
-                        style={{
-                          padding: '10px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f1f5f9',
-                          transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = '#f8fafc'}
-                        onMouseLeave={(e) => e.target.style.background = 'white'}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontWeight: '600', color: '#1e293b' }}>{customer.name}</span>
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: '600',
-                            padding: '1px 4px',
-                            borderRadius: '3px',
-                            background: customer.customer_type === 'wholesale' ? '#dbeafe' : '#f0fdf4',
-                            color: customer.customer_type === 'wholesale' ? '#1d4ed8' : '#166534'
-                          }}>
-                            {(customer.customer_type || 'retail').toUpperCase()}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                          {customer.account_number} • {customer.phone}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {selectedCustomer && (
-                <div style={{
-                  marginTop: '12px',
-                  padding: '10px',
-                  background: selectedCustomer.customer_type === 'wholesale' ? '#dbeafe' : '#e0f2fe',
-                  borderRadius: '6px',
-                  border: selectedCustomer.customer_type === 'wholesale' ? '1px solid #93c5fd' : '1px solid #7dd3fc'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: '600', color: '#0c4a6e' }}>{selectedCustomer.name}</span>
-                        <span style={{
-                          fontSize: '0.7rem',
-                          fontWeight: '600',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: selectedCustomer.customer_type === 'wholesale' ? '#1d4ed8' : '#059669',
-                          color: 'white'
-                        }}>
-                          {(selectedCustomer.customer_type || 'retail').toUpperCase()}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#075985' }}>
-                        {selectedCustomer.account_number} • {selectedCustomer.phone}
-                      </div>
-                      {selectedCustomer.customer_type === 'wholesale' && (
-                        <div style={{ fontSize: '0.75rem', color: '#1d4ed8', marginTop: '4px' }}>
-                          Wholesale prices applied
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={clearCustomer}
-                      style={{
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '4px 8px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {!selectedCustomer && (
-                <>
-                  <button
-                    type="button"
-                    onClick={clearCustomer}
-                    style={{
-                      marginTop: '12px',
-                      width: '100%',
-                      padding: '8px',
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      color: '#475569',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = '#e2e8f0';
-                      e.target.style.borderColor = '#94a3b8';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = '#f1f5f9';
-                      e.target.style.borderColor = '#cbd5e1';
-                    }}
-                  >
-                    👤 Skip - Continue as Walk-in Customer
-                  </button>
-                  
-                  <label style={{ 
-                    display: 'block', 
-                    marginTop: '12px',
-                    marginBottom: '8px', 
-                    fontWeight: '600',
-                    fontSize: '0.9rem',
-                    color: '#334155'
-                  }}>
-                    Or Enter Name Manually
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Customer name..."
-                    data-testid="customer-name-input"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                      transition: 'border-color 0.2s'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                    onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                  />
-                </>
-              )}
-            </div>
+            <CustomerLookup
+              customerAccountNumber={customerAccountNumber}
+              setCustomerAccountNumber={setCustomerAccountNumber}
+              searchCustomerByAccount={searchCustomerByAccount}
+              customerSearchResults={customerSearchResults}
+              showCustomerDropdown={showCustomerDropdown}
+              setShowCustomerDropdown={setShowCustomerDropdown}
+              selectedCustomer={selectedCustomer}
+              selectCustomer={selectCustomer}
+              clearCustomer={clearCustomer}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+            />
 
-            <div className="payment-methods">
-              <button
-                className={`payment-btn ${paymentMethod === 'cash' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('cash')}
-                data-testid="payment-cash-btn"
-              >
-                💵 Cash
-              </button>
-              <button
-                className={`payment-btn ${paymentMethod === 'stripe' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('stripe')}
-                data-testid="payment-card-btn"
-              >
-                💳 Credit Card/Debit Card
-              </button>
-            </div>
-
-            {/* Cash Register Status */}
-            {paymentMethod === 'cash' && !currentShift && (
-              <div style={{
-                backgroundColor: '#fef3c7',
-                border: '1px solid #fcd34d',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <AlertCircle size={20} style={{ color: '#d97706', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#92400e', fontWeight: '500' }}>
-                    No register open
-                  </p>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#a16207' }}>
-                    Cash sales won't be tracked until you open a register
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowOpenRegisterModal(true)}
-                  data-testid="open-register-quick-btn"
-                  style={{
-                    padding: '8px 14px',
-                    backgroundColor: '#059669',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <Wallet size={16} />
-                  Open Register
-                </button>
-              </div>
-            )}
-
-            {/* Register Open Indicator */}
-            {currentShift && (
-              <div style={{
-                backgroundColor: '#d1fae5',
-                border: '1px solid #86efac',
-                borderRadius: '8px',
-                padding: '10px 12px',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '13px',
-                color: '#065f46'
-              }}>
-                <Wallet size={16} style={{ color: '#059669' }} />
-                <span><strong>Register Open</strong> - Cash sales being tracked</span>
-              </div>
-            )}
-
-            <button
-              className="btn-checkout"
-              onClick={handleCheckout}
-              disabled={cart.length === 0 || processing}
-              data-testid="checkout-btn"
-              style={{ marginBottom: '10px' }}
-            >
-              {processing ? 'Processing...' : `Checkout - $${total.toFixed(2)}`}
-            </button>
-            
-            <button
-              className="btn-secondary"
-              onClick={() => {
+            <CheckoutPanel
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              currentShift={currentShift}
+              setShowOpenRegisterModal={setShowOpenRegisterModal}
+              cart={cart}
+              processing={processing}
+              total={total}
+              handleCheckout={handleCheckout}
+              onClearCart={() => {
                 if (cart.length > 0 && window.confirm('Are you sure you want to clear the cart?')) {
                   setCart([]);
                   clearCustomer();
                   setPaymentMethod('cash');
                 }
               }}
-              disabled={cart.length === 0}
-              data-testid="cancel-sale-btn"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: 'none',
-                borderRadius: '8px',
-                background: cart.length === 0 ? '#e2e8f0' : '#ef4444',
-                color: 'white',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                transition: 'background 0.2s',
-                opacity: cart.length === 0 ? 0.6 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (cart.length > 0) e.target.style.background = '#dc2626';
-              }}
-              onMouseLeave={(e) => {
-                if (cart.length > 0) e.target.style.background = '#ef4444';
-              }}
-            >
-              Clear Cart
-            </button>
+            />
           </div>
         </div>
       </div>

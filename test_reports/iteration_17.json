@@ -1,0 +1,78 @@
+{
+  "summary": "Frontend-only regression of the Sales.js refactor (6 new cart sub-components) and the CustomerDetailModal/CustomerFormModal onClose prop fix. ALL Sales-refactor testids and flows verified working. ErrorBoundary did NOT trigger on Sales, Inventory, Customers or Reports. Customer view+edit modals open and close cleanly. One UNRELATED pre-existing bug confirmed: a `ReferenceError: token is not defined` fires from `fetchSettings` on every authenticated route (leftover from the cookie-only auth migration in iteration 16) — this does NOT crash any page because the useEffect catch absorbs it and the caller sets safe defaults, but the console is spamming red and settings-dependent features (tax/points/dual pricing) silently fall back to defaults.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Settings fetch (likely in App.js / a layout-level useEffect calling fetchSettings)",
+        "issue": "ReferenceError: token is not defined — fires at bundle.js:52169 from fetchSettings() on every authenticated route load (Sales, Inventory, Customers, Reports). Left-over bearer-token variable was not cleaned up when the XSS-hardening sweep removed localStorage token. Functionally tolerated because the catch block logs only, but tax/points/dual-pricing settings silently fall back to {tax_enabled:false, points_enabled:false, dual_pricing_enabled:false}. Any sale is therefore computed without tax/points even when the store has them enabled.",
+        "selector": "N/A (thrown before network request)",
+        "priority": "HIGH",
+        "console_error": "Error fetching settings: ReferenceError: token is not defined  at fetchSettings (bundle.js:52169:7)"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Select-from-picker coupon apply",
+        "issue": "Clicking a row in 'View Available Coupons' can return 400 from /api/coupons/validate when the selected coupon has a min_purchase greater than the current cart subtotal. Error is silently set in couponError (not shown to user in our test because picker closes on click). Minor UX: the picker should pre-filter coupons whose min_purchase > current subtotal, or surface the 400 message.",
+        "affected_selectors": ["[data-testid^=\"select-coupon-\"]", "[data-testid=\"coupon-error\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Sales page renders with data-testid=sales-page and NO ErrorBoundary fallback (prior iteration_16 blocker is fully resolved)",
+    "86 pos-item-* rendered",
+    "Add-to-cart works — 3 clicks produced 2 cart-item-* rows (one qty=2, one qty=1), subtotal $830.00",
+    "cart-subtotal, cart-tax, cart-total, points-to-earn testids all present and show correct values",
+    "increase-qty-*, decrease-qty-*, remove-item-* controls all functional (cart went 2→1 after remove)",
+    "Invalid coupon: fill INVALID123 + apply-coupon-btn → coupon-error shows 'Invalid coupon code'",
+    "show-coupons-btn toggles the picker and reveals 19 select-coupon-* rows",
+    "customer-account-input present; walk-in skip button and manual-name input render",
+    "payment-cash-btn / payment-card-btn toggle cleanly",
+    "open-register-quick-btn renders when payment=cash AND no currentShift (expected warning state)",
+    "checkout-btn renders AND is correctly disabled when cart is empty",
+    "cancel-sale-btn present; Clear Cart with window.confirm(accept) empties the cart",
+    "Nav smoke: /inventory (body=1248), /customers (1639), /reports (456) — none trigger error-boundary-fallback",
+    "CustomerDetailModal (eye button): customer-detail-modal opens, close-detail-modal-btn closes cleanly — onClose prop fix verified",
+    "CustomerFormModal (pencil button): customer-modal opens, close-modal-btn closes cleanly — onClose prop fix verified",
+    "Login still works (admin/admin123 via httpOnly cookie, no localStorage token)"
+  ],
+  "not_tested": [
+    "PointsPanel redemption UI (customer search returned 0 results for substring 'a' — maybe the dropdown uses a different testid pattern or the customer DB has no matches for that char; did not further chase since the customers page itself lists 19 customers and the PointsPanel only renders when customer is selected)",
+    "Happy-path cash checkout completion (skipped because no open register in test data — would require opening register first; not in scope of refactor)",
+    "Coupon auto-remove-when-subtotal-drops logic (useEffect at Sales.js:165)"
+  ],
+  "test_report_links": [
+    "/app/test_reports/iteration_17.json"
+  ],
+  "action_items": [
+    "Find and fix the `token is not defined` in fetchSettings (ReferenceError at bundle.js:52169). Most likely file is a layout/context that still does `headers: { Authorization: `Bearer ${token}` }` — now should rely on axios withCredentials cookie. Grep for `fetchSettings` and `token` across /app/frontend/src. This is the SAME CLASS of bug as iteration_16's Sales.js undefined-symbol regression — XSS sweep missed this call site.",
+    "(Minor) In CouponPanel picker, hide coupons where min_purchase > current subtotal OR surface the 400 detail to the user when a picker click fails.",
+    "(Enhancement) Consider showing a toast on successful coupon apply — right now the only UI signal is the remove-coupon-btn appearing and the cart-discount row updating."
+  ],
+  "critical_code_review_comments": [
+    "Sales.js at line 56 still does `const user = JSON.parse(localStorage.getItem('user'))` at module eval time. If user is null (session expired, cleared in another tab), `user.username` at line 395 in handleCheckout will crash. Guard with `user?.username` or move to state + useEffect.",
+    "The recurring `ReferenceError: token is not defined` is an identical failure mode to the previous Sales.js regression (iteration_16). Recommend adding ESLint `no-undef` as a pre-commit/CI check — this would catch future refactor misses before they reach the bundle.",
+    "CouponPanel + PointsPanel + CustomerLookup receive a LOT of props (>8 each) from Sales.js. Consider a shared `SalesContext` or small zustand store to stop prop-drilling, which would also make the three panels individually testable without mounting the whole Sales page.",
+    "`alert('Sale completed successfully!')` at Sales.js:434 is a regression-risk blocker for automated tests. Replace with a toast so a headless test doesn't hang on the native dialog."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "not tested this round (frontend-only request)",
+    "frontend": "100% of Sales-refactor + modal-fix checks PASS (16/16). 1 unrelated pre-existing console error (fetchSettings token ReferenceError) surfaced during nav smoke — does not block any flow but silently disables tax/points/dual-pricing features."
+  },
+  "test_credentials": {
+    "admin_username": "admin",
+    "admin_password": "admin123",
+    "device_bypass": "localStorage.device_id='TEST-DEVICE'; localStorage.device_activated='true' BEFORE first authenticated load"
+  },
+  "seed_data_creation": "None — read-only verification.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sales refactor is clean — 6 new cart sub-components wire up correctly and all requested data-testids are preserved. CustomerDetailModal + CustomerFormModal onClose fix verified. The only remaining blocker-class bug is a `token is not defined` in a module that calls fetchSettings — it fires on every authenticated page. Cart/tax/points calculations in Sales use tax_enabled:false fallback so totals appear correct in a fresh db but will silently ignore store-configured tax rates. Priority next session: fix fetchSettings token reference. Also note: the app route for Dashboard is `/` not `/dashboard` (React router warns 'No routes matched location /dashboard').",
+  "rca of the issue": "fetchSettings ReferenceError RCA: The XSS-hardening sweep (iteration_16) moved auth from localStorage tokens to an httpOnly cookie + axios withCredentials. Most fetch functions were updated to drop the manual `Authorization: Bearer ${token}` header, but `fetchSettings` still references a bare `token` identifier (line ~52169 in bundle, presumably in App.js or a Layout/Context file). JS does NOT throw at parse time for undeclared identifiers, only at evaluation time inside the useEffect — which is why the error is only surfaced at runtime. The surrounding try/catch eats the error AND the caller defaults tax/points/dual-pricing to disabled, so the app appears functional but silently ignores configured store settings. Reproduction: login fresh → open devtools console → notice `ReferenceError: token is not defined` on any route. Mitigation: `grep -rn 'fetchSettings' /app/frontend/src` → locate the declaration → remove/replace `token` with the cookie-based call pattern used elsewhere in the codebase."
+}
