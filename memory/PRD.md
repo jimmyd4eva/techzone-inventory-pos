@@ -26,6 +26,16 @@
 
 ## What's Been Implemented
 
+### Portable Windows Installer (Feb 22, 2026) ✅
+- **One-command portable build** via rewritten `BUILD_PORTABLE.bat` (v1.1.0). Produces a self-contained `TechZone-Portable\` folder + `TechZone-Portable-1.1.0.zip` that drops onto any Windows 10/11 PC and runs with a double-click. No admin rights, no Python/Node/MongoDB installs on the target.
+- **Bundled at build time**: embedded Python 3.11 with all of `backend/requirements.txt` installed, embedded MongoDB 7.0 (`mongod.exe`), production React build, auto-generated `.env` with a fresh random 64-char JWT secret per install.
+- **Single-port architecture**: FastAPI serves the SPA at `/` and API at `/api/*` on `127.0.0.1:8001`. Frontend is built with empty `REACT_APP_BACKEND_URL` so it makes same-origin calls — no CORS drama on the target machine.
+- **Activation bypassed** via new `ACTIVATION_DISABLED=true` env support in `routes/activation.py` — portable installs skip the device-lock screen (pointless for single-PC deploys). Preserved for cloud/preview where it stays enforced.
+- **Helper scripts** generated into the package: `START.bat` (launches MongoDB quietly, starts uvicorn, opens browser), `STOP.bat`, `RESET_ADMIN.bat` (one-click admin password reset), `README.txt`.
+- **Docs**: Completely rewrote `/app/INSTALLER_BUILD_GUIDE.md` with build prerequisites (Node/yarn/curl/tar on build machine only), output structure, troubleshooting table, port details, LAN-exposure instructions, and uninstall steps.
+- **Validated end-to-end on preview**: frontend build succeeds with `REACT_APP_BACKEND_URL=""`, FastAPI serves SPA at `/` (200/2758B), `/static/js/…` served (200/665KB), `/dashboard` SPA-fallback works (200), `/api/*` still routes correctly. Activation bypass verified via curl (false → true after env flip).
+
+
 ### Users Page — "Last Active" Column (Feb 22, 2026) ✅
 - `GET /api/users` now enriches each row with `last_login_at` / `last_login_ip` via a MongoDB aggregation against `login_audit` (single pipeline, no N+1). Fields added to the `User` Pydantic model (both `Optional[str] = None`).
 - New **Last Active** column in `Users.js` (testid `user-lastactive-<id>`) rendered as a colour-coded pill: green for today, indigo for this week, amber for stale (>7d), grey for never. Hovering shows the exact timestamp + IP tooltip.

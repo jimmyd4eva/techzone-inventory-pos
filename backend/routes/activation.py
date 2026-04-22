@@ -1,4 +1,5 @@
 """Route module extracted from server.py."""
+import os
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
@@ -9,9 +10,16 @@ from models import ActivationCode, ActivatedDevice, ActivationRequest, Activatio
 
 router = APIRouter(tags=["Device Activation"])
 
+# Portable/single-PC installs don't need per-device activation. Setting
+# ACTIVATION_DISABLED=true in the backend .env makes /api/activation/check
+# always succeed so the Activation screen is skipped on fresh installs.
+_ACTIVATION_DISABLED = os.environ.get("ACTIVATION_DISABLED", "").lower() in ("1", "true", "yes")
+
 @router.post("/activation/check")
 async def check_device_activation(request: ActivationCheckRequest):
     """Check if a device is activated - NO AUTH REQUIRED"""
+    if _ACTIVATION_DISABLED:
+        return {"is_activated": True, "activated_at": None, "activated_email": "portable@localhost"}
     device = await db.activated_devices.find_one({"device_id": request.device_id}, {"_id": 0})
     if device:
         return {
