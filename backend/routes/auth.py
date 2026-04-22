@@ -1,7 +1,7 @@
 """Route module extracted from server.py."""
 import os
 
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from core.config import db, logger, JWT_EXPIRATION_HOURS
@@ -44,8 +44,25 @@ def _clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(key=AUTH_COOKIE_NAME, path="/")
 
 
+async def _log_login_event(request: Request, user_id: str, username: str, jti: str, remember_me: bool) -> None:
+    """Insert a row into `login_audit` so the user can review recent sign-ins."""
+    # Prefer real client IP from common reverse-proxy headers, else the socket peer.
+    fwd = request.headers.get("x-forwarded-for", "")
+    ip = (fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "")) or "unknown"
+    await db.login_audit.insert_one({
+        "id": jti,
+        "user_id": user_id,
+        "username": username,
+        "ip": ip,
+        "user_agent": (request.headers.get("user-agent") or "")[:512],
+        "remember_me": bool(remember_me),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "revoked_at": None,
+    })
+
+
 @router.post("/auth/register")
-async def register(user_data: UserCreate, response: Response):
+async def register(user_data: UserCreate, request: Request, response: Response):
     # Check if user exists
     existing_user = await db.users.find_one({"username": user_data.username})
     if existing_user:
@@ -69,13 +86,14 @@ async def register(user_data: UserCreate, response: Response):
     await db.users.insert_one(doc)
     
     # Create token
-    token = create_token(user.id, user.role, user.username)
+    token, jti = create_token(user.id, user.role, user.username)
+    await _log_login_event(request, user.id, user.username, jti, False)
     _set_auth_cookie(response, token)
     
     return {"user": user, "token": token}
 
 @router.post("/auth/login")
-async def login(credentials: UserLogin, response: Response):
+async def login(credentials: UserLogin, request: Request, response: Response):
     # Find user
     user_doc = await db.users.find_one({"username": credentials.username})
     if not user_doc:
@@ -95,7 +113,11 @@ async def login(credentials: UserLogin, response: Response):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Create token
-    token = create_token(user_doc['id'], user_doc['role'], user_doc['username'])
+    token, jti = create_token(
+        user_doc['id'], user_doc['role'], user_doc['username'],
+        max_age_hours=24 * 30 if credentials.remember_me else None,
+    )
+    await _log_login_event(request, user_doc['id'], user_doc['username'], jti, credentials.remember_me)
     _set_auth_cookie(response, token, remember_me=credentials.remember_me)
 
     # Remove password hash from response
@@ -110,6 +132,42 @@ async def logout(response: Response):
     """Clear the httpOnly auth cookie. Idempotent — safe to call when already logged out."""
     _clear_auth_cookie(response)
     return {"message": "Logged out"}
+
+
+@router.get("/auth/sessions")
+async def list_sessions(request: Request, current_user: dict = Depends(get_current_user)):
+    """Return recent login sessions for the current user (most recent first)."""
+    current_jti = current_user.get("jti")
+    cursor = db.login_audit.find(
+        {"user_id": current_user["user_id"]}, {"_id": 0},
+    ).sort("created_at", -1).limit(30)
+    sessions = []
+    async for row in cursor:
+        sessions.append({
+            "id": row["id"],
+            "ip": row.get("ip"),
+            "user_agent": row.get("user_agent"),
+            "remember_me": row.get("remember_me", False),
+            "created_at": row.get("created_at"),
+            "revoked_at": row.get("revoked_at"),
+            "is_current": row["id"] == current_jti,
+        })
+    return sessions
+
+
+@router.post("/auth/sessions/{session_id}/revoke")
+async def revoke_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke one specific session. Future requests carrying that JWT's jti get 401."""
+    row = await db.login_audit.find_one({"id": session_id}, {"_id": 0})
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if row["user_id"] != current_user["user_id"]:
+        raise HTTPException(status_code=403, detail="Cannot revoke another user's session")
+    await db.login_audit.update_one(
+        {"id": session_id},
+        {"$set": {"revoked_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"ok": True, "revoked": session_id}
 
 @router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):

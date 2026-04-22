@@ -4,11 +4,13 @@ import secrets
 import string
 from datetime import datetime, timezone, timedelta
 
+import uuid
+
 import bcrypt as bcrypt_lib
 import jwt
 from fastapi import HTTPException, Request
 
-from .config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRATION_HOURS
+from .config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRATION_HOURS, db
 
 
 # ---------- Passwords ----------
@@ -24,14 +26,20 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 # ---------- JWT ----------
-def create_token(user_id: str, role: str, username: str = None) -> str:
+def create_token(user_id: str, role: str, username: str = None, max_age_hours: int = None) -> tuple[str, str]:
+    """Create a JWT. Returns (token, jti). jti uniquely identifies this session so
+    it can be listed in the account audit panel and individually revoked.
+    """
+    jti = str(uuid.uuid4())
+    hours = max_age_hours if max_age_hours is not None else JWT_EXPIRATION_HOURS
     payload = {
         "user_id": user_id,
         "role": role,
         "username": username,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS),
+        "jti": jti,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=hours),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM), jti
 
 
 def verify_token(token: str) -> dict:
@@ -59,7 +67,12 @@ async def get_current_user(request: Request) -> dict:
             token = auth_header[7:]
     if not token:
         raise HTTPException(status_code=401, detail="Missing authentication token")
-    return verify_token(token)
+    payload = verify_token(token)
+    # Reject tokens whose session-id (jti) has been revoked via the account audit panel.
+    jti = payload.get("jti")
+    if jti and await db.login_audit.find_one({"id": jti, "revoked_at": {"$ne": None}}, {"_id": 0}):
+        raise HTTPException(status_code=401, detail="Session revoked — please sign in again")
+    return payload
 
 
 def check_not_readonly(current_user: dict):
