@@ -14,6 +14,10 @@ class User(BaseModel):
     email: str
     role: str  # admin, technician, cashier
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # Set by GET /users only — the most recent successful login's ISO timestamp and IP.
+    # Null means the user has never signed in since the audit table was introduced.
+    last_login_at: Optional[str] = None
+    last_login_ip: Optional[str] = None
 
 class UserCreate(BaseModel):
     username: str

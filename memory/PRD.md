@@ -26,6 +26,13 @@
 
 ## What's Been Implemented
 
+### Users Page — "Last Active" Column (Feb 22, 2026) ✅
+- `GET /api/users` now enriches each row with `last_login_at` / `last_login_ip` via a MongoDB aggregation against `login_audit` (single pipeline, no N+1). Fields added to the `User` Pydantic model (both `Optional[str] = None`).
+- New **Last Active** column in `Users.js` (testid `user-lastactive-<id>`) rendered as a colour-coded pill: green for today, indigo for this week, amber for stale (>7d), grey for never. Hovering shows the exact timestamp + IP tooltip.
+- Relative-time formatting: "just now" / "Nm ago" / "Nh ago" / "yesterday" / "Nd ago" / locale date for >30 days.
+- Verified via curl (admin shows fresh `last_login_at`, never-logged-in users show `None`) + UI screenshot (admin="just now" green, others="Never" grey).
+
+
 ### Full XSS Hardening: localStorage Token Removal (Feb 22, 2026) ✅
 - Swept every `localStorage.getItem('token')` / `localStorage.setItem('token')` / `localStorage.removeItem('token')` call out of the frontend. 17 page/component files updated: `App.js`, `Login.js`, `Dashboard.js`, `Reports.js`, `Settings.js` (and all 6 settings tabs), `Inventory.js`, `Sales.js`, `SalesHistory.js`, `Repairs.js`, `Customers.js`, `Suppliers.js`, `Coupons.js`, `Users.js`, `PaymentSuccess.js`, `PaymentSuccessPayPal.js`, `Layout.js`, `PurchaseOrderModal.js`.
 - `App.js` now hydrates the user on boot via `GET /api/auth/me` (cookie-authenticated). If the cookie is missing/expired/revoked, cached `user` is cleared and the app bounces to `/login`. `handleLogin(userData)` now takes a single argument — no token.

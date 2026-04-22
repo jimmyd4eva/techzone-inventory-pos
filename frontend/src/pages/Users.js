@@ -5,6 +5,33 @@ import { Plus, Search, Edit2, Trash2, UserPlus } from 'lucide-react';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Human-friendly relative time for "Last Active" column (e.g. "2h ago", "yesterday",
+// "3d ago"). Anything older than ~30 days falls back to a localized date.
+const formatLastActive = (iso) => {
+  if (!iso) return { label: 'Never', tone: 'never' };
+  let then;
+  try { then = new Date(iso); } catch { return { label: '—', tone: 'never' }; }
+  const diffMs = Date.now() - then.getTime();
+  if (diffMs < 0) return { label: 'just now', tone: 'today' };
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return { label: 'just now', tone: 'today' };
+  if (mins < 60) return { label: `${mins}m ago`, tone: 'today' };
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return { label: `${hours}h ago`, tone: 'today' };
+  const days = Math.floor(hours / 24);
+  if (days === 1) return { label: 'yesterday', tone: 'recent' };
+  if (days < 7) return { label: `${days}d ago`, tone: 'recent' };
+  if (days < 30) return { label: `${days}d ago`, tone: 'stale' };
+  return { label: then.toLocaleDateString(), tone: 'stale' };
+};
+
+const TONE_STYLES = {
+  today:  { bg: '#d1fae5', fg: '#065f46' },
+  recent: { bg: '#e0e7ff', fg: '#4338ca' },
+  stale:  { bg: '#fef3c7', fg: '#92400e' },
+  never:  { bg: '#f3f4f6', fg: '#6b7280' },
+};
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -179,6 +206,7 @@ const Users = () => {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Last Active</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -204,6 +232,31 @@ const Users = () => {
                       <span className={`badge ${user.role}`} style={{ textTransform: 'capitalize' }}>
                         {user.role}
                       </span>
+                    </td>
+                    <td>
+                      {(() => {
+                        const la = formatLastActive(user.last_login_at);
+                        const style = TONE_STYLES[la.tone];
+                        return (
+                          <span
+                            data-testid={`user-lastactive-${user.id}`}
+                            title={user.last_login_at
+                              ? `${new Date(user.last_login_at).toLocaleString()}${user.last_login_ip ? ` • ${user.last_login_ip}` : ''}`
+                              : 'No sign-ins recorded yet'}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '999px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              background: style.bg,
+                              color: style.fg,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {la.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td>{new Date(user.created_at).toLocaleDateString()}</td>
                     <td>

@@ -198,14 +198,37 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     # Only admins can view all users
     if current_user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
+
+    # Enrich with the most-recent login_audit row per user so the Users page
+    # can show an "active today" indicator at a glance.
+    user_ids = [u['id'] for u in users]
+    last_logins: Dict[str, Dict[str, Any]] = {}
+    if user_ids:
+        pipeline = [
+            {"$match": {"user_id": {"$in": user_ids}}},
+            {"$sort": {"created_at": -1}},
+            {"$group": {
+                "_id": "$user_id",
+                "last_login_at": {"$first": "$created_at"},
+                "last_login_ip": {"$first": "$ip"},
+            }},
+        ]
+        async for row in db.login_audit.aggregate(pipeline):
+            last_logins[row["_id"]] = {
+                "last_login_at": row.get("last_login_at"),
+                "last_login_ip": row.get("last_login_ip"),
+            }
+
     for user in users:
         # Handle missing or string created_at
         if 'created_at' not in user or user['created_at'] is None:
             user['created_at'] = datetime.now(timezone.utc)
         elif isinstance(user['created_at'], str):
             user['created_at'] = datetime.fromisoformat(user['created_at'])
+        # Attach last-login info (None if the user has never logged in since audit was added)
+        user.update(last_logins.get(user['id'], {"last_login_at": None, "last_login_ip": None}))
     return users
 
 @router.delete("/users/{user_id}")
