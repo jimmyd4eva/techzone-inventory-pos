@@ -23,6 +23,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentSuccessPayPal from './pages/PaymentSuccessPayPal';
 import Layout from './components/Layout';
 import Activation from './pages/Activation';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -176,32 +177,34 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />}
-        />
-        <Route
-          path="/"
-          element={user ? <Layout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="sales-history" element={<SalesHistory />} />
-          <Route path="repairs" element={<Repairs />} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="suppliers" element={<Suppliers />} />
-          <Route path="coupons" element={<Coupons />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="users" element={<Users />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="payment-success" element={<PaymentSuccess />} />
-          <Route path="payment-success-paypal" element={<PaymentSuccessPayPal />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />}
+          />
+          <Route
+            path="/"
+            element={user ? <Layout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="sales" element={<Sales />} />
+            <Route path="sales-history" element={<SalesHistory />} />
+            <Route path="repairs" element={<Repairs />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="suppliers" element={<Suppliers />} />
+            <Route path="coupons" element={<Coupons />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="users" element={<Users />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="payment-success" element={<PaymentSuccess />} />
+            <Route path="payment-success-paypal" element={<PaymentSuccessPayPal />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

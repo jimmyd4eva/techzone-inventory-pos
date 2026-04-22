@@ -1,11 +1,11 @@
 import React from 'react';
 
 export const CustomerFormModal = ({ formData, setFormData, editingCustomer, onSubmit, onClose }) => (
-  <div className="modal-overlay" onClick={closeModal}>
+  <div className="modal-overlay" onClick={onClose}>
     <div className="modal" onClick={(e) => e.stopPropagation()} data-testid="customer-modal">
       <div className="modal-header">
         <h2>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</h2>
-        <button className="btn-close" onClick={closeModal} data-testid="close-modal-btn">
+        <button className="btn-close" onClick={onClose} data-testid="close-modal-btn">
           ×
         </button>
       </div>
@@ -101,7 +101,7 @@ export const CustomerFormModal = ({ formData, setFormData, editingCustomer, onSu
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={closeModal}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancel
           </button>
           <button type="submit" className="btn btn-success" data-testid="save-customer-btn">

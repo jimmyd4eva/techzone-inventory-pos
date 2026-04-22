@@ -26,6 +26,12 @@
 
 ## What's Been Implemented
 
+### Safety Net: ErrorBoundary + Prop Audit (Feb 22, 2026) ✅
+- **App-wide `<ErrorBoundary>`** (`components/ErrorBoundary.js`) wrapped around every authenticated route in `App.js`. Any render-time exception now shows a branded "Something went wrong" card with the error message + Reload / Go to Dashboard buttons (testids: `error-boundary-fallback`, `error-reload-btn`, `error-home-btn`) instead of blanking the entire production page. The CRA dev overlay still wins in preview (intentional — it shows the stack trace for devs), but end users on `emergent.host` now always see a recoverable screen.
+- **Static prop audit** (`/tmp/scan_jsx.py`) scanned every extracted subcomponent for undeclared JSX identifiers. Found one additional lurking bug — **`CustomerFormModal.js`** was referencing `closeModal` 3× (instead of the `onClose` prop it received), meaning the edit/add-customer modal would also have gone blank on close-click. Fixed all 3 callsites → confirmed via screenshot both the Edit modal and the Detail modal now open and close cleanly.
+- The audit now reports "No suspicious JSX identifiers found" across `src/components/**`.
+
+
 ### Restore from Backup (Feb 22, 2026) ✅
 - **New `POST /api/admin/restore`** endpoint (admin-only, multipart) accepts a zip produced by the Backup endpoint. Validates it parses as valid JSON BEFORE mutating the DB (turns a partial-restore disaster into a clean "bad file, nothing changed" error). Then for each `<collection>.json` entry: `delete_many({})` + `insert_many(docs)`.
 - `activated_devices` is the single protected collection — it's never blindly wiped (only replaced if the zip contains it), so the current workstation can't accidentally lock itself out mid-restore.
