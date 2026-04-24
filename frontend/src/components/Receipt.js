@@ -1,19 +1,21 @@
-import React from 'react';
-import DOMPurify from 'dompurify';
+import React, { useMemo } from 'react';
+import { sanitizeRichText, hasHtml } from '../utils/sanitize';
 import './Receipt.css';
-
-// Detect whether a string contains any HTML tags (vs. plain text)
-const hasHtml = (str) => /<[a-z][\s\S]*>/i.test(str || '');
 
 // Apply the TECHZONE blue/red split to formatted HTML by coloring text nodes.
 // Preserves all existing formatting (bold, italic, underline, font-size) while
 // overriding only the text color to keep the brand split effect.
 const applyColorSplit = (html, firstColor = '#2563eb', secondColor = '#dc2626') => {
   if (!html) return '';
+  // CRITICAL: sanitize BEFORE touching the DOM. Setting raw innerHTML on an
+  // offscreen element still triggers `<img src=… onerror>` during HTML
+  // parsing in modern browsers, which is an XSS vector even though the
+  // container is never attached to document.body.
+  const clean = sanitizeRichText(html);
   const container = document.createElement('div');
-  container.innerHTML = html;
+  container.innerHTML = clean;
   const fullText = container.textContent || '';
-  if (!fullText) return html;
+  if (!fullText) return clean;
 
   const mid = Math.ceil(fullText.length / 2);
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
@@ -61,11 +63,20 @@ const applyColorSplit = (html, firstColor = '#2563eb', secondColor = '#dc2626') 
   return container.innerHTML;
 };
 
-const sanitize = (html) =>
-  DOMPurify.sanitize(html || '', {
-    ALLOWED_TAGS: ['b', 'i', 'u', 'strong', 'em', 'span', 'p', 'br', 'div', 'font'],
-    ALLOWED_ATTR: ['style', 'color', 'size', 'face'],
-  });
+const sanitize = sanitizeRichText;
+
+// A tiny helper that memoizes the sanitized HTML to avoid creating a new
+// `{ __html: ... }` object on every parent re-render.
+const FormattedBlock = ({ value, className, testId }) => {
+  const html = useMemo(() => sanitize(value), [value]);
+  return (
+    <div
+      className={className}
+      data-testid={testId}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
 
 const Receipt = ({ sale, onClose, businessSettings }) => {
   const businessName = businessSettings?.business_name || 'TECHZONE';
@@ -95,14 +106,19 @@ const Receipt = ({ sale, onClose, businessSettings }) => {
 
   // Business Name rendering: if HTML formatting is present, apply blue/red split
   // over the formatted HTML; otherwise use the legacy plain-text split.
+  // Memoized so dangerouslySetInnerHTML doesn't get a fresh object on every
+  // re-render of the parent Sales page.
+  const businessNameHtml = useMemo(
+    () => (hasHtml(businessName) ? sanitize(applyColorSplit(businessName)) : null),
+    [businessName],
+  );
   const renderBusinessName = () => {
-    if (hasHtml(businessName)) {
-      const splitHtml = applyColorSplit(businessName);
+    if (businessNameHtml) {
       return (
         <h1
           className="receipt-title"
           data-testid="receipt-business-name"
-          dangerouslySetInnerHTML={{ __html: sanitize(splitHtml) }}
+          dangerouslySetInnerHTML={{ __html: businessNameHtml }}
         />
       );
     }
@@ -121,11 +137,7 @@ const Receipt = ({ sale, onClose, businessSettings }) => {
   const renderFormatted = (value, className, testId) => {
     if (hasHtml(value)) {
       return (
-        <div
-          className={className}
-          data-testid={testId}
-          dangerouslySetInnerHTML={{ __html: sanitize(value) }}
-        />
+        <FormattedBlock value={value} className={className} testId={testId} />
       );
     }
     return (

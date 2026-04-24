@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type, TextQuote } from 'lucide-react';
+import { sanitizeRichText } from '../utils/sanitize';
 
 // Fonts we advertise in the dropdown. Each option specifies a display label
 // (what the user sees) and a CSS stack (applied to the selection).
@@ -23,13 +24,17 @@ const SimpleRichTextEditor = ({ value, onChange, placeholder, rows = 3 }) => {
   const [fontFamily, setFontFamily] = useState('');
 
   // Sync external value -> editor DOM only when the editor is not focused
-  // (prevents caret jumps during typing).
+  // (prevents caret jumps during typing). CRITICAL: sanitize before writing
+  // to a LIVE contenteditable element — raw innerHTML here is a direct XSS
+  // vector if `value` ever arrives from another user's saved settings.
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
     const isActive = document.activeElement === el;
-    if (!isActive && (value || '') !== el.innerHTML) {
-      el.innerHTML = value || '';
+    const incoming = value || '';
+    const cleaned = sanitizeRichText(incoming);
+    if (!isActive && cleaned !== el.innerHTML) {
+      el.innerHTML = cleaned;
     }
   }, [value]);
 

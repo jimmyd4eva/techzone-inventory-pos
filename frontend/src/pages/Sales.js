@@ -60,6 +60,9 @@ const Sales = () => {
     fetchTaxSettings();
     fetchAvailableCoupons();
     fetchCurrentShift();
+    // Mount-once: fetch helpers are stable module-scoped async closures that
+    // only reference setters and the constant API URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCurrentShift = async () => {

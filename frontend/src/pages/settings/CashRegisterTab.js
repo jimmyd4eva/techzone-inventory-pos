@@ -9,6 +9,22 @@ import { Switch } from '../../components/ui/switch';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Tint maps for transaction-type and variance badges. Using a small lookup
+// table instead of chained ternaries so the intent is visible at a glance.
+const TXN_TINT = {
+  cash_sale: { bg: '#d1fae5', fg: '#059669' },
+  payout:    { bg: '#fef3c7', fg: '#d97706' },
+  drop:      { bg: '#dbeafe', fg: '#3b82f6' },
+};
+const TXN_DEFAULT = { bg: '#fee2e2', fg: '#dc2626' };
+const getTxnTint = (type) => TXN_TINT[type] || TXN_DEFAULT;
+
+const getVarianceTint = (difference) => {
+  if (difference === 0) return { bg: '#d1fae5', fg: '#059669' };
+  if (difference > 0)   return { bg: '#dbeafe', fg: '#3b82f6' };
+  return { bg: '#fee2e2', fg: '#dc2626' };
+};
+
 const AutoSummaryCard = ({ settings, setSettings }) => {
   const [sending, setSending] = useState(null); // 'weekly' | 'monthly' | null
   const [msg, setMsg] = useState({ type: '', text: '' });
@@ -409,19 +425,24 @@ export const CashRegisterTab = ({
                     marginBottom: '4px'
                   }}>
                     <div>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        backgroundColor: t.transaction_type === 'cash_sale' ? '#d1fae5' : t.transaction_type === 'payout' ? '#fef3c7' : t.transaction_type === 'drop' ? '#dbeafe' : '#fee2e2',
-                        color: t.transaction_type === 'cash_sale' ? '#059669' : t.transaction_type === 'payout' ? '#d97706' : t.transaction_type === 'drop' ? '#3b82f6' : '#dc2626',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        marginRight: '8px',
-                        textTransform: 'uppercase'
-                      }}>
-                        {t.transaction_type.replace('_', ' ')}
-                      </span>
+                      {(() => {
+                        const tint = getTxnTint(t.transaction_type);
+                        return (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            backgroundColor: tint.bg,
+                            color: tint.fg,
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            marginRight: '8px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {t.transaction_type.replace('_', ' ')}
+                          </span>
+                        );
+                      })()}
                       <span style={{ fontSize: '13px', color: '#6b7280' }}>{t.description || '-'}</span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -661,16 +682,26 @@ export const CashRegisterTab = ({
                         <FileText size={12} />
                         PDF
                       </button>
-                      <span style={{
-                        padding: '4px 10px',
-                        backgroundColor: shift.difference === 0 ? '#d1fae5' : shift.difference > 0 ? '#dbeafe' : '#fee2e2',
-                        color: shift.difference === 0 ? '#059669' : shift.difference > 0 ? '#3b82f6' : '#dc2626',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {shift.difference === 0 ? 'BALANCED' : shift.difference > 0 ? `+$${shift.difference.toFixed(2)} OVER` : `-$${Math.abs(shift.difference).toFixed(2)} SHORT`}
-                      </span>
+                      {(() => {
+                        const tint = getVarianceTint(shift.difference);
+                        const getVarianceLabel = () => {
+                          if (shift.difference === 0) return 'BALANCED';
+                          if (shift.difference > 0) return `+$${shift.difference.toFixed(2)} OVER`;
+                          return `-$${Math.abs(shift.difference).toFixed(2)} SHORT`;
+                        };
+                        return (
+                          <span style={{
+                            padding: '4px 10px',
+                            backgroundColor: tint.bg,
+                            color: tint.fg,
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            {getVarianceLabel()}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>

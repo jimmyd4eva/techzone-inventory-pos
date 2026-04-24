@@ -31,6 +31,8 @@ const Inventory = () => {
 
   useEffect(() => {
     fetchItems();
+    // Mount-once: fetchItems is a stable closure over setters + constant API.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

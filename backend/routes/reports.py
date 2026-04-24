@@ -658,28 +658,20 @@ async def export_tax_report_pdf(current_user: dict = Depends(get_current_user)):
 def _period_range(period: str, now: Optional[datetime] = None):
     """Return (start, end, label) for the 'previous' weekly or monthly period."""
     now = now or datetime.now(timezone.utc)
-    start: datetime
-    end: datetime
-    label: str
     if period == "weekly":
         # Previous Monday 00:00 UTC → last Sunday 23:59:59 UTC
         today = now.date()
         days_since_mon = today.weekday()
         this_mon = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc) - timedelta(days=days_since_mon)
         last_mon = this_mon - timedelta(days=7)
-        start = last_mon
-        end = this_mon
-        label = "Weekly"
-    elif period == "monthly":
+        return last_mon, this_mon, "Weekly"
+    if period == "monthly":
         # Previous full calendar month
         first_of_this_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = first_of_this_month
         prev_month_end = first_of_this_month - timedelta(days=1)
         start = prev_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        label = "Monthly"
-    else:
-        raise ValueError(f"Unknown period: {period}")
-    return start, end, label
+        return start, first_of_this_month, "Monthly"
+    raise ValueError(f"Unknown period: {period}")
 
 
 @router.post("/reports/send-summary-now")

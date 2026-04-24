@@ -1,15 +1,15 @@
-import React from 'react';
-import DOMPurify from 'dompurify';
-
-// Shared helpers with Receipt.js — kept local to keep Settings bundle light.
-const hasHtml = (str) => /<[a-z][\s\S]*>/i.test(str || '');
+import React, { useMemo } from 'react';
+import { sanitizeRichText, hasHtml } from '../utils/sanitize';
 
 const applyColorSplit = (html, firstColor = '#2563eb', secondColor = '#dc2626') => {
   if (!html) return '';
+  // Sanitize BEFORE touching the DOM — offscreen innerHTML can still trigger
+  // `<img onerror>` during parsing. See Receipt.js for details.
+  const clean = sanitizeRichText(html);
   const container = document.createElement('div');
-  container.innerHTML = html;
+  container.innerHTML = clean;
   const fullText = container.textContent || '';
-  if (!fullText) return html;
+  if (!fullText) return clean;
   const mid = Math.ceil(fullText.length / 2);
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   const nodes = [];
@@ -51,11 +51,20 @@ const applyColorSplit = (html, firstColor = '#2563eb', secondColor = '#dc2626') 
   return container.innerHTML;
 };
 
-const sanitize = (html) =>
-  DOMPurify.sanitize(html || '', {
-    ALLOWED_TAGS: ['b', 'i', 'u', 'strong', 'em', 'span', 'p', 'br', 'div', 'font'],
-    ALLOWED_ATTR: ['style', 'color', 'size', 'face'],
-  });
+const sanitize = sanitizeRichText;
+
+// Memoize sanitized HTML so dangerouslySetInnerHTML doesn't see a new object
+// on every keystroke in the Settings form.
+const FormattedBlock = ({ value, testId, style }) => {
+  const html = useMemo(() => sanitize(value), [value]);
+  return (
+    <div
+      data-testid={testId}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
 
 // A compact, static preview of how the receipt header will print.
 // Reflects the currently-typed (unsaved) settings state.
@@ -65,13 +74,17 @@ export const ReceiptPreview = ({ settings }) => {
   const businessPhone = settings?.business_phone || '';
   const businessLogo = settings?.business_logo || '';
 
+  const businessNameHtml = useMemo(
+    () => (hasHtml(businessName) ? sanitize(applyColorSplit(businessName)) : null),
+    [businessName],
+  );
   const renderBusinessName = () => {
-    if (hasHtml(businessName)) {
+    if (businessNameHtml) {
       return (
         <h2
           data-testid="preview-business-name"
           style={{ fontSize: '22px', fontWeight: 'bold', margin: '6px 0', textAlign: 'center' }}
-          dangerouslySetInnerHTML={{ __html: sanitize(applyColorSplit(businessName)) }}
+          dangerouslySetInnerHTML={{ __html: businessNameHtml }}
         />
       );
     }
@@ -90,10 +103,10 @@ export const ReceiptPreview = ({ settings }) => {
   const renderHtmlOrText = (value, testId) => {
     if (hasHtml(value)) {
       return (
-        <div
-          data-testid={testId}
+        <FormattedBlock
+          value={value}
+          testId={testId}
           style={{ fontSize: '13px', color: '#374151', textAlign: 'center', margin: '2px 0' }}
-          dangerouslySetInnerHTML={{ __html: sanitize(value) }}
         />
       );
     }
@@ -154,24 +167,24 @@ export const ReceiptPreview = ({ settings }) => {
       </div>
       <div style={{ borderTop: '1px dashed #9ca3af', margin: '10px 0' }} />
       {settings?.receipt_thankyou_html ? (
-        <div
-          data-testid="preview-receipt-thankyou"
+        <FormattedBlock
+          value={settings.receipt_thankyou_html}
+          testId="preview-receipt-thankyou"
           style={{ fontSize: '13px', color: '#374151', textAlign: 'center', fontWeight: 600, margin: '2px 0' }}
-          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_thankyou_html) }}
         />
       ) : null}
       {settings?.receipt_tagline_html ? (
-        <div
-          data-testid="preview-receipt-tagline"
+        <FormattedBlock
+          value={settings.receipt_tagline_html}
+          testId="preview-receipt-tagline"
           style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: '2px 0' }}
-          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_tagline_html) }}
         />
       ) : null}
       {settings?.receipt_footer_note_html ? (
-        <div
-          data-testid="preview-receipt-footer-note"
+        <FormattedBlock
+          value={settings.receipt_footer_note_html}
+          testId="preview-receipt-footer-note"
           style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center', margin: '2px 0 8px 0' }}
-          dangerouslySetInnerHTML={{ __html: sanitize(settings.receipt_footer_note_html) }}
         />
       ) : null}
       <div style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>

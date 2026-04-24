@@ -26,6 +26,27 @@
 
 ## What's Been Implemented
 
+### Code Review Fixes — Critical + Important (Feb 22, 2026) ✅
+Applied the 2026-04 code review findings. P2 component-size refactors deferred (we already refactored Sales/Dashboard/Reports/Customers in earlier passes).
+
+**Critical**
+- `routes/reports.py::_period_range` — refactored to use early `return` per branch so `start` is unambiguously always assigned. Curl-verified that `weekly`, `monthly`, and invalid-period all behave correctly (400 on unknown period, no crash).
+- **XSS hardening across receipt/rich-text flow**:
+  - New shared util `utils/sanitize.js` (`sanitizeRichText`, `hasHtml`) — single source of truth for the allow-list.
+  - `Receipt.js` and `ReceiptPreview.js` now sanitize BEFORE assigning to offscreen `container.innerHTML` (closes the `<img onerror>` parsing-time vector that was still present even on detached DOM).
+  - `SimpleRichTextEditor.js` now sanitizes BEFORE assigning to the live contenteditable — prior code trusted the `value` prop blindly.
+  - Extracted a memoized `<FormattedBlock>` helper in both receipt components so `dangerouslySetInnerHTML={{ __html }}` gets a stable object reference (addresses the "inline object re-render" review finding).
+  - New regression-safe **Jest test suite** `src/utils/__tests__/sanitize.test.js` — 8 tests covering `<img onerror>`, `<script>`, `onclick=`, `javascript:` URLs, empty inputs, and preservation of legitimate `<b>`/`<span style>` formatting. All pass.
+
+**Important**
+- **Nested-ternary cleanup**:
+  - `AccountSecurityTab.js::prettyUA` — replaced deeply nested ternary with a small `OS_MATCHERS` table + `detectOs`/`detectBrowser` helpers.
+  - `CashRegisterTab.js` — replaced 4 nested ternaries (transaction-type and variance-badge tinting) with `TXN_TINT` lookup + `getVarianceTint` and `getVarianceLabel` helpers.
+- **Stale-closure eslint disables with documentation**: added explanatory `// eslint-disable-next-line react-hooks/exhaustive-deps` comments on mount-once fetch effects in `Sales.js`, `Reports.js`, `SalesHistory.js`, `Inventory.js` (Settings.js already had them). These are intentional — the fetchers are stable closures over setters + the constant `API` URL.
+- **`is` vs `==` review points**: Verified all flagged sites use `is None` / `is not None` which is the **correct** Python idiom (PEP 8). Ruff's F632 check passes cleanly on all flagged files. Review finding was a false positive — no changes needed.
+- Removed a leftover "TEST PRINT" debug button from `SalesHistory.js` (red+yellow fixed-position overlay left behind during a previous debugging session).
+
+
 ### Sales.js Cart Section Refactor (Feb 22, 2026) ✅
 Final item from the Code Quality Report — fully done.
 

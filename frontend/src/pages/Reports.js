@@ -75,6 +75,9 @@ const Reports = () => {
       }
     };
     fetchReports();
+    // Mount-once: `fetchReports` is defined in this closure and only references
+    // the constant `API` and local setters. No stale-closure risk.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const downloadTaxReport = async () => {

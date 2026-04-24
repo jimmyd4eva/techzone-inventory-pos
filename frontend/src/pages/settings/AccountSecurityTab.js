@@ -6,21 +6,33 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Friendly device/browser guess from the User-Agent string.
+// Replaces the previous nested-ternary chain with a small lookup table for
+// readability and easier extension.
+const OS_MATCHERS = [
+  [/Windows/i, 'Windows'],
+  [/iPhone|iOS/i, 'iPhone'],
+  [/iPad/i, 'iPad'],
+  [/Mac/i, 'macOS'],
+  [/Android/i, 'Android'],
+  [/Linux/i, 'Linux'],
+];
+const detectOs = (ua) => {
+  for (const [re, label] of OS_MATCHERS) {
+    if (re.test(ua)) return label;
+  }
+  return 'Unknown OS';
+};
+const detectBrowser = (ua) => {
+  if (/Edg\//i.test(ua)) return 'Edge';
+  if (/Chrome\//i.test(ua)) return 'Chrome';
+  if (/Firefox\//i.test(ua)) return 'Firefox';
+  if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+  if (/curl/i.test(ua)) return 'curl';
+  return 'Browser';
+};
 const prettyUA = (ua) => {
   if (!ua) return 'Unknown device';
-  const os = /Windows/i.test(ua) ? 'Windows' :
-    /iPhone|iOS/i.test(ua) ? 'iPhone' :
-    /iPad/i.test(ua) ? 'iPad' :
-    /Mac/i.test(ua) ? 'macOS' :
-    /Android/i.test(ua) ? 'Android' :
-    /Linux/i.test(ua) ? 'Linux' : 'Unknown OS';
-  const browser =
-    /Edg\//i.test(ua) ? 'Edge' :
-    /Chrome\//i.test(ua) ? 'Chrome' :
-    /Firefox\//i.test(ua) ? 'Firefox' :
-    /Safari\//i.test(ua) && !/Chrome/i.test(ua) ? 'Safari' :
-    /curl/i.test(ua) ? 'curl' : 'Browser';
-  return `${browser} on ${os}`;
+  return `${detectBrowser(ua)} on ${detectOs(ua)}`;
 };
 
 const timeAgo = (iso) => {
