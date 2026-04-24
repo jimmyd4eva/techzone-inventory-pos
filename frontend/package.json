@@ -59,7 +59,9 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "check:jsx": "node scripts/check-jsx-imports.js",
+    "prebuild": "node scripts/check-jsx-imports.js"
   },
   "browserslist": {
     "production": [

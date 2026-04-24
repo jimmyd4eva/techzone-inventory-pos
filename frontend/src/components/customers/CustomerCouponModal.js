@@ -1,4 +1,5 @@
 import React from 'react';
+import { Ticket, MessageSquare, Send, Mail } from 'lucide-react';
 
 export const CustomerCouponModal = ({
   couponForCustomer, couponForm, setCouponForm, couponMsg, couponSaving,

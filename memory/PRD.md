@@ -26,6 +26,22 @@
 
 ## What's Been Implemented
 
+### Reports → Coupons Tab Crash + JSX Import Build Gate (Feb 22, 2026) ✅
+User reported `DollarSign is not defined` on the Reports → Coupons tab (caught by the `<ErrorBoundary>` with the friendly "Something went wrong" panel instead of blanking the page, as intended).
+
+**Root cause**: `<DollarSign>` JSX element used in `components/reports/CouponsReportTab.js` but not imported. Same class of bug as the Customer modals earlier this session.
+
+**Fixed**:
+- Added `DollarSign` + `BarChart3` to the `lucide-react` import in `CouponsReportTab.js`.
+- Ran a **new stricter AST-style scanner** (`/tmp/scan_jsx_strict.py`) that surfaced 4 sibling bugs: `CustomerCouponModal.js` was missing `Ticket`, `MessageSquare`, `Send`, `Mail` imports. All added.
+- Verified via screenshot: Reports → Coupons now renders 19 coupons with usage bars, stats grid, all testids intact. 0 console errors, no ErrorBoundary fallback.
+
+**Permanent protection**:
+- New `frontend/scripts/check-jsx-imports.js` — portable Node script that walks `src/` and fails with exit code 1 if any PascalCase JSX element (e.g. `<DollarSign>`) isn't imported or locally declared.
+- Wired into `package.json` as both `yarn check:jsx` and (most importantly) `yarn prebuild`, so `yarn build` now runs it automatically. CRA treats this class of bug as a warning, not an error — this script makes it blocking.
+- **Simulation test passed**: removing `DollarSign` from the import → `yarn check:jsx` exits with `[X] Undeclared PascalCase JSX identifiers found: components/reports/CouponsReportTab.js:44 <DollarSign>`. Restoring → `[OK] No undeclared PascalCase JSX identifiers.`
+
+
 ### Code Review Fixes — Critical + Important (Feb 22, 2026) ✅
 Applied the 2026-04 code review findings. P2 component-size refactors deferred (we already refactored Sales/Dashboard/Reports/Customers in earlier passes).
 

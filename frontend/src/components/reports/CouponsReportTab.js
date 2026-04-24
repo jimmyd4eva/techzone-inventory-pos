@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ticket, Percent, Hash, TrendingUp } from 'lucide-react';
+import { Ticket, Percent, Hash, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 
 export const CouponsReportTab = ({ couponAnalytics }) => {
   if (!couponAnalytics) return null;
