@@ -17,6 +17,9 @@ const PaymentSuccess = () => {
     if (sessionId) {
       checkPaymentStatus();
     }
+    // Intentional: we only want to re-run when sessionId changes. checkPaymentStatus
+    // is a stable closure defined inside the component.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const checkPaymentStatus = async () => {

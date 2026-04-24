@@ -17,6 +17,8 @@ const PaymentSuccessPayPal = () => {
     if (token) {
       capturePayment();
     }
+    // Intentional: only re-run when the PayPal order token changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const capturePayment = async () => {

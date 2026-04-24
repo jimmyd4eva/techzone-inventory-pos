@@ -68,7 +68,34 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Create default admin user if no users exist."""
+    """Create default admin user if no users exist. Also confirm Mongo is reachable
+    — this is by far the most common local-setup failure on Windows, and the
+    default motor error is opaque, so we surface a clear message upfront."""
+    try:
+        # `ping` is the cheapest round-trip that proves we can talk to mongod.
+        await client.admin.command('ping')
+        print(f"[OK] Connected to MongoDB at {os.environ.get('MONGO_URL')} / db={os.environ.get('DB_NAME')}")
+    except Exception as e:
+        # Print a big banner so it's impossible to miss in the dev console.
+        print("=" * 72)
+        print("[X] Cannot reach MongoDB!")
+        print(f"    MONGO_URL = {os.environ.get('MONGO_URL')}")
+        print(f"    DB_NAME   = {os.environ.get('DB_NAME')}")
+        print(f"    Error     = {e}")
+        print("")
+        print("  Fix checklist (Windows local setup):")
+        print("    1. Is MongoDB installed? ->  https://www.mongodb.com/try/download/community")
+        print("    2. Is it running?  Open Services.msc and look for 'MongoDB Server'.")
+        print("       Or run in a separate terminal:   mongod --dbpath C:\\data\\db")
+        print("    3. Is backend/.env pointing at the right MONGO_URL?")
+        print("       Default for local:   MONGO_URL=mongodb://127.0.0.1:27017")
+        print("    4. Any firewall / antivirus blocking port 27017?")
+        print("=" * 72)
+        # Continue booting so the /docs page still loads — every DB-backed route
+        # will 500 until Mongo is up, but the admin can at least see the banner
+        # in the dev console and fix it without a crash loop.
+        return
+
     try:
         users_count = await db.users.count_documents({})
         if users_count == 0:
