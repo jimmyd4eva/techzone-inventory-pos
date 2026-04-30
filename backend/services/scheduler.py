@@ -6,6 +6,7 @@ from core.config import db, logger
 from core.security import strip_html
 from services.summary_service import build_summary_pdf, send_summary_email
 from services.birthday_service import process_birthday_coupons
+from services.auto_backup_service import maybe_send_backup
 from routes.reports import _period_range
 
 
@@ -103,6 +104,7 @@ async def summary_scheduler_loop(interval_seconds: int = 3600):
             )
             await _process_followups()
             await process_birthday_coupons()
+            await maybe_send_backup()
         except Exception as e:
             logger.error(f"Scheduler iteration error: {e}")
         await asyncio.sleep(interval_seconds)

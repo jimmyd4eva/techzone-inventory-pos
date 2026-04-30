@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Download, Upload, Database, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle2, AlertTriangle, Mail, Calendar } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -20,6 +20,76 @@ export const DataBackupTab = () => {
     localStorage.getItem('last_backup_at') || null
   );
   const fileRef = useRef(null);
+
+  // Auto-backup settings
+  const [autoCfg, setAutoCfg] = useState({
+    auto_backup_enabled: false,
+    auto_backup_email: '',
+    auto_backup_frequency: 'weekly',
+    auto_backup_last_sent: null,
+  });
+  const [savingCfg, setSavingCfg] = useState(false);
+  const [sendingNow, setSendingNow] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await axios.get(`${API}/settings`);
+        if (cancelled) return;
+        setAutoCfg({
+          auto_backup_enabled: !!r.data.auto_backup_enabled,
+          auto_backup_email: r.data.auto_backup_email || r.data.shift_report_email || '',
+          auto_backup_frequency: r.data.auto_backup_frequency || 'weekly',
+          auto_backup_last_sent: r.data.auto_backup_last_sent || null,
+        });
+      } catch (e) {
+        // Settings endpoint failure is non-fatal — the rest of the panel still works.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const saveAutoCfg = async (overrides = {}) => {
+    setSavingCfg(true);
+    setMsg(null);
+    try {
+      const merged = { ...autoCfg, ...overrides };
+      // Pull current settings, merge our 3 keys, save back.
+      const r = await axios.get(`${API}/settings`);
+      const next = {
+        ...r.data,
+        auto_backup_enabled: merged.auto_backup_enabled,
+        auto_backup_email: merged.auto_backup_email,
+        auto_backup_frequency: merged.auto_backup_frequency,
+      };
+      await axios.put(`${API}/settings`, next);
+      setAutoCfg(merged);
+      setMsg({ type: 'success', text: 'Auto-backup settings saved.' });
+    } catch (e) {
+      setMsg({ type: 'error', text: e.response?.data?.detail || 'Could not save auto-backup settings.' });
+    } finally {
+      setSavingCfg(false);
+    }
+  };
+
+  const sendBackupNow = async () => {
+    setSendingNow(true);
+    setMsg(null);
+    try {
+      const r = await axios.post(`${API}/admin/backup/send-now`);
+      if (r.data.sent) {
+        setMsg({ type: 'success', text: `Backup emailed to ${r.data.recipient} (${(r.data.size_bytes / 1024).toFixed(1)} KB).` });
+        setAutoCfg((c) => ({ ...c, auto_backup_last_sent: new Date().toISOString() }));
+      } else {
+        setMsg({ type: 'error', text: 'Email send failed. Check SMTP credentials in backend .env.' });
+      }
+    } catch (e) {
+      setMsg({ type: 'error', text: e.response?.data?.detail || 'Could not send backup.' });
+    } finally {
+      setSendingNow(false);
+    }
+  };
 
   const handleRestore = async (event) => {
     const f = event.target.files?.[0];
@@ -146,6 +216,83 @@ export const DataBackupTab = () => {
           {msg.text}
         </div>
       ) : null}
+
+      {/* ----- Scheduled auto-backup ----- */}
+      <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px dashed #e5e7eb' }}>
+        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Calendar size={16} /> Scheduled email backups
+        </h4>
+        <p style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 14px 0' }}>
+          Get a fresh backup zip emailed to you automatically. The scheduler runs hourly in the background and sends a backup whenever the chosen interval has elapsed.
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              data-testid="auto-backup-enabled-toggle"
+              checked={autoCfg.auto_backup_enabled}
+              onChange={(e) => saveAutoCfg({ auto_backup_enabled: e.target.checked })}
+              disabled={savingCfg}
+              style={{ width: '16px', height: '16px' }}
+            />
+            <b>Enable auto-backup</b>
+          </label>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', maxWidth: '560px', marginBottom: '14px' }}>
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '4px' }}>Frequency</label>
+            <select
+              data-testid="auto-backup-frequency-select"
+              value={autoCfg.auto_backup_frequency}
+              onChange={(e) => setAutoCfg((c) => ({ ...c, auto_backup_frequency: e.target.value }))}
+              onBlur={() => saveAutoCfg()}
+              disabled={savingCfg || !autoCfg.auto_backup_enabled}
+              style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px' }}
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '4px' }}>Recipient email</label>
+            <input
+              type="email"
+              data-testid="auto-backup-email-input"
+              value={autoCfg.auto_backup_email}
+              onChange={(e) => setAutoCfg((c) => ({ ...c, auto_backup_email: e.target.value }))}
+              onBlur={() => saveAutoCfg()}
+              disabled={savingCfg || !autoCfg.auto_backup_enabled}
+              placeholder="owner@example.com"
+              style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px' }}
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          data-testid="send-backup-now-btn"
+          onClick={sendBackupNow}
+          disabled={sendingNow || !autoCfg.auto_backup_email}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '8px 16px', background: '#fff', color: '#1d4ed8',
+            border: '1px solid #bfdbfe', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+            cursor: (sendingNow || !autoCfg.auto_backup_email) ? 'not-allowed' : 'pointer',
+            opacity: (sendingNow || !autoCfg.auto_backup_email) ? 0.6 : 1,
+          }}
+        >
+          <Mail size={14} /> {sendingNow ? 'Sending…' : 'Send backup email now'}
+        </button>
+
+        {autoCfg.auto_backup_last_sent ? (
+          <div style={{ marginTop: '10px', fontSize: '12px', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <CheckCircle2 size={12} color="#059669" />
+            Last automatic email: {new Date(autoCfg.auto_backup_last_sent).toLocaleString()}
+          </div>
+        ) : null}
+      </div>
 
       {/* ----- Restore from backup (danger zone) ----- */}
       <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px dashed #e5e7eb' }}>

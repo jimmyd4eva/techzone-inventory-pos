@@ -234,6 +234,11 @@ class Settings(BaseModel):
     custom_theme_thankyou_html: Optional[str] = None
     custom_theme_tagline_html: Optional[str] = None
     custom_theme_footer_note_html: Optional[str] = None
+    # Scheduled auto-backup
+    auto_backup_enabled: bool = False
+    auto_backup_email: Optional[str] = None  # Falls back to shift_report_email when blank
+    auto_backup_frequency: str = "weekly"  # 'weekly' | 'monthly'
+    auto_backup_last_sent: Optional[str] = None  # ISO datetime managed by the scheduler
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
 
@@ -273,6 +278,9 @@ class SettingsUpdate(BaseModel):
     custom_theme_thankyou_html: Optional[str] = None
     custom_theme_tagline_html: Optional[str] = None
     custom_theme_footer_note_html: Optional[str] = None
+    auto_backup_enabled: Optional[bool] = None
+    auto_backup_email: Optional[str] = None
+    auto_backup_frequency: Optional[str] = None
 
 # ============ COUPON MODELS ============
 

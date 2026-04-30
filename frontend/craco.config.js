@@ -49,15 +49,17 @@ const webpackConfig = {
     configure: (webpackConfig) => {
 
       // Silence "Failed to parse source map" warnings from third-party packages
-      // (dompurify ships TS source maps pointing at .ts files they don't include
-      // in the npm tarball). These are harmless but spam the dev console.
-      // We ignore any source-map-loader warning that originates inside node_modules.
+      // (dompurify ships TS sourcemaps pointing at files not in its tarball).
+      // `exclude` in webpack can be a RegExp, a string, a function, or an
+      // array — normalise to an array before extending.
       const sourceMapLoaderRule = (webpackConfig.module?.rules || []).find((r) => {
         return r.enforce === 'pre' && String(r.loader || '').includes('source-map-loader');
       });
       if (sourceMapLoaderRule) {
+        const prev = sourceMapLoaderRule.exclude;
+        const prevArr = Array.isArray(prev) ? prev : prev ? [prev] : [];
         sourceMapLoaderRule.exclude = [
-          ...(sourceMapLoaderRule.exclude || []),
+          ...prevArr,
           /node_modules[\\/]dompurify/,
         ];
       }

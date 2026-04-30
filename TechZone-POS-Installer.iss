@@ -1,78 +1,109 @@
-; TechZone POS - Inno Setup Installer Script
-; Download Inno Setup from: https://jrsoftware.org/isdl.php
+; ====================================================================
+;  TechZone POS - Inno Setup Installer Script (v2)
+;  --------------------------------------------------------------------
+;  Wraps the output of BUILD_PORTABLE.bat into a single Setup EXE with:
+;    - Start Menu shortcut + optional desktop shortcut
+;    - Proper "Add or Remove Programs" entry (with publisher, version,
+;      and help link)
+;    - Silent uninstaller that leaves user data (mongodb\data) intact
+;
+;  BUILD STEPS (on a Windows machine):
+;    1. Run BUILD_PORTABLE.bat       → produces TechZone-Portable\
+;    2. Install Inno Setup 6+        → https://jrsoftware.org/isdl.php
+;    3. Right-click this .iss file → "Compile"
+;       (or run:  ISCC.exe TechZone-POS-Installer.iss  )
+;    4. Output:  dist\TechZone-POS-Setup-1.1.0.exe
+; ====================================================================
 
-#define MyAppName "TechZone POS"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "TechZone"
-#define MyAppExeName "START.bat"
+#define AppName      "TechZone POS"
+#define AppVersion   "1.1.0"
+#define AppPublisher "TechZone"
+#define AppURL       "https://zero-tax-pos.emergent.host"
+#define AppExe       "START.bat"
+#define PortableDir  "TechZone-Portable"
 
 [Setup]
-AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
+AppId={{A7F3D1C2-4E18-4B6F-9A3B-00FF112233AA}
+AppName={#AppName}
+AppVersion={#AppVersion}
+AppVerName={#AppName} {#AppVersion}
+AppPublisher={#AppPublisher}
+AppPublisherURL={#AppURL}
+AppSupportURL={#AppURL}
+AppUpdatesURL={#AppURL}
+DefaultDirName={autopf}\TechZone POS
+DefaultGroupName={#AppName}
 AllowNoIcons=yes
-OutputDir=installer_output
-OutputBaseFilename=TechZone-POS-Setup-{#MyAppVersion}
-SetupIconFile=SalesTax.ico
-UninstallDisplayIcon={app}\SalesTax.ico
+DisableProgramGroupPage=yes
+OutputDir=dist
+OutputBaseFilename=TechZone-POS-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
-PrivilegesRequired=admin
-MinVersion=10.0
 WizardStyle=modern
+; POS software doesn't need admin — installing to AppData keeps it portable-friendly
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+UninstallDisplayIcon={app}\mongodb\mongod.exe
+ChangesAssociations=no
+MinVersion=10.0.17763   ; Windows 10 1809+ (tar / curl built in)
+; If you have a code-signing cert, uncomment these to sign the setup + uninstaller:
+; SignTool=signtool
+; SignedUninstaller=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
+Name: "startmenuicon"; Description: "Create a Start Menu shortcut"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-; Backend files
-Source: "backend\*"; DestDir: "{app}\backend"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "__pycache__,*.pyc,*.pyo,.env"
-
-; Frontend files - INCLUDING node_modules
-Source: "frontend\node_modules\*"; DestDir: "{app}\frontend\node_modules"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "frontend\src\*"; DestDir: "{app}\frontend\src"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "frontend\public\*"; DestDir: "{app}\frontend\public"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "frontend\package.json"; DestDir: "{app}\frontend"; Flags: ignoreversion
-Source: "frontend\craco.config.js"; DestDir: "{app}\frontend"; Flags: ignoreversion skipifsourcedoesntexist
-
-; Batch files
-Source: "START.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "STOP.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "SETUP.bat"; DestDir: "{app}"; Flags: ignoreversion
-
-; Icon
-Source: "SalesTax.ico"; DestDir: "{app}"; Flags: ignoreversion
-
-[Dirs]
-Name: "{app}\backend"; Permissions: users-full
-Name: "{app}\frontend"; Permissions: users-full
+; The entire portable payload is pulled in verbatim. recursesubdirs copies
+; everything under TechZone-Portable\ (python, mongodb, backend, frontend).
+Source: "{#PortableDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Optional icon — falls back to mongod.exe's icon if not present.
+Source: "SalesTax.ico"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\SalesTax.ico"; WorkingDir: "{app}"
-Name: "{group}\Stop {#MyAppName}"; Filename: "{app}\STOP.bat"; WorkingDir: "{app}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\SalesTax.ico"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; IconFilename: "{app}\SalesTax.ico"; Tasks: startmenuicon
+Name: "{group}\Stop {#AppName}"; Filename: "{app}\STOP.bat"; WorkingDir: "{app}"; Tasks: startmenuicon
+Name: "{group}\Reset admin password"; Filename: "{app}\RESET_ADMIN.bat"; WorkingDir: "{app}"; Tasks: startmenuicon
+Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"; Tasks: startmenuicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; IconFilename: "{app}\SalesTax.ico"; Tasks: desktopicon
 
 [Run]
-; Create backend .env file
-Filename: "{cmd}"; Parameters: "/c echo MONGO_URL=mongodb://localhost:27017 > ""{app}\backend\.env"" && echo DB_NAME=salestax >> ""{app}\backend\.env"" && echo JWT_SECRET=techzone-local-2024 >> ""{app}\backend\.env"" && echo EMAIL_ADDRESS= >> ""{app}\backend\.env"" && echo EMAIL_PASSWORD= >> ""{app}\backend\.env"""; Flags: runhidden
+Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: postinstall skipifsilent nowait
 
-; Create frontend .env file
-Filename: "{cmd}"; Parameters: "/c echo REACT_APP_BACKEND_URL=http://127.0.0.1:8001 > ""{app}\frontend\.env"""; Flags: runhidden
-
-; Launch app after install
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+[UninstallRun]
+; Gracefully stop any running mongod / python processes so uninstall can
+; delete the folder cleanly. Non-fatal if they aren't running.
+Filename: "{app}\STOP.bat"; RunOnceId: "StopTechZone"; Flags: runhidden
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\backend\__pycache__"
+; Leave mongodb\data alone — that's the user's business data. Uninstall
+; cleans up everything else; user can manually wipe mongodb\data later.
+Type: filesandordirs; Name: "{app}\logs"
+Type: filesandordirs; Name: "{app}\mongodb\logs"
 Type: files; Name: "{app}\backend\.env"
-Type: files; Name: "{app}\frontend\.env"
 
-[Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nPREREQUISITES REQUIRED:%n- Python 3.10+%n- Node.js LTS%n- MongoDB (as Windows service)%n%nMake sure these are installed before continuing.
+[Code]
+function InitializeUninstall(): Boolean;
+var
+  KeepData: Integer;
+begin
+  KeepData := MsgBox(
+    'Do you want to KEEP your business data (customers, sales, inventory)?' + #13#10#13#10 +
+    'Click YES to preserve it (mongodb\data will be left on disk).' + #13#10 +
+    'Click NO to delete everything.' + #13#10 +
+    'Click CANCEL to abort the uninstall.',
+    mbConfirmation, MB_YESNOCANCEL);
+  if KeepData = IDCANCEL then begin
+    Result := False;
+    exit;
+  end;
+  if KeepData = IDNO then begin
+    DelTree(ExpandConstant('{app}\mongodb\data'), True, True, True);
+  end;
+  Result := True;
+end;

@@ -4,7 +4,16 @@ import { Search } from 'lucide-react';
 export const ProductSelection = ({
   searchTerm, setSearchTerm,
   filteredInventory, selectedCustomer, addToCart,
-}) => (
+}) => {
+  // Enter on the search input adds the first visible product to cart — lets
+  // cashiers scan/type a SKU and tap Enter without reaching for the mouse.
+  const onSearchKey = (e) => {
+    if (e.key === 'Enter' && filteredInventory.length > 0) {
+      e.preventDefault();
+      addToCart(filteredInventory[0]);
+    }
+  };
+  return (
 <div className="items-section">
   <div className="card">
     <div className="card-header">
@@ -13,10 +22,11 @@ export const ProductSelection = ({
         <Search className="search-icon" size={20} />
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder="Search products... (F2 to focus, Enter to add top match)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          data-testid="sales-search"
+          onKeyDown={onSearchKey}
+          data-testid="product-search-input"
         />
       </div>
     </div>
@@ -93,6 +103,7 @@ export const ProductSelection = ({
     </div>
   </div>
 </div>
-);
+  );
+};
 
 export default ProductSelection;

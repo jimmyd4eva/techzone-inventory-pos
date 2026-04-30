@@ -53,6 +53,7 @@ const Sales = () => {
   const [showOpenRegisterModal, setShowOpenRegisterModal] = useState(false);
   const [openingAmount, setOpeningAmount] = useState('');
   const [registerMessage, setRegisterMessage] = useState('');
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
@@ -64,6 +65,46 @@ const Sales = () => {
     // only reference setters and the constant API URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Keyboard shortcuts for cashiers — bound at the document level so they
+  // work regardless of which sub-panel currently has focus. Inputs/textareas
+  // are excluded so typing into the customer-name field doesn't fire
+  // shortcuts. Opens a help overlay with `?` (Shift+/).
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toUpperCase();
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable;
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        const el = document.querySelector('[data-testid="product-search-input"]');
+        if (el) { el.focus(); el.select?.(); }
+        return;
+      }
+      if (isTyping && e.key !== 'Escape') return;
+
+      if (e.key === 'F9') {
+        e.preventDefault();
+        const btn = document.querySelector('[data-testid="checkout-btn"]');
+        if (btn && !btn.disabled) btn.click();
+        return;
+      }
+      if (e.key === 'Escape') {
+        if (showShortcuts) { setShowShortcuts(false); return; }
+        if (!isTyping) {
+          const btn = document.querySelector('[data-testid="cancel-sale-btn"]');
+          if (btn && !btn.disabled) btn.click();
+        }
+        return;
+      }
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault();
+        setShowShortcuts((v) => !v);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showShortcuts]);
 
   const fetchCurrentShift = async () => {
     try {
@@ -578,6 +619,86 @@ const Sales = () => {
           onCancel={() => { setShowOpenRegisterModal(false); setOpeningAmount(""); setRegisterMessage(""); }}
           onConfirm={handleOpenRegister}
         />
+      )}
+
+      {/* Floating Shortcuts hint (bottom-right). Click opens the full cheat-sheet. */}
+      <button
+        type="button"
+        data-testid="shortcuts-hint-btn"
+        onClick={() => setShowShortcuts(true)}
+        title="Keyboard shortcuts (press ?)"
+        style={{
+          position: 'fixed', bottom: '20px', right: '20px', zIndex: 30,
+          background: '#1e293b', color: '#fff', border: 'none',
+          borderRadius: '999px', padding: '8px 14px', fontSize: '12px',
+          fontWeight: 600, cursor: 'pointer',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+        }}
+      >
+        <kbd style={{ background: '#334155', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>?</kbd>
+        Shortcuts
+      </button>
+
+      {/* Keyboard shortcut cheat-sheet overlay */}
+      {showShortcuts && (
+        <div
+          data-testid="shortcuts-overlay"
+          onClick={() => setShowShortcuts(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px', width: '92%',
+              background: '#fff', borderRadius: '12px', padding: '24px 28px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '17px', color: '#111827' }}>Cashier keyboard shortcuts</h3>
+            <p style={{ fontSize: '13px', color: '#6b7280', margin: '6px 0 18px 0' }}>
+              These work from anywhere on the Sales page.
+            </p>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {[
+                  ['F2', 'Focus the product search'],
+                  ['Enter', 'Add the top matching product to cart (while searching)'],
+                  ['F9', 'Checkout the current cart'],
+                  ['Esc', 'Clear cart (with confirmation)'],
+                  ['?', 'Show / hide this help'],
+                ].map(([k, desc]) => (
+                  <tr key={k} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 0', width: '80px' }}>
+                      <kbd style={{
+                        background: '#f1f5f9', border: '1px solid #cbd5e1',
+                        borderRadius: '6px', padding: '2px 8px',
+                        fontFamily: 'monospace', fontSize: '13px', color: '#334155',
+                      }}>{k}</kbd>
+                    </td>
+                    <td style={{ padding: '8px 0', fontSize: '13px', color: '#374151' }}>{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button
+              type="button"
+              data-testid="shortcuts-close-btn"
+              onClick={() => setShowShortcuts(false)}
+              style={{
+                marginTop: '18px', padding: '8px 14px', background: '#1e293b',
+                color: '#fff', border: 'none', borderRadius: '8px',
+                fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

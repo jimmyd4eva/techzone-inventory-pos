@@ -130,6 +130,43 @@ async def restore_backup(
     }
 
 
+@router.post("/admin/backup/send-now")
+async def send_backup_now(current_user: dict = Depends(get_current_user)):
+    """Trigger a one-off backup email immediately. Admin-only.
+
+    Useful both as a 'verify my SMTP works' button and to grab a fresh copy
+    without waiting for the next scheduler tick.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can send a backup")
+
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0}) or {}
+    to_email = (
+        settings.get("auto_backup_email")
+        or settings.get("shift_report_email")
+        or ""
+    ).strip()
+    if not to_email:
+        raise HTTPException(
+            status_code=400,
+            detail="No recipient configured. Set 'Backup recipient email' in Settings → Backup or 'Manager Email' in Cash Register.",
+        )
+
+    from services.auto_backup_service import _build_backup_zip, _send_backup_email
+    import re
+    business_name = re.sub(r"<[^>]+>", "", settings.get("business_name") or "TECHZONE").strip() or "TECHZONE"
+
+    zip_bytes = await _build_backup_zip()
+    sent = _send_backup_email(to_email, zip_bytes, business_name)
+    if sent:
+        await db.settings.update_one(
+            {"id": "app_settings"},
+            {"$set": {"auto_backup_last_sent": datetime.now(timezone.utc).isoformat()}},
+            upsert=True,
+        )
+    return {"sent": sent, "recipient": to_email, "size_bytes": len(zip_bytes)}
+
+
 @router.post("/admin/migrate-data")
 async def migrate_data(current_user: dict = Depends(get_current_user)):
     # Only admins can run migration

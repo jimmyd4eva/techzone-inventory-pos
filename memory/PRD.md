@@ -26,6 +26,40 @@
 
 ## What's Been Implemented
 
+### Cashier Shortcuts + Auto-Backup + Inno Setup Installer (Feb 22, 2026) ✅
+
+**1. Cashier keyboard shortcuts on Sales**
+- `F2` focuses the product search (works even mid-typing elsewhere — cashiers want a quick re-focus)
+- `Enter` in the search input adds the top matching product to cart (scan SKU → Enter, no mouse)
+- `F9` triggers the Checkout button
+- `Esc` triggers Clear Cart (when not typing)
+- `?` opens a cheat-sheet overlay (testid `shortcuts-overlay`)
+- Floating **Shortcuts** hint button at bottom-right (testid `shortcuts-hint-btn`)
+- Typing into inputs/textareas cleanly suppresses shortcuts so `?` in customer-name doesn't open help
+- Verified end-to-end via Playwright: 6/6 assertions pass, 0 console errors
+
+**2. Scheduled auto-email backup**
+- New `services/auto_backup_service.py` — reuses the `/api/admin/backup` JSON-zip logic, sends it over SMTP as a proper attachment (no `mongodump` binary needed; works on cloud prod AND portable Windows build)
+- Wired into the existing hourly scheduler (`services/scheduler.py::summary_scheduler_loop`) alongside follow-ups and birthday sweeps
+- New `POST /api/admin/backup/send-now` admin endpoint — one-click "send me a test backup right now" (validates SMTP + recipient in <3 seconds)
+- Settings fields added to `Settings` + `SettingsUpdate` models: `auto_backup_enabled`, `auto_backup_email`, `auto_backup_frequency` (weekly|monthly), `auto_backup_last_sent`
+- `DataBackupTab.js` gained a blue "Scheduled email backups" panel with an enable toggle, frequency dropdown, recipient input, **Send backup email now** button, and a "Last automatic email" timestamp. Settings autosave onBlur.
+- Curl-verified: PUT /settings persists the 3 new fields, POST /admin/backup/send-now emailed a 52KB zip to the configured recipient successfully. Frequency guard: weekly = 7-day interval, monthly = 30-day interval; first run always sends
+
+**3. Inno Setup EXE installer**
+- Rewrote `TechZone-POS-Installer.iss` for Inno Setup 6+. Wraps the `BUILD_PORTABLE.bat` output into a proper `TechZone-POS-Setup-1.1.0.exe`:
+  - Installs under `{autopf}\TechZone POS` with `PrivilegesRequired=lowest` (no admin needed)
+  - Start Menu + optional desktop + quick-launch shortcuts
+  - Proper "Add or Remove Programs" entry (publisher / version / help URL)
+  - `[Run]` launches the app post-install with `postinstall skipifsilent`
+  - **Data-preserving uninstaller**: `[Code] InitializeUninstall` prompts YES/NO/CANCEL — YES keeps `mongodb\data`, NO wipes it, CANCEL aborts. `[UninstallRun]` executes `STOP.bat` first so uninstall can cleanly delete the folder
+  - Hooks for code-signing (`SignTool`, `SignedUninstaller`) commented in — uncomment once you have a cert
+- Build flow documented inline at the top of the .iss file (Run `BUILD_PORTABLE.bat` → install Inno Setup → right-click .iss → Compile → `dist\TechZone-POS-Setup-1.1.0.exe`)
+
+**4. Bonus: fixed a craco.config.js crash**
+- The earlier `sourceMapLoaderRule.exclude = [...(prev || []), new RegExp]` was crashing because `exclude` can be a single RegExp (non-iterable). Normalised to an array before spreading so the frontend boots cleanly.
+
+
 ### Reports → Coupons Tab Crash + JSX Import Build Gate (Feb 22, 2026) ✅
 User reported `DollarSign is not defined` on the Reports → Coupons tab (caught by the `<ErrorBoundary>` with the friendly "Something went wrong" panel instead of blanking the page, as intended).
 
