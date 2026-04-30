@@ -26,6 +26,23 @@
 
 ## What's Been Implemented
 
+### Code Review Round 2 Fixes (Feb 22, 2026) ✅
+
+**Real fixes**
+- `services/auto_backup_service.py::_is_due` refactored — extracted `_parse_iso()` helper so `last` is unambiguously assigned on all paths. Turns any static analyzer warning about "variable may not be defined" into a compile-time impossibility. Added 5 pytest regression tests (`tests/test_auto_backup.py`): never-sent, corrupt ISO, 6/8 day weekly boundary, 8/31 day monthly boundary. All pass.
+- `components/reports/TaxReportTab.js` — wrapped the two `reduce` calls in the category-totals footer in `useMemo` keyed on `taxReport?.category_breakdown`. Stops recomputing on unrelated parent re-renders.
+- **New XSS build gate**: `frontend/scripts/check-sanitize.js` — walks src/, finds every `dangerouslySetInnerHTML` / `elem.innerHTML =` call, and fails the build unless the expression is `sanitizeRichText(...)`, a string literal, or a known-sanitized variable name. An explicit `// sanitized: <reason>` comment on the same line opts out (documented exception). Wired into `prebuild` so `yarn build` runs it automatically alongside the JSX-imports check. Simulation test: reintroducing `<div dangerouslySetInnerHTML={{ __html: value }}>` correctly fails with exit code 1 and an actionable message.
+
+**False positives confirmed via ruff (no changes)**
+- Every `is`/`is not` usage flagged across `database.py`, `routes/auth.py`, `routes/coupons.py`, `routes/inventory.py`, `services/shift_report_service.py` is `is None` / `is not None` — the **correct** PEP 8 idiom. Ruff's F632 passes cleanly.
+- Every XSS flag is on code that **already routes through `sanitizeRichText`** (shared util added in the previous review round). The new `check-sanitize.js` gate now makes this invariant machine-verifiable instead of a code-review judgement call.
+- React hook-dep warnings on Sales/Reports/Settings/SalesHistory/Inventory — already eslint-disabled with documented intentional-effect comments in the previous review round; ESLint reports 0 hook warnings on all 5 files.
+
+**Deferred (P2)**
+- Component-size splits for Inventory.js (588), CashRegisterTab.js (579), Settings.js (576), Coupons.js (538). Each needs a dedicated refactor pass.
+- Backend complexity hotspots: `database.py::find_many` (CC 18), `routes/coupons.py::validate_coupon` (CC 16), `routes/inventory.py::email_purchase_order` (CC 15), `routes/admin.py::restore_backup` (CC 14), `routes/cash_register.py::get_daily_summary` (CC 11).
+
+
 ### Cashier Shortcuts + Auto-Backup + Inno Setup Installer (Feb 22, 2026) ✅
 
 **1. Cashier keyboard shortcuts on Sales**

@@ -114,15 +114,23 @@ def _send_backup_email(to_email: str, zip_bytes: bytes, business_name: str) -> b
         return False
 
 
+def _parse_iso(ts: str | None) -> datetime | None:
+    """Parse a stored ISO timestamp. Returns None if missing or malformed so
+    the caller can treat 'unknown' and 'never sent' identically."""
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def _is_due(last_sent_iso: str | None, frequency: str) -> bool:
     """Return True if the next scheduled backup window has arrived."""
     interval = timedelta(days=30) if frequency == "monthly" else timedelta(days=7)
-    if not last_sent_iso:
-        return True
-    try:
-        last = datetime.fromisoformat(last_sent_iso.replace("Z", "+00:00"))
-    except ValueError:
-        return True
+    last = _parse_iso(last_sent_iso)
+    if last is None:
+        return True  # never sent OR corrupt timestamp -> treat as "never sent"
     return datetime.now(timezone.utc) - last >= interval
 
 

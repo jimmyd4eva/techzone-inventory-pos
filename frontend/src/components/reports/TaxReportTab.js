@@ -1,7 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Receipt, BarChart3, PieChart, CheckCircle, XCircle, Download, Percent, Hash } from 'lucide-react';
 
 export const TaxReportTab = ({ taxReport, downloadTaxReport, downloading }) => {
+  // Pre-compute the category totals so parent re-renders don't rerun these
+  // two full reductions on every tick. Safe no-ops when taxReport is null.
+  const categoryTotals = useMemo(() => {
+    const rows = taxReport?.category_breakdown || [];
+    return {
+      sales: rows.reduce((sum, c) => sum + c.sales, 0).toFixed(2),
+      tax:   rows.reduce((sum, c) => sum + c.tax_collected, 0).toFixed(2),
+    };
+  }, [taxReport?.category_breakdown]);
+
   if (!taxReport) return null;
   return (
     <>
@@ -264,9 +274,9 @@ export const TaxReportTab = ({ taxReport, downloadTaxReport, downloading }) => {
           <tfoot>
             <tr style={{ backgroundColor: '#f9fafb', fontWeight: '700' }}>
               <td colSpan="2">Total</td>
-              <td>${taxReport.category_breakdown.reduce((sum, c) => sum + c.sales, 0).toFixed(2)}</td>
+              <td>${categoryTotals.sales}</td>
               <td style={{ color: '#059669' }}>
-                ${taxReport.category_breakdown.reduce((sum, c) => sum + c.tax_collected, 0).toFixed(2)}
+                ${categoryTotals.tax}
               </td>
             </tr>
           </tfoot>

@@ -61,7 +61,8 @@
     "build": "craco build",
     "test": "craco test",
     "check:jsx": "node scripts/check-jsx-imports.js",
-    "prebuild": "node scripts/check-jsx-imports.js"
+    "prebuild": "node scripts/check-jsx-imports.js && node scripts/check-sanitize.js",
+    "check:sanitize": "node scripts/check-sanitize.js"
   },
   "browserslist": {
     "production": [
