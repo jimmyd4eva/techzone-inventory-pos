@@ -8,6 +8,7 @@ import { CouponPanel } from '../components/sales/CouponPanel';
 import { PointsPanel } from '../components/sales/PointsPanel';
 import { CustomerLookup } from '../components/sales/CustomerLookup';
 import { CheckoutPanel } from '../components/sales/CheckoutPanel';
+import Receipt from '../components/Receipt';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -54,6 +55,14 @@ const Sales = () => {
   const [openingAmount, setOpeningAmount] = useState('');
   const [registerMessage, setRegisterMessage] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  // Receipt modal — auto-shown after a successful cash sale, with auto-print
+  // toggleable so cashiers without a printer can suppress the dialog.
+  const [completedSale, setCompletedSale] = useState(null);
+  const [businessSettings, setBusinessSettings] = useState(null);
+  const [autoPrint, setAutoPrint] = useState(() => {
+    const saved = localStorage.getItem('sales_auto_print');
+    return saved === null ? true : saved === 'true';
+  });
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
@@ -61,10 +70,21 @@ const Sales = () => {
     fetchTaxSettings();
     fetchAvailableCoupons();
     fetchCurrentShift();
+    // Pull business settings once on mount so the receipt modal can render
+    // the correct logo/header/footer without an extra round-trip after
+    // every sale.
+    axios.get(`${API}/settings`).then((r) => setBusinessSettings(r.data)).catch(() => {});
     // Mount-once: fetch helpers are stable module-scoped async closures that
     // only reference setters and the constant API URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Persist the auto-print preference per cashier-machine — most cashiers
+  // want it always-on, but a back-office workstation without a printer can
+  // turn it off.
+  useEffect(() => {
+    localStorage.setItem('sales_auto_print', String(autoPrint));
+  }, [autoPrint]);
 
   // Keyboard shortcuts for cashiers — bound at the document level so they
   // work regardless of which sub-panel currently has focus. Inputs/textareas
@@ -474,13 +494,20 @@ const Sales = () => {
         // Redirect to PayPal
         window.location.href = paypalResponse.data.approval_url;
       } else {
-        // Cash payment - clear cart and refresh
-        alert('Sale completed successfully!');
+        // Cash payment - show the receipt modal (with optional auto-print),
+        // clear cart and refresh inventory in the background.
+        setCompletedSale(response.data);
         setCart([]);
         clearCustomer();
         setPaymentMethod('cash');
         removeCoupon();
         fetchInventory();
+        if (autoPrint) {
+          // Wait for the modal + receipt DOM to render BEFORE invoking the
+          // browser print dialog. ~250ms covers the React reconciliation +
+          // CSS @media-print stylesheet load on a thermal printer driver.
+          setTimeout(() => window.print(), 280);
+        }
       }
     } catch (error) {
       console.error('Error processing sale:', error);
@@ -607,6 +634,27 @@ const Sales = () => {
                 }
               }}
             />
+
+            {/* Auto-print toggle — most cashiers want it on; back-office workstations
+                without a printer can turn it off. Stored per-browser. */}
+            <label
+              data-testid="auto-print-toggle-label"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                marginTop: '10px', padding: '8px 10px',
+                background: '#f8fafc', borderRadius: '6px',
+                fontSize: '12px', color: '#475569', cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                data-testid="auto-print-toggle"
+                checked={autoPrint}
+                onChange={(e) => setAutoPrint(e.target.checked)}
+                style={{ width: '14px', height: '14px' }}
+              />
+              <span>Auto-print receipt after each sale</span>
+            </label>
           </div>
         </div>
       </div>
@@ -619,6 +667,15 @@ const Sales = () => {
           registerMessage={registerMessage}
           onCancel={() => { setShowOpenRegisterModal(false); setOpeningAmount(""); setRegisterMessage(""); }}
           onConfirm={handleOpenRegister}
+        />
+      )}
+
+      {/* Receipt modal — auto-shown after every successful cash sale. */}
+      {completedSale && (
+        <Receipt
+          sale={completedSale}
+          businessSettings={businessSettings}
+          onClose={() => setCompletedSale(null)}
         />
       )}
 

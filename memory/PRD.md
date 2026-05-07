@@ -26,6 +26,15 @@
 
 ## What's Been Implemented
 
+### Auto-Show + Auto-Print Receipt After Every Sale (Feb 22, 2026) ✅
+- Cash sales now auto-open the existing `<Receipt>` modal with the full transaction (logo, header, line items, totals, footer) instead of the old `alert('Sale completed!')`.
+- The browser print dialog fires automatically ~280ms after the modal renders (gives React + thermal-printer CSS time to settle), so a USB receipt printer just produces the slip without any extra clicks.
+- New per-browser **"Auto-print receipt after each sale"** toggle (testid `auto-print-toggle`) under the Checkout panel. Default ON. Persisted in `localStorage` keyed `sales_auto_print` so back-office workstations without a printer can keep it OFF.
+- Mounts business settings once on the Sales page (single `GET /settings`) so receipts always render the right logo/address/footer without an extra round-trip per sale.
+- End-to-end Playwright verified: F2 → search → Enter (barcode flow) → Checkout → receipt modal renders with TECHZONE branding and all line items, `window.print()` invoked exactly 1× per sale, cart cleared, total reset to $0.00, 0 console errors.
+- Stripe sales unchanged — they continue to redirect to `payment-success` which already has its own receipt screen.
+
+
 ### Migration Wizard — Self-Service "Move to a New PC" (Feb 22, 2026) ✅
 - New `MigrationWizard.js` — 3-step (4-stage) modal that walks a non-technical owner through transferring all POS data to another Windows machine. Reuses the encryption + restore-preview endpoints already shipped — pure curated UX layer on top.
 - **Step 1 (old PC)**: passphrase + confirm-passphrase inputs with validation (≥12 chars, match required), one-click encrypted backup download (`techzone-migration-<ts>.zip.tzbk`).
