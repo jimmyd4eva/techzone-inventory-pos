@@ -45,7 +45,7 @@ export const DataBackupTab = () => {
           auto_backup_last_sent: r.data.auto_backup_last_sent || null,
         });
       } catch (e) {
-        // Settings endpoint failure is non-fatal — the rest of the panel still works.
+        console.warn('[DataBackupTab] settings load failed:', e);
       }
     })();
     return () => { cancelled = true; };

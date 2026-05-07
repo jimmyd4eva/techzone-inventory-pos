@@ -26,6 +26,17 @@
 
 ## What's Been Implemented
 
+### Code Quality Round 3 — Backend Complexity Reduction (Feb 23, 2026) ✅
+- **`routes/coupons.py::validate_coupon()`** (cyclomatic complexity 16 → 4). Extracted all rules into new `services/coupon_validator.py` with 6 single-purpose helpers: `_check_active`, `_check_customer_lock`, `_check_usage_limit`, `_check_min_purchase`, `_check_date_range`, `_calculate_discount`. Route handler is now ~15 lines and translates `CouponValidationError` → HTTPException.
+- **`routes/payments.py::check_payment_status()`** (6 levels deep → 1) + Stripe webhook handler. Extracted `_persist_stripe_status()` and `_finalize_paid_sale()`. Both handlers (polling + webhook) now share the same idempotent finalize path → no double-decrement risk.
+- **`routes/reports.py::get_coupon_analytics()`** (95 lines → 50). Extracted `_aggregate_coupon_stats()` and `_format_coupon_status_row()`; replaced `next((c for c in all_coupons if ...))` O(n²) lookup with a `coupons_by_code` dict.
+- **`database.py::SQLiteDatabase.find_many()`** (cyclomatic 18, 10-level nesting → 1 level). Extracted module-level `_op_matches()`, `_field_matches()`, `_doc_matches_query()`. Mongo-style operators (`$gte`, `$lte`, `$in`, `$ne`, `$regex`) live in one place. Bonus: now handles `$ne` correctly (was missing).
+- **Empty catches addressed**: `Sales.js:529` and `DataBackupTab.js:47` now `console.warn` for visibility (still non-fatal, preserves intentional fire-and-forget semantics).
+- **New regression suite**: `backend/tests/test_coupon_validator.py` — 13 unit tests covering every rule + discount math (percentage cap, fixed clip-to-subtotal, customer lock, usage exhaustion, date windows). All passing.
+- **Verified live via curl**: invalid code → 404; personalized coupon w/o customer → 400; personalized coupon with correct customer → 200 + correct discount; `/api/reports/coupon-analytics` returns full summary (20 coupons, 2 sales, breakdown).
+- **Rejected (false-positive code-review findings)**: every XSS finding (build-time `check-sanitize.js` proves all calls route through `sanitizeRichText`); `is None` / `is not None` (correct PEP 8 idiom, not the `is 0` anti-pattern).
+
+
 ### Auto-Show + Auto-Print Receipt After Every Sale (Feb 22, 2026) ✅
 - Cash sales now auto-open the existing `<Receipt>` modal with the full transaction (logo, header, line items, totals, footer) instead of the old `alert('Sale completed!')`.
 - The browser print dialog fires automatically ~280ms after the modal renders (gives React + thermal-printer CSS time to settle), so a USB receipt printer just produces the slip without any extra clicks.

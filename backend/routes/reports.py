@@ -220,102 +220,101 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "total_customers": total_customers
     }
 
+def _aggregate_coupon_stats(sales_with_coupons: list) -> dict:
+    """Group sales by coupon code → usage_count, total_discount, total_revenue."""
+    stats: dict = {}
+    for sale in sales_with_coupons:
+        code = sale.get('coupon_code')
+        if not code:
+            continue
+        bucket = stats.setdefault(code, {
+            'code': code,
+            'usage_count': 0,
+            'total_discount': 0,
+            'total_revenue': 0,
+            'avg_order_value': 0,
+        })
+        bucket['usage_count'] += 1
+        bucket['total_discount'] += sale.get('discount', 0)
+        bucket['total_revenue'] += sale.get('total', 0)
+    return stats
+
+
+def _format_coupon_status_row(coupon: dict) -> dict:
+    """Single coupon's status row used by the analytics dashboard."""
+    used = coupon.get('usage_count', 0)
+    limit = coupon.get('usage_limit')
+    return {
+        "code": coupon.get('code'),
+        "description": coupon.get('description'),
+        "discount_type": coupon.get('discount_type'),
+        "discount_value": coupon.get('discount_value'),
+        "usage_count": used,
+        "usage_limit": limit,
+        "is_active": coupon.get('is_active'),
+        "utilization": round(used / limit * 100, 1) if limit else None,
+    }
+
+
 @router.get("/reports/coupon-analytics")
 async def get_coupon_analytics(current_user: dict = Depends(get_current_user)):
-    """Get coupon usage analytics including popularity, revenue impact, and trends"""
+    """Get coupon usage analytics including popularity, revenue impact, and trends.
+
+    Refactored: aggregation + per-row formatting are now small helpers above so
+    this handler is short and the unit tests can target each piece directly.
+    """
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     start_of_month = today.replace(day=1)
     month_iso = start_of_month.isoformat()
-    
-    # Get all coupons
+
     all_coupons = await db.coupons.find({}, {"_id": 0}).to_list(1000)
-    
-    # Get sales with coupons this month
     sales_with_coupons = await db.sales.find(
         {"coupon_code": {"$ne": None}, "created_at": {"$gte": month_iso}, "payment_status": "completed"},
-        {"_id": 0}
+        {"_id": 0},
     ).to_list(1000)
-    
-    # Get all sales this month for comparison
     all_sales_month = await db.sales.find(
         {"created_at": {"$gte": month_iso}, "payment_status": "completed"},
-        {"_id": 0, "total": 1, "discount": 1, "coupon_code": 1}
+        {"_id": 0, "total": 1, "discount": 1, "coupon_code": 1},
     ).to_list(1000)
-    
-    # Calculate overall stats
+
+    # Top-level summary
     total_sales_count = len(all_sales_month)
-    sales_with_coupon_count = len([s for s in all_sales_month if s.get('coupon_code')])
+    sales_with_coupon_count = sum(1 for s in all_sales_month if s.get('coupon_code'))
     total_discount_given = sum(s.get('discount', 0) for s in all_sales_month)
-    total_revenue = sum(s.get('total', 0) for s in all_sales_month)
-    
-    # Coupon usage breakdown
-    coupon_stats = {}
-    for sale in sales_with_coupons:
-        code = sale.get('coupon_code')
-        if code:
-            if code not in coupon_stats:
-                coupon_stats[code] = {
-                    'code': code,
-                    'usage_count': 0,
-                    'total_discount': 0,
-                    'total_revenue': 0,
-                    'avg_order_value': 0
-                }
-            coupon_stats[code]['usage_count'] += 1
-            coupon_stats[code]['total_discount'] += sale.get('discount', 0)
-            coupon_stats[code]['total_revenue'] += sale.get('total', 0)
-    
-    # Calculate averages and sort by usage
+
+    # Per-coupon breakdown
+    coupon_stats = _aggregate_coupon_stats(sales_with_coupons)
     coupon_breakdown = []
+    coupons_by_code = {c.get('code'): c for c in all_coupons}
     for code, stats in coupon_stats.items():
         if stats['usage_count'] > 0:
             stats['avg_order_value'] = stats['total_revenue'] / stats['usage_count']
-        
-        # Find coupon details
-        coupon = next((c for c in all_coupons if c.get('code') == code), None)
+        coupon = coupons_by_code.get(code)
         if coupon:
             stats['discount_type'] = coupon.get('discount_type')
             stats['discount_value'] = coupon.get('discount_value')
             stats['is_active'] = coupon.get('is_active', False)
-        
         coupon_breakdown.append(stats)
-    
-    # Sort by usage count (most popular first)
+
     coupon_breakdown.sort(key=lambda x: x['usage_count'], reverse=True)
-    
-    # Top performing coupons (by revenue generated)
     top_by_revenue = sorted(coupon_breakdown, key=lambda x: x['total_revenue'], reverse=True)[:5]
-    
-    # Calculate conversion rate (sales with coupons vs without)
     conversion_rate = (sales_with_coupon_count / total_sales_count * 100) if total_sales_count > 0 else 0
-    
+
     return {
         "summary": {
             "total_coupons": len(all_coupons),
-            "active_coupons": len([c for c in all_coupons if c.get('is_active')]),
+            "active_coupons": sum(1 for c in all_coupons if c.get('is_active')),
             "total_sales_this_month": total_sales_count,
             "sales_with_coupons": sales_with_coupon_count,
             "coupon_usage_rate": round(conversion_rate, 1),
             "total_discount_given": round(total_discount_given, 2),
             "total_revenue_with_coupons": round(sum(s.get('total', 0) for s in sales_with_coupons), 2),
             "avg_discount_per_sale": round(total_discount_given / sales_with_coupon_count, 2) if sales_with_coupon_count > 0 else 0,
-            "month": today.strftime("%B %Y")
+            "month": today.strftime("%B %Y"),
         },
         "coupon_breakdown": coupon_breakdown,
         "top_by_revenue": top_by_revenue,
-        "all_coupons_status": [
-            {
-                "code": c.get('code'),
-                "description": c.get('description'),
-                "discount_type": c.get('discount_type'),
-                "discount_value": c.get('discount_value'),
-                "usage_count": c.get('usage_count', 0),
-                "usage_limit": c.get('usage_limit'),
-                "is_active": c.get('is_active'),
-                "utilization": round((c.get('usage_count', 0) / c.get('usage_limit') * 100), 1) if c.get('usage_limit') else None
-            }
-            for c in all_coupons
-        ]
+        "all_coupons_status": [_format_coupon_status_row(c) for c in all_coupons],
     }
 
 @router.get("/reports/tax-summary")

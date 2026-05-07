@@ -3,6 +3,7 @@ Database Abstraction Layer
 Supports both MongoDB (web/cloud) and SQLite (desktop/offline)
 """
 import os
+import re
 import json
 import uuid
 import aiosqlite
@@ -14,6 +15,41 @@ from motor.motor_asyncio import AsyncIOMotorClient
 # Database type from environment
 DB_TYPE = os.environ.get('DB_TYPE', 'mongodb')  # 'mongodb' or 'sqlite'
 SQLITE_PATH = os.environ.get('SQLITE_PATH', str(Path(__file__).parent / 'data' / 'salestax.db'))
+
+
+# ---------------------------------------------------------------------------
+# Query helpers (extracted from SQLiteDatabase.find_many to flatten complexity)
+# ---------------------------------------------------------------------------
+
+def _op_matches(doc_value: Any, op: str, op_val: Any) -> bool:
+    """Mongo-style operator on a single doc field. Returns True if it matches."""
+    if op == "$gte":
+        return (doc_value if doc_value is not None else 0) >= op_val
+    if op == "$lte":
+        return (doc_value if doc_value is not None else 0) <= op_val
+    if op == "$in":
+        return doc_value in op_val
+    if op == "$ne":
+        return doc_value != op_val
+    if op == "$regex":
+        return re.search(op_val, str(doc_value or ""), re.IGNORECASE) is not None
+    # Unknown operator → don't filter the doc out.
+    return True
+
+
+def _field_matches(doc_value: Any, predicate: Any) -> bool:
+    """Either equality or a {$op: val, ...} predicate dict."""
+    if isinstance(predicate, dict):
+        return all(_op_matches(doc_value, op, v) for op, v in predicate.items())
+    return doc_value == predicate
+
+
+def _doc_matches_query(doc: dict, query: Optional[dict]) -> bool:
+    """Apply every top-level field predicate. Empty/None query matches everything."""
+    if not query:
+        return True
+    return all(_field_matches(doc.get(field), pred) for field, pred in query.items())
+
 
 class DatabaseInterface:
     """Abstract interface for database operations"""
@@ -144,32 +180,11 @@ class SQLiteDatabase(DatabaseInterface):
                 (collection,)
             )
             rows = await cursor.fetchall()
-            results = []
-            for row in rows:
-                doc = self._deserialize(row[0])
-                # Simple query matching
-                if query:
-                    match = True
-                    for key, value in query.items():
-                        if isinstance(value, dict):
-                            # Handle operators like $gte, $lte, $in
-                            for op, op_val in value.items():
-                                if op == "$gte" and doc.get(key, 0) < op_val:
-                                    match = False
-                                elif op == "$lte" and doc.get(key, 0) > op_val:
-                                    match = False
-                                elif op == "$in" and doc.get(key) not in op_val:
-                                    match = False
-                                elif op == "$regex":
-                                    import re
-                                    if not re.search(op_val, str(doc.get(key, "")), re.IGNORECASE):
-                                        match = False
-                        elif doc.get(key) != value:
-                            match = False
-                    if not match:
-                        continue
-                results.append(doc)
-            
+            results = [
+                doc for doc in (self._deserialize(row[0]) for row in rows)
+                if _doc_matches_query(doc, query)
+            ]
+
             # Apply sorting
             if sort:
                 for sort_key, sort_dir in reversed(sort):
@@ -179,7 +194,7 @@ class SQLiteDatabase(DatabaseInterface):
                         key=lambda x, k=sort_key: x.get(k, ""),
                         reverse=(sort_dir == -1),
                     )
-            
+
             return results
     
     async def insert_one(self, collection: str, document: dict) -> dict:

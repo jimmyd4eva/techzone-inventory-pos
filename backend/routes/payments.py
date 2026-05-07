@@ -72,45 +72,57 @@ async def create_checkout_session(checkout_data: CheckoutRequest, request: Reque
 
 @router.get("/payments/status/{session_id}")
 async def check_payment_status(session_id: str, current_user: dict = Depends(get_current_user)):
-    # Initialize Stripe
+    """Stripe-side payment status check. Refactored from a 6-level nested
+    block into early returns + small helpers (`_persist_stripe_status`,
+    `_finalize_paid_sale`)."""
     webhook_url = ""  # Not needed for status check
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-    
+
     try:
         checkout_status = await stripe_checkout.get_checkout_status(session_id)
-        
-        # Update payment transaction
-        transaction = await db.payment_transactions.find_one({"session_id": session_id})
-        if transaction:
-            # Check if already processed
-            if transaction['payment_status'] != "completed":
-                await db.payment_transactions.update_one(
-                    {"session_id": session_id},
-                    {"$set": {"payment_status": checkout_status.payment_status}}
-                )
-                
-                # Update sale if payment successful
-                if checkout_status.payment_status == "paid":
-                    sale_id = transaction['sale_id']
-                    sale = await db.sales.find_one({"id": sale_id})
-                    
-                    # Only update inventory once
-                    if sale and sale['payment_status'] != "completed":
-                        await db.sales.update_one(
-                            {"id": sale_id},
-                            {"$set": {"payment_status": "completed"}}
-                        )
-                        
-                        # Update inventory
-                        for item in sale['items']:
-                            await db.inventory.update_one(
-                                {"id": item['item_id']},
-                                {"$inc": {"quantity": -item['quantity']}}
-                            )
-        
+        await _persist_stripe_status(session_id, checkout_status)
         return checkout_status
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+async def _persist_stripe_status(session_id: str, checkout_status) -> None:
+    """Mirror Stripe's view of the session into our DB. No-op if already done."""
+    transaction = await db.payment_transactions.find_one({"session_id": session_id})
+    if not transaction:
+        return
+    if transaction['payment_status'] == "completed":
+        return  # already finalized — idempotent
+
+    await db.payment_transactions.update_one(
+        {"session_id": session_id},
+        {"$set": {"payment_status": checkout_status.payment_status}},
+    )
+
+    if checkout_status.payment_status != "paid":
+        return
+
+    await _finalize_paid_sale(transaction['sale_id'])
+
+
+async def _finalize_paid_sale(sale_id: str) -> None:
+    """Mark sale completed + decrement inventory exactly once.
+
+    Shared between the polling endpoint (`check_payment_status`) and the
+    Stripe webhook handler so both paths stay in sync.
+    """
+    sale = await db.sales.find_one({"id": sale_id})
+    if not sale or sale['payment_status'] == "completed":
+        return
+    await db.sales.update_one(
+        {"id": sale_id},
+        {"$set": {"payment_status": "completed"}},
+    )
+    for item in sale['items']:
+        await db.inventory.update_one(
+            {"id": item['item_id']},
+            {"$inc": {"quantity": -item['quantity']}},
+        )
 
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
@@ -122,33 +134,19 @@ async def stripe_webhook(request: Request):
     
     try:
         webhook_response = await stripe_checkout.handle_webhook(body, signature)
-        
-        # Process webhook
+
+        # Process webhook (delegates to the same helper used by the polling endpoint)
         if webhook_response.payment_status == "paid":
             session_id = webhook_response.session_id
             transaction = await db.payment_transactions.find_one({"session_id": session_id})
-            
+
             if transaction and transaction['payment_status'] != "completed":
                 await db.payment_transactions.update_one(
                     {"session_id": session_id},
-                    {"$set": {"payment_status": "paid"}}
+                    {"$set": {"payment_status": "paid"}},
                 )
-                
-                sale_id = transaction['sale_id']
-                sale = await db.sales.find_one({"id": sale_id})
-                
-                if sale and sale['payment_status'] != "completed":
-                    await db.sales.update_one(
-                        {"id": sale_id},
-                        {"$set": {"payment_status": "completed"}}
-                    )
-                    
-                    for item in sale['items']:
-                        await db.inventory.update_one(
-                            {"id": item['item_id']},
-                            {"$inc": {"quantity": -item['quantity']}}
-                        )
-        
+                await _finalize_paid_sale(transaction['sale_id'])
+
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -5,6 +5,10 @@ from typing import List, Optional, Dict, Any
 from core.config import db, logger
 from core.security import get_current_user, check_not_readonly, strip_html
 from services.email_service import send_coupon_email
+from services.coupon_validator import (
+    CouponValidationError,
+    validate_and_calculate,
+)
 from models import Coupon, CouponCreate, CouponUpdate
 
 router = APIRouter(tags=["Coupons"])
@@ -86,7 +90,11 @@ async def delete_coupon(coupon_id: str, current_user: dict = Depends(get_current
 
 @router.post("/coupons/validate")
 async def validate_coupon(data: dict, current_user: dict = Depends(get_current_user)):
-    """Validate a coupon code and calculate discount"""
+    """Validate a coupon code and calculate discount.
+
+    Heavy lifting now lives in `services/coupon_validator.py`; this handler
+    just translates DB lookup + ValidationError into HTTP responses.
+    """
     code = data.get('code', '').upper()
     subtotal = data.get('subtotal', 0)
     customer_id = data.get('customer_id')
@@ -94,51 +102,13 @@ async def validate_coupon(data: dict, current_user: dict = Depends(get_current_u
     coupon = await db.coupons.find_one({"code": code}, {"_id": 0})
     if not coupon:
         raise HTTPException(status_code=404, detail="Invalid coupon code")
-    
-    if not coupon.get('is_active', False):
-        raise HTTPException(status_code=400, detail="This coupon is no longer active")
 
-    # Personalized coupon: locked to a specific customer
-    if coupon.get('customer_id'):
-        if not customer_id:
-            raise HTTPException(
-                status_code=400,
-                detail="This coupon is personalized and requires a customer at checkout",
-            )
-        if customer_id != coupon.get('customer_id'):
-            raise HTTPException(
-                status_code=400,
-                detail="This coupon is not valid for this customer",
-            )
+    try:
+        coupon, discount = validate_and_calculate(coupon, subtotal, customer_id)
+    except CouponValidationError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
-    # Check usage limit
-    if coupon.get('usage_limit') and coupon.get('usage_count', 0) >= coupon.get('usage_limit'):
-        raise HTTPException(status_code=400, detail="This coupon has reached its usage limit")
-    
-    # Check minimum purchase
-    if subtotal < coupon.get('min_purchase', 0):
-        raise HTTPException(status_code=400, detail=f"Minimum purchase of ${coupon.get('min_purchase', 0):.2f} required")
-    
-    # Check validity dates
-    now = datetime.now(timezone.utc).isoformat()
-    if coupon.get('valid_from') and now < coupon.get('valid_from'):
-        raise HTTPException(status_code=400, detail="This coupon is not yet valid")
-    if coupon.get('valid_until') and now > coupon.get('valid_until'):
-        raise HTTPException(status_code=400, detail="This coupon has expired")
-    
-    # Calculate discount
-    if coupon.get('discount_type') == 'percentage':
-        discount = subtotal * (coupon.get('discount_value', 0) / 100)
-        if coupon.get('max_discount') and discount > coupon.get('max_discount'):
-            discount = coupon.get('max_discount')
-    else:  # fixed
-        discount = min(coupon.get('discount_value', 0), subtotal)
-    
-    return {
-        "valid": True,
-        "coupon": coupon,
-        "discount": round(discount, 2)
-    }
+    return {"valid": True, "coupon": coupon, "discount": discount}
 
 @router.post("/coupons/{coupon_id}/increment-usage")
 async def increment_coupon_usage(coupon_id: str, current_user: dict = Depends(get_current_user)):

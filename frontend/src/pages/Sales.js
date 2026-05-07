@@ -526,7 +526,7 @@ const Sales = () => {
         // clear cart and refresh inventory in the background.
         setCompletedSale(response.data);
         setLastSale(response.data);
-        try { localStorage.setItem('last_completed_sale', JSON.stringify(response.data)); } catch (_) {}
+        try { localStorage.setItem('last_completed_sale', JSON.stringify(response.data)); } catch (e) { console.warn('[Sales] could not cache last sale:', e); }
         setCart([]);
         clearCustomer();
         setPaymentMethod('cash');
