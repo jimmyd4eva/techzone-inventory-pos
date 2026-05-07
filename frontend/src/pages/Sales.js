@@ -58,6 +58,17 @@ const Sales = () => {
   // Receipt modal — auto-shown after a successful cash sale, with auto-print
   // toggleable so cashiers without a printer can suppress the dialog.
   const [completedSale, setCompletedSale] = useState(null);
+  // Last completed sale persists across page reloads so cashiers can reprint
+  // immediately even after a refresh / browser crash. Stored locally because
+  // it's a per-cashier UX nicety, not a global record.
+  const [lastSale, setLastSale] = useState(() => {
+    try {
+      const raw = localStorage.getItem('last_completed_sale');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [businessSettings, setBusinessSettings] = useState(null);
   const [autoPrint, setAutoPrint] = useState(() => {
     const saved = localStorage.getItem('sales_auto_print');
@@ -85,6 +96,14 @@ const Sales = () => {
   useEffect(() => {
     localStorage.setItem('sales_auto_print', String(autoPrint));
   }, [autoPrint]);
+
+  // Reprint the most recently completed sale. Used by both the toolbar
+  // button and the Ctrl+P / Cmd+P shortcut.
+  const reprintLast = () => {
+    if (!lastSale) return;
+    setCompletedSale(lastSale);
+    setTimeout(() => window.print(), 280);
+  };
 
   // Keyboard shortcuts for cashiers — bound at the document level so they
   // work regardless of which sub-panel currently has focus. Inputs/textareas
@@ -120,11 +139,20 @@ const Sales = () => {
       if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
         e.preventDefault();
         setShowShortcuts((v) => !v);
+        return;
+      }
+      // Ctrl+P / Cmd+P: reprint the most recent receipt. We let the browser's
+      // own Ctrl+P pass through when a receipt modal is already open (the
+      // user explicitly wants to print THIS visible receipt) — only intercept
+      // when there's no modal but a `lastSale` is available.
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P') && !completedSale && lastSale) {
+        e.preventDefault();
+        reprintLast();
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [showShortcuts]);
+  }, [showShortcuts, completedSale, lastSale]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCurrentShift = async () => {
     try {
@@ -497,6 +525,8 @@ const Sales = () => {
         // Cash payment - show the receipt modal (with optional auto-print),
         // clear cart and refresh inventory in the background.
         setCompletedSale(response.data);
+        setLastSale(response.data);
+        try { localStorage.setItem('last_completed_sale', JSON.stringify(response.data)); } catch (_) {}
         setCart([]);
         clearCustomer();
         setPaymentMethod('cash');
@@ -536,9 +566,31 @@ const Sales = () => {
 
   return (
     <div data-testid="sales-page">
-      <div className="page-header">
-        <h1>Point of Sale</h1>
-        <p>Process sales and transactions</p>
+      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1>Point of Sale</h1>
+          <p>Process sales and transactions</p>
+        </div>
+        {lastSale ? (
+          <button
+            type="button"
+            data-testid="reprint-last-receipt-btn"
+            onClick={reprintLast}
+            title={`Reprint receipt #${lastSale.id?.slice(-8) || ''}  (Ctrl+P)`}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '8px 14px', background: '#fff', color: '#1d4ed8',
+              border: '1px solid #bfdbfe', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🖨️ Reprint last receipt
+            <kbd style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '1px 6px', fontFamily: 'monospace', fontSize: '11px', color: '#1d4ed8' }}>
+              Ctrl+P
+            </kbd>
+          </button>
+        ) : null}
       </div>
 
       <div className="pos-container">
@@ -727,6 +779,7 @@ const Sales = () => {
                   ['F2', 'Focus the product search'],
                   ['Scan / Enter', 'Scan barcode or type SKU + Enter to add to cart'],
                   ['F9', 'Checkout the current cart'],
+                  ['Ctrl+P', 'Reprint last receipt'],
                   ['Esc', 'Clear cart (with confirmation)'],
                   ['?', 'Show / hide this help'],
                 ].map(([k, desc]) => (
