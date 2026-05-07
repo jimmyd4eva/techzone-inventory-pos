@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Download, Upload, Database, AlertCircle, CheckCircle2, AlertTriangle, Mail, Calendar } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle2, AlertTriangle, Mail, Calendar, Rocket } from 'lucide-react';
+import { MigrationWizard } from './MigrationWizard';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -162,6 +163,7 @@ export const DataBackupTab = () => {
   // --- Optional encryption ---
   const [usePassphrase, setUsePassphrase] = useState(false);
   const [passphrase, setPassphrase] = useState('');
+  const [showWizard, setShowWizard] = useState(false);
 
   const handleDownload = async () => {
     if (usePassphrase && !passphrase) {
@@ -216,6 +218,21 @@ export const DataBackupTab = () => {
       <p style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 18px 0' }}>
         Download a complete snapshot of every sale, customer, repair, coupon, and setting as a single ZIP file. Keep one copy on an external drive or cloud storage — this is your safety net against a hard-drive failure or ransomware.
       </p>
+
+      <button
+        type="button"
+        data-testid="open-migration-wizard-btn"
+        onClick={() => setShowWizard(true)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          padding: '8px 14px', background: 'linear-gradient(135deg,#7c3aed,#1d4ed8)',
+          color: '#fff', border: 'none', borderRadius: '8px',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+          marginBottom: '14px',
+        }}
+      >
+        <Rocket size={14} /> Migrate to a new PC (3-step wizard)
+      </button>
 
       <div style={{
         padding: '14px 16px', background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '8px',
@@ -493,6 +510,10 @@ export const DataBackupTab = () => {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {showWizard ? (
+        <MigrationWizard onClose={() => setShowWizard(false)} />
       ) : null}
     </div>
   );

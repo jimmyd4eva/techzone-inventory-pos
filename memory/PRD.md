@@ -26,6 +26,17 @@
 
 ## What's Been Implemented
 
+### Migration Wizard — Self-Service "Move to a New PC" (Feb 22, 2026) ✅
+- New `MigrationWizard.js` — 3-step (4-stage) modal that walks a non-technical owner through transferring all POS data to another Windows machine. Reuses the encryption + restore-preview endpoints already shipped — pure curated UX layer on top.
+- **Step 1 (old PC)**: passphrase + confirm-passphrase inputs with validation (≥12 chars, match required), one-click encrypted backup download (`techzone-migration-<ts>.zip.tzbk`).
+- **Step 2 (new PC)**: clear 5-step install instructions (copy zip → unzip → `START.bat` → log in admin/admin123 → reopen wizard). One-click "Copy passphrase to clipboard" so the user can paste it on the new PC.
+- **Step 3 (new PC)**: file picker → preview deltas table (current vs incoming counts with colour-coded Δ) → Apply restore button. Auto-decrypts using the stored passphrase from step 1.
+- **Step 4**: success card with restored doc count, then auto-logout + redirect to /login (so user signs back in with restored credentials).
+- Visual stepper at the top (1 Backup → 2 Install → 3 Restore → 4 Done) with check marks on completed stages.
+- Launched from a new "Migrate to a new PC (3-step wizard)" gradient button in Settings → Backup (testid `open-migration-wizard-btn`).
+- Verified end-to-end via Playwright: wizard opens, all 4 testids render, ≥12-char + match validations both fire correctly, 0 console errors. Build gates `check:jsx` and `check:sanitize` both pass.
+
+
 ### Barcode Scanner + Encrypted Backups + Restore Preview + Code-Sign Docs (Feb 22, 2026) ✅
 
 **1. Barcode/USB-scanner-friendly Sales mode**
