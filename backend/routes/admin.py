@@ -3,9 +3,9 @@ import io
 import json
 import zipfile
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from core.config import db, logger
 from core.security import get_current_user
@@ -27,12 +27,15 @@ def _json_safe(v):
 
 
 @router.get("/admin/backup")
-async def download_backup(current_user: dict = Depends(get_current_user)):
+async def download_backup(
+    passphrase: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
     """Stream a ZIP containing every collection as JSON. Admin-only.
 
-    The zip is built in-memory and streamed to the browser, so it works on
-    both the cloud preview (no shell access) and the portable Windows build
-    (no mongodump binary required) with the same code path.
+    Optional `?passphrase=...` query param wraps the zip in an AES-256-GCM
+    envelope (file extension becomes `.zip.tzbk`). The same passphrase is
+    required to restore.
     """
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can export data")
@@ -43,7 +46,6 @@ async def download_backup(current_user: dict = Depends(get_current_user)):
             docs = await db[coll_name].find({}, {"_id": 0}).to_list(length=None)
             docs = [_json_safe(d) for d in docs]
             zf.writestr(f"{coll_name}.json", json.dumps(docs, indent=2, default=str))
-        # Manifest so a future restore tool can sanity-check the dump.
         manifest = {
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "exported_by": current_user.get("username"),
@@ -51,12 +53,19 @@ async def download_backup(current_user: dict = Depends(get_current_user)):
         }
         zf.writestr("_manifest.json", json.dumps(manifest, indent=2))
 
-    buf.seek(0)
+    payload = buf.getvalue()
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    filename = f"techzone-backup-{ts}.zip"
+    if passphrase:
+        from services.backup_crypto import encrypt
+        payload = encrypt(payload, passphrase)
+        filename = f"techzone-backup-{ts}.zip.tzbk"
+        media_type = "application/octet-stream"
+    else:
+        filename = f"techzone-backup-{ts}.zip"
+        media_type = "application/zip"
     return StreamingResponse(
-        buf,
-        media_type="application/zip",
+        io.BytesIO(payload),
+        media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
@@ -68,22 +77,32 @@ _PROTECTED_COLLECTIONS = {"activated_devices"}
 
 
 @router.post("/admin/restore")
-async def restore_backup(
-    file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user),
-):
-    """Replace every collection in the DB with the JSON documents in the
-    uploaded backup zip. Admin-only. DESTRUCTIVE — the frontend must show a
-    confirmation dialog before calling this.
+async def _decode_backup_payload(file: UploadFile, passphrase: Optional[str]) -> bytes:
+    """Read the uploaded file and return raw zip bytes, decrypting if needed.
+    Raises HTTPException with a user-friendly 400 on any failure.
     """
-    if current_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can restore data")
+    payload = await file.read()
+    fname = (file.filename or "").lower()
+    is_encrypted_ext = fname.endswith(".tzbk") or fname.endswith(".zip.tzbk")
+    if is_encrypted_ext:
+        from services.backup_crypto import decrypt
+        if not passphrase:
+            raise HTTPException(status_code=400, detail="This backup is encrypted. Please enter the passphrase.")
+        try:
+            payload = decrypt(payload, passphrase)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    elif not fname.endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Please upload a .zip or .zip.tzbk file produced by the Backup button")
+    return payload
 
-    if not file.filename.lower().endswith(".zip"):
-        raise HTTPException(status_code=400, detail="Please upload a .zip file produced by the Backup button")
 
+def _parse_backup_zip(payload: bytes) -> Dict[str, List[Dict[str, Any]]]:
+    """Parse and validate a backup zip's JSON entries WITHOUT mutating the DB.
+    Returns {collection_name: [docs...]}. Raises HTTPException(400) on any
+    schema/parse problem so the caller can short-circuit cleanly.
+    """
     try:
-        payload = await file.read()
         zf = zipfile.ZipFile(io.BytesIO(payload))
     except zipfile.BadZipFile:
         raise HTTPException(status_code=400, detail="File is not a valid zip archive")
@@ -92,9 +111,6 @@ async def restore_backup(
     if not names:
         raise HTTPException(status_code=400, detail="Zip contains no collection JSON files")
 
-    # Quick sanity check: every entry must parse as a JSON list of objects
-    # BEFORE we start mutating the DB. This turns a partial-restore disaster
-    # into a clean "bad file, nothing changed" error.
     parsed: Dict[str, List[Dict[str, Any]]] = {}
     for n in names:
         try:
@@ -104,8 +120,59 @@ async def restore_backup(
         if not isinstance(docs, list):
             raise HTTPException(status_code=400, detail=f"{n} must be a JSON array of documents")
         parsed[n[:-5]] = docs  # strip ".json"
+    return parsed
 
-    # Apply: clear + bulk-insert per collection.
+
+async def _build_restore_diff(parsed: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """For each collection in `parsed`, count current docs and the incoming
+    count so the frontend can show "+42 sales / -3 users" before the user
+    commits. Pure read operation — no writes.
+    """
+    rows: List[Dict[str, Any]] = []
+    for coll_name, docs in parsed.items():
+        current = await db[coll_name].count_documents({})
+        incoming = len(docs)
+        rows.append({
+            "collection": coll_name,
+            "current": current,
+            "incoming": incoming,
+            "delta": incoming - current,
+            "protected": coll_name in _PROTECTED_COLLECTIONS,
+        })
+    return sorted(rows, key=lambda r: r["collection"])
+
+
+@router.post("/admin/restore/preview")
+async def preview_restore(
+    file: UploadFile = File(...),
+    passphrase: Optional[str] = Form(None),
+    current_user: dict = Depends(get_current_user),
+):
+    """Validate the uploaded backup AND return the per-collection delta the
+    user is about to apply, without mutating anything. Admin-only.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can preview a restore")
+    payload = await _decode_backup_payload(file, passphrase)
+    parsed = _parse_backup_zip(payload)
+    return {"diff": await _build_restore_diff(parsed), "total_collections": len(parsed)}
+
+
+@router.post("/admin/restore")
+async def restore_backup(
+    file: UploadFile = File(...),
+    passphrase: Optional[str] = Form(None),
+    current_user: dict = Depends(get_current_user),
+):
+    """Replace every collection in the DB with the JSON documents in the
+    uploaded backup zip. Admin-only. DESTRUCTIVE.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can restore data")
+
+    payload = await _decode_backup_payload(file, passphrase)
+    parsed = _parse_backup_zip(payload)
+
     summary: Dict[str, Dict[str, Any]] = {}
     total_restored = 0
     for coll_name, docs in parsed.items():

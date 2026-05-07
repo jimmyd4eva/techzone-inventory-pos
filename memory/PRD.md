@@ -26,6 +26,31 @@
 
 ## What's Been Implemented
 
+### Barcode Scanner + Encrypted Backups + Restore Preview + Code-Sign Docs (Feb 22, 2026) ✅
+
+**1. Barcode/USB-scanner-friendly Sales mode**
+- `ProductSelection.js` Enter handler now resolves an exact barcode/SKU match against the full inventory before falling back to the top filtered result. USB scanners that emit `<digits>+Enter` "just work" — scan resolves to the right product even when prefix-search would rank a different item higher.
+- Search input clears after add so the next scan starts fresh (classic POS UX).
+- Cheat-sheet overlay updated: `Scan / Enter` row replaces the old `Enter` row, signals barcode + SKU support.
+
+**2. Passphrase-encrypted backups (AES-256-GCM)**
+- New `services/backup_crypto.py` — AES-256-GCM with PBKDF2-HMAC-SHA256 key derivation (200K iterations, 16-byte salt, 12-byte nonce). Self-describing envelope: `TZBKv1\0\0` magic + salt + nonce + ciphertext+tag. Plain zips remain backwards compatible (file extension `.zip`); encrypted ones are `.zip.tzbk`.
+- `GET /api/admin/backup?passphrase=…` wraps the zip in the envelope when a passphrase is given. `POST /api/admin/restore` and `POST /api/admin/restore/preview` accept an optional `passphrase` form field and decrypt automatically when the file extension or magic header indicates encryption.
+- 6 pytest regression tests (`tests/test_backup_crypto.py`): round-trip, wrong-passphrase, tampered ciphertext, truncated payload, plain-zip not misidentified, non-deterministic ciphertext (random salt/nonce). All pass.
+- Frontend: new "Encrypt with passphrase (AES-256-GCM)" toggle in Settings → Backup with a password input + warning ("Without this passphrase the backup cannot be restored — there is no recovery"). Passphrase is also prompted on restore for `.tzbk` files.
+
+**3. Restore-preview step**
+- New `POST /api/admin/restore/preview` — runs the same decode + JSON-parse validation as the real restore but **never mutates the DB**. Returns `{diff: [{collection, current, incoming, delta, protected}], total_collections}`.
+- Restore flow split into 2 stages on the frontend: file-pick → preview modal showing per-collection deltas (`+42 sales`, `-3 users`, `0 ∅`) → user explicitly clicks "Apply restore" or "Cancel". Replaces the old `window.confirm` blob.
+- Curl-verified: 15 collections diffed cleanly with correct passphrase; wrong passphrase / missing passphrase return clean 400s with actionable messages.
+
+**4. Code-signing docs**
+- New `/app/CODESIGN_GUIDE.md` — vendor comparison (Sectigo / DigiCert / Certum / SSL.com), OV vs EV explanation, signtool.exe install, exact Inno Setup IDE config, .pfx vs Windows-cert-store guidance, SmartScreen reputation warm-up. The Inno Setup .iss already has commented `SignTool=signtool` + `SignedUninstaller=yes` hooks ready to uncomment once you have a cert.
+
+**5. Bonus: backend complexity reduction**
+- `routes/admin.py::restore_backup` (CC 14, 59 lines) split into 3 named helpers (`_decode_backup_payload` / `_parse_backup_zip` / `_build_restore_diff`) so the public endpoints are now ~12 lines each. Same code path is reused by both `restore_backup` and the new `preview_restore`.
+
+
 ### Code Review Round 2 Fixes (Feb 22, 2026) ✅
 
 **Real fixes**

@@ -519,6 +519,7 @@ const Sales = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           filteredInventory={filteredInventory}
+          inventory={inventory}
           selectedCustomer={selectedCustomer}
           addToCart={addToCart}
         />
@@ -667,7 +668,7 @@ const Sales = () => {
               <tbody>
                 {[
                   ['F2', 'Focus the product search'],
-                  ['Enter', 'Add the top matching product to cart (while searching)'],
+                  ['Scan / Enter', 'Scan barcode or type SKU + Enter to add to cart'],
                   ['F9', 'Checkout the current cart'],
                   ['Esc', 'Clear cart (with confirmation)'],
                   ['?', 'Show / hide this help'],

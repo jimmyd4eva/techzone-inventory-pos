@@ -4,13 +4,30 @@ import { Search } from 'lucide-react';
 export const ProductSelection = ({
   searchTerm, setSearchTerm,
   filteredInventory, selectedCustomer, addToCart,
+  inventory,
 }) => {
   // Enter on the search input adds the first visible product to cart — lets
   // cashiers scan/type a SKU and tap Enter without reaching for the mouse.
+  // USB barcode scanners emit the digits + a trailing Enter as if typed on a
+  // keyboard. When the current search term matches a barcode or SKU *exactly*
+  // we add THAT item (even if a prefix-match ranks higher in the list) so a
+  // scan of 012345 always resolves to the right product.
   const onSearchKey = (e) => {
-    if (e.key === 'Enter' && filteredInventory.length > 0) {
-      e.preventDefault();
-      addToCart(filteredInventory[0]);
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const q = (searchTerm || '').trim();
+    if (!q) return;
+    const source = inventory?.length ? inventory : filteredInventory;
+    const exact = source.find(
+      (it) =>
+        (it.barcode && it.barcode === q) ||
+        (it.sku && it.sku.toLowerCase() === q.toLowerCase())
+    );
+    const target = exact || filteredInventory[0];
+    if (target) {
+      addToCart(target);
+      // Reset the search so the next scan starts fresh. Quintessential POS flow.
+      setSearchTerm('');
     }
   };
   return (
@@ -22,7 +39,7 @@ export const ProductSelection = ({
         <Search className="search-icon" size={20} />
         <input
           type="text"
-          placeholder="Search products... (F2 to focus, Enter to add top match)"
+          placeholder="Search or scan barcode / SKU... (F2 to focus, Enter to add)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={onSearchKey}

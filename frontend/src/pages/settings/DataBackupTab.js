@@ -91,25 +91,47 @@ export const DataBackupTab = () => {
     }
   };
 
-  const handleRestore = async (event) => {
+  // --- Restore: two-step (preview → confirm-commit) with optional passphrase ---
+  const [restorePending, setRestorePending] = useState(null); // { file, diff, encrypted, passphrase }
+
+  const handleRestoreFile = async (event) => {
     const f = event.target.files?.[0];
     if (!f) return;
-    // Deliberately scary confirmation — this action is irreversible.
-    const go = window.confirm(
-      `This will REPLACE the current database with the contents of "${f.name}".\n\n` +
-      'Every customer, sale, repair and setting will be overwritten. You may be ' +
-      'signed out after the restore completes.\n\n' +
-      'Have you taken a fresh backup first? Click OK only if you are sure.'
-    );
-    if (!go) {
-      if (fileRef.current) fileRef.current.value = '';
-      return;
+    setMsg(null);
+    const isEncrypted = /\.tzbk$/i.test(f.name);
+    let passphrase = '';
+    if (isEncrypted) {
+      passphrase = window.prompt(`"${f.name}" is encrypted. Enter the passphrase used when downloading it:`) || '';
+      if (!passphrase) {
+        if (fileRef.current) fileRef.current.value = '';
+        return;
+      }
     }
+    setRestoring(true);
+    try {
+      const form = new FormData();
+      form.append('file', f);
+      if (passphrase) form.append('passphrase', passphrase);
+      const r = await axios.post(`${API}/admin/restore/preview`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setRestorePending({ file: f, diff: r.data?.diff || [], passphrase, encrypted: isEncrypted });
+    } catch (e) {
+      setMsg({ type: 'error', text: e.response?.data?.detail || 'Could not read backup file.' });
+      if (fileRef.current) fileRef.current.value = '';
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const commitRestore = async () => {
+    if (!restorePending?.file) return;
     setRestoring(true);
     setMsg(null);
     try {
       const form = new FormData();
-      form.append('file', f);
+      form.append('file', restorePending.file);
+      if (restorePending.passphrase) form.append('passphrase', restorePending.passphrase);
       const r = await axios.post(`${API}/admin/restore`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -119,6 +141,7 @@ export const DataBackupTab = () => {
         type: 'success',
         text: `Restore complete — ${restored} documents across ${collCount} collections. Signing you out so you can log in with the restored credentials…`,
       });
+      setRestorePending(null);
       setTimeout(() => {
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -131,24 +154,47 @@ export const DataBackupTab = () => {
     }
   };
 
+  const cancelRestore = () => {
+    setRestorePending(null);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  // --- Optional encryption ---
+  const [usePassphrase, setUsePassphrase] = useState(false);
+  const [passphrase, setPassphrase] = useState('');
+
   const handleDownload = async () => {
+    if (usePassphrase && !passphrase) {
+      setMsg({ type: 'error', text: 'Please enter a passphrase, or untick the encryption box.' });
+      return;
+    }
     setDownloading(true);
     setMsg(null);
     try {
-      const response = await axios.get(`${API}/admin/backup`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/zip' }));
+      const url = usePassphrase
+        ? `${API}/admin/backup?passphrase=${encodeURIComponent(passphrase)}`
+        : `${API}/admin/backup`;
+      const response = await axios.get(url, { responseType: 'blob' });
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const ext = usePassphrase ? 'zip.tzbk' : 'zip';
+      const blob = new Blob([response.data], { type: usePassphrase ? 'application/octet-stream' : 'application/zip' });
+      const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `techzone-backup-${ts}.zip`);
+      link.href = blobUrl;
+      link.setAttribute('download', `techzone-backup-${ts}.${ext}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(blobUrl);
       const now = new Date().toISOString();
       localStorage.setItem('last_backup_at', now);
       setLastBackupAt(now);
-      setMsg({ type: 'success', text: 'Backup downloaded. Store the zip somewhere safe (external drive, cloud).' });
+      setMsg({
+        type: 'success',
+        text: usePassphrase
+          ? 'Encrypted backup downloaded. Save the passphrase somewhere safe — without it, the backup cannot be restored.'
+          : 'Backup downloaded. Store the zip somewhere safe (external drive, cloud).',
+      });
     } catch (e) {
       setMsg({
         type: 'error',
@@ -194,8 +240,40 @@ export const DataBackupTab = () => {
           cursor: downloading ? 'not-allowed' : 'pointer',
         }}
       >
-        <Download size={16} /> {downloading ? 'Preparing zip…' : 'Download backup (.zip)'}
+        <Download size={16} /> {downloading ? 'Preparing…' : 'Download backup'}
       </button>
+
+      <div style={{ marginTop: '12px', padding: '10px 12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            data-testid="encrypt-backup-toggle"
+            checked={usePassphrase}
+            onChange={(e) => setUsePassphrase(e.target.checked)}
+            style={{ width: '14px', height: '14px' }}
+          />
+          <b>Encrypt with passphrase (AES-256-GCM)</b>
+        </label>
+        {usePassphrase ? (
+          <div style={{ marginTop: '8px' }}>
+            <input
+              type="password"
+              data-testid="backup-passphrase-input"
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              placeholder="Strong passphrase (≥ 12 characters recommended)"
+              autoComplete="new-password"
+              style={{
+                width: '100%', maxWidth: '420px', padding: '8px 10px',
+                border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px',
+              }}
+            />
+            <div style={{ marginTop: '6px', fontSize: '12px', color: '#92400e' }}>
+              ⚠️ Without this passphrase the backup cannot be restored — there is no recovery.
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {lastBackupAt ? (
         <div style={{ marginTop: '12px', fontSize: '12px', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -306,8 +384,8 @@ export const DataBackupTab = () => {
         <input
           ref={fileRef}
           type="file"
-          accept=".zip,application/zip"
-          onChange={handleRestore}
+          accept=".zip,.tzbk,application/zip,application/octet-stream"
+          onChange={handleRestoreFile}
           disabled={restoring}
           style={{ display: 'none' }}
           data-testid="restore-file-input"
@@ -324,9 +402,98 @@ export const DataBackupTab = () => {
             cursor: restoring ? 'not-allowed' : 'pointer',
           }}
         >
-          <Upload size={14} /> {restoring ? 'Restoring…' : 'Restore from .zip'}
+          <Upload size={14} /> {restoring ? 'Reading…' : 'Restore from .zip / .tzbk'}
         </button>
       </div>
+
+      {/* Restore preview modal — shown after the user picks a file. */}
+      {restorePending ? (
+        <div
+          data-testid="restore-preview-overlay"
+          onClick={cancelRestore}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '560px', width: '92%', maxHeight: '80vh', overflowY: 'auto',
+              background: '#fff', borderRadius: '12px', padding: '24px 28px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '17px', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={18} /> Confirm restore from "{restorePending.file.name}"
+            </h3>
+            <p style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 16px 0' }}>
+              The restore will <b>replace</b> every collection listed below. Review the deltas and click <i>Apply restore</i> to commit, or <i>Cancel</i> to abort.
+            </p>
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead style={{ background: '#f9fafb' }}>
+                  <tr>
+                    <th style={{ textAlign: 'left',  padding: '8px 12px' }}>Collection</th>
+                    <th style={{ textAlign: 'right', padding: '8px 12px' }}>Now</th>
+                    <th style={{ textAlign: 'right', padding: '8px 12px' }}>Incoming</th>
+                    <th style={{ textAlign: 'right', padding: '8px 12px' }}>Δ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {restorePending.diff.map((row) => {
+                    const tone = row.delta > 0 ? '#059669' : row.delta < 0 ? '#dc2626' : '#6b7280';
+                    return (
+                      <tr key={row.collection} style={{ borderTop: '1px solid #f3f4f6' }} data-testid={`diff-row-${row.collection}`}>
+                        <td style={{ padding: '6px 12px', fontFamily: 'monospace', color: '#111827' }}>
+                          {row.collection}
+                          {row.protected ? <span style={{ marginLeft: 6, fontSize: 10, color: '#6366f1', fontWeight: 700 }}>PROTECTED</span> : null}
+                        </td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', color: '#374151' }}>{row.current}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', color: '#374151' }}>{row.incoming}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', color: tone, fontWeight: 600 }}>
+                          {row.delta > 0 ? `+${row.delta}` : row.delta}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: '14px', fontSize: '12px', color: '#92400e' }}>
+              ⚠️ This is irreversible. Take a fresh backup first if you're unsure.
+            </div>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '18px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                data-testid="cancel-restore-btn"
+                onClick={cancelRestore}
+                disabled={restoring}
+                style={{
+                  padding: '8px 16px', background: '#fff', color: '#374151',
+                  border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13px',
+                  fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-restore-btn"
+                onClick={commitRestore}
+                disabled={restoring}
+                style={{
+                  padding: '8px 16px', background: '#dc2626', color: '#fff',
+                  border: 'none', borderRadius: '8px', fontSize: '13px',
+                  fontWeight: 600, cursor: restoring ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {restoring ? 'Applying…' : 'Apply restore'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
