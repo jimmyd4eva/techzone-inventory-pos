@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../components/ui/input-otp';
 import { Mail, Key, CheckCircle, Loader2, Shield, AlertCircle } from 'lucide-react';
+import { stripHtml } from '../utils/sanitize';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -142,7 +143,7 @@ export default function Activation({ onActivated }) {
               <Shield className="w-8 h-8 text-white" />
             </div>
           )}
-          <h1 className="text-2xl font-bold text-white">{businessInfo.business_name}</h1>
+          <h1 className="text-2xl font-bold text-white">{stripHtml(businessInfo.business_name) || 'TechZone POS'}</h1>
           <p className="text-purple-200 mt-1">Device Activation Required</p>
         </div>
 

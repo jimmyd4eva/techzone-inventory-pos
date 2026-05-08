@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { stripHtml } from '../utils/sanitize';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -39,8 +40,15 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  // Login screen renders branding as plain text — strip rich-text HTML so
+  // the user doesn't see literal `<b>` / `<span style="...">` markup if the
+  // owner formatted business info via the Settings rich-text editor.
+  const plainName = stripHtml(businessSettings.business_name) || 'TECHZONE';
+  const plainAddress = stripHtml(businessSettings.business_address);
+  const plainPhone = stripHtml(businessSettings.business_phone);
+
   // Split business name for colored display
-  const nameParts = businessSettings.business_name.split('');
+  const nameParts = plainName.split('');
   const midPoint = Math.ceil(nameParts.length / 2);
   const firstPart = nameParts.slice(0, midPoint).join('');
   const secondPart = nameParts.slice(midPoint).join('');
@@ -67,7 +75,7 @@ const Login = ({ onLogin }) => {
           <div style={{ overflow: 'hidden', height: '100px', marginBottom: '8px' }}>
             <img 
               src={businessSettings.business_logo || '/techzone-logo.jpg'} 
-              alt={`${businessSettings.business_name} Logo`}
+              alt={`${plainName} Logo`}
               style={{ 
                 width: '288px', 
                 height: 'auto', 
@@ -84,7 +92,7 @@ const Login = ({ onLogin }) => {
             marginBottom: '4px',
             lineHeight: '1.4'
           }}>
-            {businessSettings.business_address}
+            {plainAddress}
           </p>
           <p style={{ 
             fontSize: '14px', 
@@ -92,7 +100,7 @@ const Login = ({ onLogin }) => {
             marginBottom: '16px',
             lineHeight: '1.4'
           }}>
-            {businessSettings.business_phone}
+            {plainPhone}
           </p>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
             <span style={{ color: '#1e3a8a' }}>{firstPart}</span>

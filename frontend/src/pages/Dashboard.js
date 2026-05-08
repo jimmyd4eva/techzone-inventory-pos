@@ -10,6 +10,7 @@ import { SlowMovingWidget } from '../components/dashboard/SlowMovingWidget';
 import { LowStockWidget } from '../components/dashboard/LowStockWidget';
 import { PurchaseOrderModal } from '../components/dashboard/PurchaseOrderModal';
 import { UpcomingBirthdaysWidget } from '../components/dashboard/UpcomingBirthdaysWidget';
+import { stripHtml } from '../utils/sanitize';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -55,8 +56,9 @@ const Dashboard = () => {
       safe('/reports/upcoming-birthdays?days=7', setUpcomingBirthdays),
       axios.get(`${API}/settings/public`).then((r) => {
         const raw = r.data?.business_name || '';
-        // business_name may contain rich-text HTML — strip to plain text for message bodies
-        const plain = raw.replace(/<[^>]+>/g, '').trim();
+        // business_name may contain rich-text HTML — strip to plain text for
+        // SMS/Email message bodies (and the on-screen widget label).
+        const plain = stripHtml(raw);
         if (plain) setBusinessName(plain);
       }).catch(() => {}),
     ]).finally(() => setLoading(false));

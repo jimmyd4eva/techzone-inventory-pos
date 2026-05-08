@@ -5,7 +5,7 @@
  *
  * Run:  yarn jest src/utils/__tests__/sanitize.test.js
  */
-import { sanitizeRichText, hasHtml } from '../sanitize';
+import { sanitizeRichText, hasHtml, stripHtml } from '../sanitize';
 
 describe('sanitizeRichText', () => {
   test('strips <img onerror>', () => {
@@ -57,5 +57,38 @@ describe('hasHtml', () => {
     expect(hasHtml('Hello world')).toBe(false);
     expect(hasHtml('')).toBe(false);
     expect(hasHtml(null)).toBe(false);
+  });
+});
+
+describe('stripHtml', () => {
+  test('removes simple tags', () => {
+    expect(stripHtml('<b>TechZone</b>')).toBe('TechZone');
+  });
+
+  test('removes deeply nested rich-text formatting (sidebar regression)', () => {
+    // Real example from the bug report: the rich-text editor produced this.
+    const raw = '<span><span style="font-size: 16px;"><span style="font-family: Verdana, Geneva, sans-serif;"><b>TechZone</b></span></span></span>';
+    expect(stripHtml(raw)).toBe('TechZone');
+  });
+
+  test('strips XSS payloads BEFORE returning text (defense in depth)', () => {
+    const out = stripHtml('<img src=x onerror=alert(1)>hello');
+    expect(out).not.toMatch(/onerror/i);
+    expect(out).toBe('hello');
+  });
+
+  test('decodes common HTML entities', () => {
+    expect(stripHtml('Tom&nbsp;&amp;&nbsp;Jerry')).toBe('Tom & Jerry');
+    expect(stripHtml('&quot;quoted&quot;')).toBe('"quoted"');
+  });
+
+  test('handles empty/null/undefined safely', () => {
+    expect(stripHtml('')).toBe('');
+    expect(stripHtml(null)).toBe('');
+    expect(stripHtml(undefined)).toBe('');
+  });
+
+  test('preserves plain text that has no markup', () => {
+    expect(stripHtml('30 Giltress Street, Kingston 2, JA')).toBe('30 Giltress Street, Kingston 2, JA');
   });
 });

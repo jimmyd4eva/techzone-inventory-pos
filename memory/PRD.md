@@ -26,6 +26,14 @@
 
 ## What's Been Implemented
 
+### Bug Fix — Raw HTML Markup Leaking into Sidebar / Login / Activation (Feb 23, 2026) ✅
+- **Bug**: When the owner formatted Business Info via the rich-text editor in Settings (e.g. selected a font family or applied bold), the resulting nested HTML (`<span style="font-family: Verdana"><b>TechZone</b></span>`) was being rendered as **literal text** in the sidebar, login screen, and activation screen. Receipts were unaffected (they already use the proper sanitizer + dangerouslySetInnerHTML path).
+- **Root cause**: `Layout.js`, `Login.js`, and `Activation.js` rendered `business_name` / `business_address` / `business_phone` directly as React text nodes (`{value}`), which auto-escapes the `<>` and shows them as visible markup. `Layout.js` even called `business_name.split('')` over the raw HTML string and fed each character into a colored `<span>`, producing the chain of `<`, `s`, `p`, `a`, `n` characters seen in the screenshot.
+- **Fix**: New shared `stripHtml()` helper in `utils/sanitize.js` (sanitize → strip tags → decode entities). Now used by `Layout.js`, `Login.js`, `Activation.js`, and `Dashboard.js` (replacing its inline regex-only version). Receipts and previews still get the full rich-text formatting — only the chrome that doesn't support inline styling falls back to plain text.
+- **Tests**: `frontend/src/utils/__tests__/sanitize.test.js` extended with 6 `stripHtml` tests including the **exact regression payload** from the bug report (`<span><span style="font-size:16px;"><span style="font-family:Verdana"><b>TechZone</b></span></span></span>` → `TechZone`). All 14 tests pass.
+- **Verified live**: Login screen rendered correctly with deliberately polluted business settings (`<b>30 Giltress Street...</b>`, `<span style="font-family:Arial"><b>TechZone</b></span>`) → showed clean plain text. Settings restored to clean values after test.
+
+
 ### Code Quality Round 3 — Backend Complexity Reduction (Feb 23, 2026) ✅
 - **`routes/coupons.py::validate_coupon()`** (cyclomatic complexity 16 → 4). Extracted all rules into new `services/coupon_validator.py` with 6 single-purpose helpers: `_check_active`, `_check_customer_lock`, `_check_usage_limit`, `_check_min_purchase`, `_check_date_range`, `_calculate_discount`. Route handler is now ~15 lines and translates `CouponValidationError` → HTTPException.
 - **`routes/payments.py::check_payment_status()`** (6 levels deep → 1) + Stripe webhook handler. Extracted `_persist_stripe_status()` and `_finalize_paid_sale()`. Both handlers (polling + webhook) now share the same idempotent finalize path → no double-decrement risk.

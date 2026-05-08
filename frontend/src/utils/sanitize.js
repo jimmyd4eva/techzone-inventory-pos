@@ -17,3 +17,28 @@ export const sanitizeRichText = (html) =>
 
 /** Returns true if the string contains at least one HTML tag. */
 export const hasHtml = (str) => /<[a-z][\s\S]*>/i.test(str || '');
+
+/**
+ * Convert rich-text HTML to plain text. Used in places that render the
+ * value as a text node (sidebar, login header, browser title, alt= attrs,
+ * email bodies) — without this, a name like
+ *   `<span style="font-family: Arial"><b>TechZone</b></span>`
+ * shows up literally on screen with all the tags visible.
+ *
+ * Strategy: sanitize first (defense in depth), then drop every tag and
+ * decode common HTML entities. We DO NOT use DOMParser because it would
+ * also execute `<img onerror>` URL fetches if a payload slipped past.
+ */
+export const stripHtml = (str) => {
+  if (!str) return '';
+  const clean = sanitizeRichText(String(str));
+  return clean
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+};
